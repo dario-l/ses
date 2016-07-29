@@ -1,0 +1,13 @@
+﻿using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+[assembly: AssemblyTitle("SimpleEventStore")]
+[assembly: AssemblyDescription("")]
+[assembly: AssemblyConfiguration("")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("SimpleEventStore")]
+[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCulture("")]
+[assembly: ComVisible(false)]
+[assembly: Guid("d5e8cd28-a7b1-4ee9-a2fd-64fd99283b5c")]
+[assembly: InternalsVisibleTo("Ses.UnitTests")]
