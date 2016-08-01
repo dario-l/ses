@@ -33,19 +33,38 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="xunit.abstractions, Version=2.0.0.0, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <HintPath>..\packages\xunit.abstractions.2.0.0\lib\net35\xunit.abstractions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="xunit.assert, Version=2.1.0.3179, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <HintPath>..\packages\xunit.assert.2.1.0\lib\dotnet\xunit.assert.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="xunit.core, Version=2.1.0.3179, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <HintPath>..\packages\xunit.extensibility.core.2.1.0\lib\dotnet\xunit.core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="xunit.execution.desktop, Version=2.1.0.3179, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
+      <HintPath>..\packages\xunit.extensibility.execution.2.1.0\lib\net45\xunit.execution.desktop.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="EventConversion\DefaultEventConverterFactory.cs" />
-    <Compile Include="EventConversion\EventUpConverter.cs" />
-    <Compile Include="EventConversion\IEventConverterFactory.cs" />
-    <Compile Include="EventConversion\IUpconvertEvent.cs" />
-    <Compile Include="EventStream.cs" />
+    <Compile Include="Contracts\DefaultContractsRegistry.cs" />
+    <Compile Include="Converters\DefaultEventConverterFactory.cs" />
+    <Compile Include="Converters\EventUpConverter.cs" />
+    <Compile Include="Converters\IEventConverterFactory.cs" />
+    <Compile Include="Converters\IUpconvertEvent.cs" />
     <Compile Include="IContractsRegistry.cs" />
     <Compile Include="IEvent.cs" />
     <Compile Include="IEventStore.cs" />
-    <Compile Include="EventConversion\IEventUpConverter.cs" />
+    <Compile Include="Converters\IEventUpConverter.cs" />
+    <Compile Include="IEventStream.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="IMemento.cs" />
+    <Compile Include="IReadOnlyEventStream.cs" />
     <Compile Include="ISerializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="..\SharedAssemblyInfo.cs">
@@ -55,6 +74,7 @@
     <Compile Include="SequentalGuid.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="packages.config" />
     <None Include="Project.nuspec" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

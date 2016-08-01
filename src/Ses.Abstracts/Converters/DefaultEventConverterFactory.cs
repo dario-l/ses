@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace Ses.Abstracts.EventConversion
+namespace Ses.Abstracts.Converters
 {
     public class DefaultEventConverterFactory : IEventConverterFactory
     {

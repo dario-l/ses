@@ -1,5 +1,5 @@
 using Ses.Abstracts;
-using Ses.Abstracts.EventConversion;
+using Ses.Abstracts.Converters;
 
 namespace Ses
 {

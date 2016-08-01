@@ -11,8 +11,8 @@ namespace Ses
         public EventStore(IEventStoreSettings settings)
         {
             _settings = settings;
-            _settings.Persistor.OnEventRead += OnEventRead;
-            _settings.Persistor.OnSnapshotRead += OnSnapshotRead;
+            _settings.Persistor.OnReadEvent += OnEventRead;
+            _settings.Persistor.OnReadSnapshot += OnSnapshotRead;
         }
 
         private IEvent OnEventRead(Guid streamId, string eventContract, byte[] eventData)
@@ -33,19 +33,15 @@ namespace Ses
             return convertedSnapshot;
         }
 
-        public async Task<ReadOnlyEventStream> Load(Guid id, bool pessimisticLock = false)
+        public async Task<IReadOnlyEventStream> Load(Guid id, bool pessimisticLock = false)
         {
             var events = await _settings.Persistor.Load(id, pessimisticLock);
-            var currentVersion = events.Count;
             var snapshot = events[0] as IMemento;
-            if (snapshot != null)
-            {
-                currentVersion = snapshot.Version + events.Count;
-            }
+            var currentVersion = snapshot?.Version + events.Count ?? events.Count;
             return new ReadOnlyEventStream(id, events, currentVersion);
         }
 
-        public Task SaveChanges(EventStream stream)
+        public Task SaveChanges(IEventStream stream)
         {
             throw new NotImplementedException();
         }

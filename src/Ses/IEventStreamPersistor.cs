@@ -8,7 +8,7 @@ namespace Ses
     public interface IEventStreamPersistor
     {
         /// <summary>
-        /// Loads events from persistance instance.
+        /// Loads events from data source.
         /// </summary>
         /// <param name="streamId">Stream identifier</param>
         /// <param name="pessimisticLock">If <c>true</c> then acquires pessimistic lock.</param>
@@ -23,7 +23,7 @@ namespace Ses
         Task DeleteStream(Guid streamId);
 
         /// <summary>
-        /// Adding new snapshot to persistance.
+        /// Adding new snapshot to data source.
         /// </summary>
         /// <param name="streamId">Stream identifier</param>
         /// <param name="snapshot">Snaphot instance</param>
@@ -31,13 +31,13 @@ namespace Ses
         Task AddSnapshot(Guid streamId, IMemento snapshot);
 
         /// <summary>
-        /// Fires when event was read from persistance.
+        /// Fires when event was read from data source.
         /// </summary>
-        Func<Guid, string, byte[], IEvent> OnEventRead { get; set; }
+        Func<Guid, string, byte[], IEvent> OnReadEvent { get; set; }
 
         /// <summary>
-        /// Fires when snapshot was read from persistance.
+        /// Fires when snapshot was read from data source.
         /// </summary>
-        Func<Guid, string, byte[], IEvent> OnSnapshotRead { get; set; }
+        Func<Guid, string, byte[], IEvent> OnReadSnapshot { get; set; }
     }
 }

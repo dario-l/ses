@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Ses.Abstracts
 {
-    public class ReadOnlyEventStream
+    public class ReadOnlyEventStream : IReadOnlyEventStream
     {
         private readonly List<IEvent> _events;
 

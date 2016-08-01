@@ -1,6 +1,6 @@
 using System;
 
-namespace Ses.Abstracts.EventConversion
+namespace Ses.Abstracts.Converters
 {
     public interface IEventConverterFactory
     {

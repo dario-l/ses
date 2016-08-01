@@ -1,4 +1,4 @@
-namespace Ses.Abstracts.EventConversion
+namespace Ses.Abstracts.Converters
 {
     public interface IEventUpConverter
     {

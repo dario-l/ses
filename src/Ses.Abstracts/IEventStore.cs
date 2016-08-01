@@ -11,13 +11,13 @@ namespace Ses.Abstracts
         /// <param name="id"></param>
         /// <param name="pessimisticLock"></param>
         /// <returns></returns>
-        Task<ReadOnlyEventStream> Load(Guid id, bool pessimisticLock = false);
+        Task<IReadOnlyEventStream> Load(Guid id, bool pessimisticLock = false);
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="stream"></param>
         /// <returns></returns>
-        Task SaveChanges(EventStream stream);
+        Task SaveChanges(IEventStream stream);
     }
 }
