@@ -66,6 +66,7 @@
     <Compile Include="IMemento.cs" />
     <Compile Include="IReadOnlyEventStream.cs" />
     <Compile Include="ISerializer.cs" />
+    <Compile Include="Logging\NullLogger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
