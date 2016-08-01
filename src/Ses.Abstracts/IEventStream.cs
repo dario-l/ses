@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Ses.Abstracts
 {
-    public interface IEventStream : IReadOnlyEventStream
+    public interface IEventStream
     {
         Guid CommitId { get; }
+        IEvent[] Events { get; }
+        IDictionary<string, object> Metadata { get; set; }
     }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace Ses.Abstracts
@@ -8,15 +7,13 @@ namespace Ses.Abstracts
     {
         private readonly List<IEvent> _events;
 
-        public ReadOnlyEventStream(Guid id, IEnumerable<IEvent> events, int currentVersion)
+        public ReadOnlyEventStream(IEnumerable<IEvent> events, int currentVersion)
         {
-            ID = id;
             _events = events.ToList();
             CurrentVersion = currentVersion;
         }
 
-        public Guid ID { get; private set; }
         public IReadOnlyList<IEvent> Events => _events.AsReadOnly();
-        public int CurrentVersion { get; private set; }
+        public int CurrentVersion { get; }
     }
 }

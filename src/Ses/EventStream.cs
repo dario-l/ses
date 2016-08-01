@@ -4,13 +4,15 @@ using Ses.Abstracts;
 
 namespace Ses
 {
-    public class EventStream : ReadOnlyEventStream, IEventStream
+    public class EventStream : IEventStream
     {
-        public EventStream(Guid id, Guid commitId) : base(id, new List<IEvent>(), 0)
+        public EventStream(Guid commitId)
         {
             CommitId = commitId;
         }
 
-        public Guid CommitId { get; private set; }
+        public Guid CommitId { get; }
+        public IEvent[] Events { get; }
+        public IDictionary<string, object> Metadata { get; set; }
     }
 }

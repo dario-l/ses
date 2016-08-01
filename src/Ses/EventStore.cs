@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Ses.Abstracts;
 
@@ -33,15 +34,15 @@ namespace Ses
             return convertedSnapshot;
         }
 
-        public async Task<IReadOnlyEventStream> Load(Guid id, bool pessimisticLock = false)
+        public async Task<IReadOnlyEventStream> Load(Guid streamId, bool pessimisticLock, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var events = await _settings.Persistor.Load(id, pessimisticLock);
+            var events = await _settings.Persistor.Load(streamId, pessimisticLock);
             var snapshot = events[0] as IMemento;
             var currentVersion = snapshot?.Version + events.Count ?? events.Count;
-            return new ReadOnlyEventStream(id, events, currentVersion);
+            return new ReadOnlyEventStream(events, currentVersion);
         }
 
-        public Task SaveChanges(IEventStream stream)
+        public Task SaveChanges(Guid streamId, int expectedVersion, IEventStream stream, CancellationToken cancellationToken = default(CancellationToken))
         {
             throw new NotImplementedException();
         }

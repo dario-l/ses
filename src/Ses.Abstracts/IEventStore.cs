@@ -1,23 +1,20 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ses.Abstracts
 {
     public interface IEventStore
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="pessimisticLock"></param>
-        /// <returns></returns>
-        Task<IReadOnlyEventStream> Load(Guid id, bool pessimisticLock = false);
+        Task<IReadOnlyEventStream> Load(
+            Guid streamId,
+            bool pessimisticLock,
+            CancellationToken cancellationToken = default(CancellationToken));
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="stream"></param>
-        /// <returns></returns>
-        Task SaveChanges(IEventStream stream);
+        Task SaveChanges(
+            Guid streamId,
+            int expectedVersion,
+            IEventStream stream,
+            CancellationToken cancellationToken = default(CancellationToken));
     }
 }
