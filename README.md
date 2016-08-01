@@ -39,7 +39,7 @@ using (var scope = new TransactionScope(TransactionScopeOption.Required, options
 
     await store.SaveChanges(stream);
 
-    await scope.Complete();
+    scope.Complete();
 }
 ```
 
