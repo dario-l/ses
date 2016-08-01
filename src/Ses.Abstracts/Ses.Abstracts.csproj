@@ -35,11 +35,23 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EventConversion\DefaultEventConverterFactory.cs" />
+    <Compile Include="EventConversion\EventUpConverter.cs" />
+    <Compile Include="EventConversion\IEventConverterFactory.cs" />
+    <Compile Include="EventConversion\IUpconvertEvent.cs" />
+    <Compile Include="EventStream.cs" />
+    <Compile Include="IContractsRegistry.cs" />
+    <Compile Include="IEvent.cs" />
     <Compile Include="IEventStore.cs" />
+    <Compile Include="EventConversion\IEventUpConverter.cs" />
+    <Compile Include="ILogger.cs" />
+    <Compile Include="IMemento.cs" />
+    <Compile Include="ISerializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="ReadOnlyEventStream.cs" />
     <Compile Include="SequentalGuid.cs" />
   </ItemGroup>
   <ItemGroup>
