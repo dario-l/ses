@@ -51,7 +51,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DefaultConcurrencyConflictResolverTests.cs" />
     <Compile Include="EventStoreTests.cs" />
+    <Compile Include="Fakes\FakeEvent1.cs" />
+    <Compile Include="Fakes\FakeEvent2.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -62,7 +65,12 @@
       <Project>{8872B02A-5745-4ADC-A214-C953A471A9E8}</Project>
       <Name>Ses.Abstracts</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Ses\Ses.csproj">
+      <Project>{00F648AC-E5B6-47D2-843C-1F34C6FC9843}</Project>
+      <Name>Ses</Name>
+    </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

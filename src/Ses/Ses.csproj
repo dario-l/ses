@@ -35,7 +35,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Conflicts\ConcurrencyConflictResolver.cs" />
+    <Compile Include="Conflicts\DefaultConcurrencyConflictResolver.cs" />
     <Compile Include="EventStore.cs" />
     <Compile Include="EventStoreBuilder.cs" />
     <Compile Include="EventStoreSettings.cs" />
