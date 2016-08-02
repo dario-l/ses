@@ -1,8 +1,8 @@
 namespace Ses.Abstracts.Converters
 {
-    public interface IUpconvertEvent { }
+    public interface IUpConvertEvent { }
 
-    public interface IUpconvertEvent<in TSource, out TTarget> : IUpconvertEvent
+    public interface IUpConvertEvent<in TSource, out TTarget> : IUpConvertEvent
         where TSource : class, IEvent
         where TTarget : class, IEvent
     {

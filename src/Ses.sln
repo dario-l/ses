@@ -19,6 +19,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ses.Domain", "Ses.Domain\Se
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ses.Samples", "Ses.Samples\Ses.Samples.csproj", "{590A9C84-0373-4DF8-AD77-BAADE176CFD3}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{30BB5F0E-705B-412C-95B1-4AC821B4DCAA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ses.Abstracts.UnitTests", "Ses.Abstracts.UnitTests\Ses.Abstracts.UnitTests.csproj", "{8B176780-14BA-4703-AAB3-B98074A89290}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,8 +49,16 @@ Global
 		{590A9C84-0373-4DF8-AD77-BAADE176CFD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{590A9C84-0373-4DF8-AD77-BAADE176CFD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{590A9C84-0373-4DF8-AD77-BAADE176CFD3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B176780-14BA-4703-AAB3-B98074A89290}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B176780-14BA-4703-AAB3-B98074A89290}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B176780-14BA-4703-AAB3-B98074A89290}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B176780-14BA-4703-AAB3-B98074A89290}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F4B33712-A07F-4FBC-815B-955A2D04305C} = {30BB5F0E-705B-412C-95B1-4AC821B4DCAA}
+		{8B176780-14BA-4703-AAB3-B98074A89290} = {30BB5F0E-705B-412C-95B1-4AC821B4DCAA}
 	EndGlobalSection
 EndGlobal

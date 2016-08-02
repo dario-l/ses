@@ -18,9 +18,12 @@ namespace Ses.Abstracts.Converters
                 {
                     var eventType =
                         converterType.GetInterfaces()
-                            .First(x => x.IsGenericType && typeof(IUpconvertEvent).IsAssignableFrom(x))
+                            .First(x => x.IsGenericType && typeof(IUpConvertEvent).IsAssignableFrom(x))
                             .GetGenericArguments()
                             .First();
+
+                    if (_converters.ContainsKey(eventType)) throw new InvalidOperationException($"UpConverter for {eventType.Name} is already registered.");
+
                     _converters.Add(eventType, converterType);
                 }
             }
@@ -28,13 +31,13 @@ namespace Ses.Abstracts.Converters
 
         private static bool IsConverter(Type type)
         {
-            return typeof(IUpconvertEvent).IsAssignableFrom(type);
+            return typeof(IUpConvertEvent).IsAssignableFrom(type);
         }
 
-        public IUpconvertEvent CreateInstance(Type eventType)
+        public IUpConvertEvent CreateInstance(Type eventType)
         {
             Type converter;
-            return (!_converters.TryGetValue(eventType, out converter) ? null : Activator.CreateInstance(converter)) as IUpconvertEvent;
+            return (!_converters.TryGetValue(eventType, out converter) ? null : Activator.CreateInstance(converter)) as IUpConvertEvent;
         }
     }
 }

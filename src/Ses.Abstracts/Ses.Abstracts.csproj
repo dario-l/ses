@@ -54,13 +54,11 @@
   <ItemGroup>
     <Compile Include="Contracts\DefaultContractsRegistry.cs" />
     <Compile Include="Converters\DefaultEventConverterFactory.cs" />
-    <Compile Include="Converters\EventUpConverter.cs" />
     <Compile Include="Converters\IEventConverterFactory.cs" />
-    <Compile Include="Converters\IUpconvertEvent.cs" />
+    <Compile Include="Converters\IUpConvertEvent.cs" />
     <Compile Include="IContractsRegistry.cs" />
     <Compile Include="IEvent.cs" />
     <Compile Include="IEventStore.cs" />
-    <Compile Include="Converters\IEventUpConverter.cs" />
     <Compile Include="IEventStream.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="IMemento.cs" />

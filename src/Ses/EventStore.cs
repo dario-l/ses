@@ -21,8 +21,8 @@ namespace Ses
             var eventType = _settings.ContractsRegistry.GetType(eventContract);
             var @event = _settings.Serializer.Deserialize<IMemento>(eventData, eventType);
             if (@event == null) throw new InvalidCastException($"Deserialized payload from stream {streamId} is not an IEvent of type {eventType.FullName}.");
-            var convertedEvent = _settings.UpConverter.Convert(@event);
-            return convertedEvent;
+            var upConverter = _settings.UpConverterFactory.CreateInstance(eventType);
+            return upConverter == null ? @event : ((dynamic)upConverter).Convert(@event);
         }
 
         private IEvent OnSnapshotRead(Guid streamId, string snapshotContract, byte[] snapshotData)
@@ -30,8 +30,8 @@ namespace Ses
             var snapshotType = _settings.ContractsRegistry.GetType(snapshotContract);
             var memento = _settings.Serializer.Deserialize<IMemento>(snapshotData, snapshotType);
             if (memento == null) throw new InvalidCastException($"Deserialized payload from stream {streamId} is not an IMemento of type {snapshotType.FullName}.");
-            var convertedSnapshot = _settings.UpConverter.Convert(memento);
-            return convertedSnapshot;
+            var upConverter = _settings.UpConverterFactory.CreateInstance(snapshotType);
+            return upConverter == null ? memento : ((dynamic)upConverter).Convert(memento);
         }
 
         public async Task<IReadOnlyEventStream> Load(Guid streamId, bool pessimisticLock, CancellationToken cancellationToken = default(CancellationToken))
