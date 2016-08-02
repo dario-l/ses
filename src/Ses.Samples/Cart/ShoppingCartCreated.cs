@@ -2,7 +2,7 @@
 using System.Runtime.Serialization;
 using Ses.Abstracts;
 
-namespace Ses.Samples
+namespace Ses.Samples.Cart
 {
     [DataContract(Name = "ShoppingCartCreated")]
     public class ShoppingCartCreated : IEvent

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Ses.Abstracts;
 
-namespace Ses.Samples
+namespace Ses.Samples.Cart
 {
     public class ShoppingCartState : IMemento
     {

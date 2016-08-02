@@ -5,5 +5,6 @@ namespace Ses.Abstracts
     public interface IContractsRegistry
     {
         Type GetType(string contractName);
+        string GetContractName(Type type);
     }
 }

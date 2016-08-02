@@ -56,6 +56,6 @@ namespace Ses
         /// <param name="metadata"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IList<IEvent> events, IDictionary<string, object> metadata, CancellationToken cancellationToken = default(CancellationToken));
+        Task SaveChanges(Guid streamId, Guid commitId, int expectedVersion, EventRecord[] events, byte[] metadata, CancellationToken cancellationToken = default(CancellationToken));
     }
 }

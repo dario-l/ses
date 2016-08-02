@@ -34,8 +34,7 @@ namespace Ses.Domain
             if (aggregate == null) throw new ArgumentNullException(nameof(aggregate));
             var stream = new EventStream(commitId ?? SequentialGuid.NewGuid(), aggregate.TakeUncommittedEvents());
             PrepareEventStream(stream);
-            var expectedVersion = aggregate.CommittedVersion + stream.Events.Count;
-            await _store.SaveChanges(aggregate.Id, expectedVersion, stream, cancellationToken);
+            await _store.SaveChanges(aggregate.Id, aggregate.CommittedVersion, stream, cancellationToken);
         }
 
         protected virtual void PrepareEventStream(EventStream stream)

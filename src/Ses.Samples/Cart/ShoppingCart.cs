@@ -2,16 +2,13 @@
 using System.Collections.Generic;
 using Ses.Domain;
 
-namespace Ses.Samples
+namespace Ses.Samples.Cart
 {
     public class ShoppingCart : Aggregate<ShoppingCartState>
     {
         public ShoppingCart()
         {
-            State = new ShoppingCartState
-            {
-                Items = new List<CartItem>()
-            };
+            State = new ShoppingCartState();
             Handles<ShoppingCartCreated>(State.OnCreated);
             Handles<ItemAddedToShoppingCart>(State.OnItemAddedToShoppingCart);
         }

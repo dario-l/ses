@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Ses.Samples
+namespace Ses.Samples.Cart
 {
     public class CartItem
     {
