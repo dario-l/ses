@@ -12,10 +12,11 @@ namespace Ses
         /// Loads events from data source.
         /// </summary>
         /// <param name="streamId">Stream identifier</param>
+        /// <param name="fromVersion"></param>
         /// <param name="pessimisticLock">If <c>true</c> then acquires pessimistic lock.</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<IList<IEvent>> Load(Guid streamId, bool pessimisticLock, CancellationToken cancellationToken = default(CancellationToken));
+        Task<IList<IEvent>> Load(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Deletes stream for a given id.
@@ -44,5 +45,16 @@ namespace Ses
         /// Fires when snapshot was read from data source.
         /// </summary>
         Func<Guid, string, byte[], IEvent> OnReadSnapshot { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="streamId"></param>
+        /// <param name="commitId"></param>
+        /// <param name="expectedVersion"></param>
+        /// <param name="events"></param>
+        /// <param name="metadata"></param>
+        /// <returns></returns>
+        Task SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IList<IEvent> events, IDictionary<string, object> metadata);
     }
 }

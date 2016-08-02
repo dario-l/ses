@@ -9,5 +9,7 @@ namespace Ses
         IContractsRegistry ContractsRegistry { get; }
         IEventConverterFactory UpConverterFactory { get; }
         ISerializer Serializer { get; }
+        ILogger Logger { get; }
+        IConcurrencyConflictResolver ConcurrencyConflictResolver { get; }
     }
 }
