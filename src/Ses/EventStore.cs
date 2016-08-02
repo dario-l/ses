@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ses.Abstracts;
@@ -55,32 +54,13 @@ namespace Ses
 
         public async Task SaveChanges(Guid streamId, int expectedVersion, IEventStream stream, CancellationToken cancellationToken = default(CancellationToken))
         {
-            await TrySaveChanges(streamId, expectedVersion, stream, 0, cancellationToken);
+            _settings.Logger.Debug("Saving changes for stream '{0}' with commit '{1}'...", streamId, stream.CommitId);
+            await TrySaveChanges(streamId, expectedVersion, stream, cancellationToken);
         }
 
-        private async Task<int> TrySaveChanges(Guid streamId, int expectedVersion, IEventStream stream, int tryCommitCounter, CancellationToken cancellationToken)
+        private async Task TrySaveChanges(Guid streamId, int expectedVersion, IEventStream stream, CancellationToken cancellationToken)
         {
-            try
-            {
-                await _settings.Persistor.SaveChanges(streamId, stream.CommitId, expectedVersion, stream.Events, stream.Metadata);
-            }
-            catch (StreamConcurrencyException e)
-            {
-                if (tryCommitCounter >= 3)
-                {
-                    _settings.Logger.Error("Retrying committing stream '{0}' excided limit and throwing concurrency exception.", streamId);
-                    throw;
-                }
-                tryCommitCounter++;
-                _settings.Logger.Debug("Retrying committing stream '{0}' for {1} time...", streamId, tryCommitCounter);
-                var previousEvents = await InternalLoad(streamId, e.ConflictedEventVersion - 1, false, cancellationToken);
-                var calculatedVersion = previousEvents.CommittedVersion;
-                var previousEventTypes = previousEvents.CommittedEvents.Select(x => x.GetType()).ToList();
-                var resolved = _settings.ConcurrencyConflictResolver.ConflictsWith(e.ConflictedEventType, previousEventTypes);
-                if (!resolved) throw;
-                return await TrySaveChanges(streamId, expectedVersion + calculatedVersion, stream, tryCommitCounter, cancellationToken);
-            }
-            return tryCommitCounter;
+            await _settings.Persistor.SaveChanges(streamId, stream.CommitId, expectedVersion, stream.Events, stream.Metadata, cancellationToken);
         }
     }
 }
