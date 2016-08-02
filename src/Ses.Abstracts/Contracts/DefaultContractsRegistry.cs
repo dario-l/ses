@@ -24,7 +24,7 @@ namespace Ses.Abstracts.Contracts
                 {
                     var name = CreateContractName(type);
                     if (_contract2Type.ContainsKey(name))
-                        throw new InvalidOperationException($"Can not register type {type.FullName} becouse contract name '{name}' is already registered.");
+                        throw new InvalidOperationException($"Can not register type {type.FullName} because contract name '{name}' is already registered.");
 
                     _contract2Type.Add(name, type);
                     _type2Contract.Add(type, name);

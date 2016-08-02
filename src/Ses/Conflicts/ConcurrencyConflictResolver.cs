@@ -5,11 +5,11 @@ using Ses.Abstracts;
 
 namespace Ses.Conflicts
 {
-    public class ConcurrencyConflictResolver : IConcurrencyConflictResolver
+    public class DefaultConcurrencyConflictResolver : IConcurrencyConflictResolver
     {
         private readonly Dictionary<Type, List<Type>> _conflictRegister;
 
-        public ConcurrencyConflictResolver()
+        public DefaultConcurrencyConflictResolver()
         {
             _conflictRegister = new Dictionary<Type, List<Type>>();
         }
@@ -21,14 +21,14 @@ namespace Ses.Conflicts
                 || previousEvents.Any(previousEvent => _conflictRegister[eventToCheck].Any(et => et == previousEvent));
         }
 
-        public void RegisterConflictList(Type eventDefinition, List<Type> conflictsWith)
+        public void RegisterConflictList(Type eventDefinition, params Type[] conflictsWith)
         {
             if (!eventDefinition.IsSubclassOf(typeof(IEvent))) throw new ArgumentException("eventDefinition must be of type IEvent");
             if (conflictsWith.Any(c => c.IsSubclassOf(typeof(IEvent)) == false)) throw new ArgumentException("all conflicts with type must be of type IEvent");
             if (_conflictRegister.ContainsKey(eventDefinition))
                 _conflictRegister.Remove(eventDefinition);
 
-            _conflictRegister.Add(eventDefinition, conflictsWith);
+            _conflictRegister.Add(eventDefinition, conflictsWith.ToList());
         }
     }
 }

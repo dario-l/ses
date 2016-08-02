@@ -33,6 +33,10 @@
     <StartupObject>Ses.Samples.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
@@ -40,17 +44,19 @@
     <Reference Include="System.Transactions" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CartItem.cs" />
-    <Compile Include="ItemAddedToShoppingCart.cs" />
+    <Compile Include="Cart\CartItem.cs" />
+    <Compile Include="Cart\ItemAddedToShoppingCart.cs" />
+    <Compile Include="JsonNetSerializer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SampleRunner.cs" />
-    <Compile Include="ShoppingCart.cs" />
-    <Compile Include="ShoppingCartCreated.cs" />
-    <Compile Include="ShoppingCartState.cs" />
+    <Compile Include="Cart\ShoppingCart.cs" />
+    <Compile Include="Cart\ShoppingCartCreated.cs" />
+    <Compile Include="Cart\ShoppingCartState.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ses.Abstracts\Ses.Abstracts.csproj">

@@ -2,7 +2,7 @@ using System;
 
 namespace Ses.Abstracts.Converters
 {
-    public interface IEventConverterFactory
+    public interface IUpConverterFactory
     {
         IUpConvertEvent CreateInstance(Type type);
     }

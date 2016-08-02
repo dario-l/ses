@@ -5,11 +5,11 @@ using System.Reflection;
 
 namespace Ses.Abstracts.Converters
 {
-    public class DefaultEventConverterFactory : IEventConverterFactory
+    public class DefaultUpConverterFactory : IUpConverterFactory
     {
         private readonly IDictionary<Type, Type> _converters;
 
-        public DefaultEventConverterFactory(params Assembly[] assemblies)
+        public DefaultUpConverterFactory(params Assembly[] assemblies)
         {
             _converters = new Dictionary<Type, Type>();
             foreach (var assembly in assemblies)

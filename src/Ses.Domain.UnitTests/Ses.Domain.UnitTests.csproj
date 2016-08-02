@@ -59,7 +59,6 @@
     <Compile Include="Fakes\FakeAggregate.cs" />
     <Compile Include="Fakes\FakeAggregateState.cs" />
     <Compile Include="Fakes\FakeEvent.cs" />
-    <Compile Include="Fakes\FakeSnapshot.cs" />
     <Compile Include="RepositoryTests.cs" />
     <Compile Include="ValueObjectTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -54,6 +54,12 @@
   <ItemGroup>
     <Compile Include="DefaultContractsRegistryTests.cs" />
     <Compile Include="DefaultEventConverterFactoryTests.cs" />
+    <Compile Include="Fakes\FakeContract1.cs" />
+    <Compile Include="Fakes\FakeContract2.cs" />
+    <Compile Include="Fakes\FakeContract3.cs" />
+    <Compile Include="Fakes\FakeContractWithoutDataContract.cs" />
+    <Compile Include="Fakes\FakeUpConverter12.cs" />
+    <Compile Include="Fakes\FakeUpConverter23.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -65,6 +71,7 @@
       <Name>Ses.Abstracts</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

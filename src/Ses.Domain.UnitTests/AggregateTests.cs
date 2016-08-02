@@ -49,7 +49,7 @@ namespace Ses.Domain.UnitTests
             var sut = new FakeAggregate();
             IEnumerable<IEvent> events = new List<IEvent>
             {
-                new FakeSnapshot { Version = 5 },
+                new FakeAggregateState { Version = 5 },
                 new FakeEvent(),
                 new FakeEvent()
             };
@@ -63,7 +63,7 @@ namespace Ses.Domain.UnitTests
             var sut = new FakeAggregate();
             IEnumerable<IEvent> events = new List<IEvent>
             {
-                new FakeSnapshot { Version = 5 },
+                new FakeAggregateState { Version = 5 },
                 new FakeEvent(),
                 new FakeEvent()
             };

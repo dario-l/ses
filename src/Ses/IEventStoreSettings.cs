@@ -7,9 +7,10 @@ namespace Ses
     {
         IEventStreamPersistor Persistor { get; }
         IContractsRegistry ContractsRegistry { get; }
-        IEventConverterFactory UpConverterFactory { get; }
+        IUpConverterFactory UpConverterFactory { get; }
         ISerializer Serializer { get; }
         ILogger Logger { get; }
         IConcurrencyConflictResolver ConcurrencyConflictResolver { get; }
+        void Validate();
     }
 }

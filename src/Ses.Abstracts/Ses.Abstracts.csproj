@@ -54,7 +54,7 @@
   <ItemGroup>
     <Compile Include="Contracts\DefaultContractsRegistry.cs" />
     <Compile Include="Converters\DefaultEventConverterFactory.cs" />
-    <Compile Include="Converters\IEventConverterFactory.cs" />
+    <Compile Include="Converters\IUpConverterFactory.cs" />
     <Compile Include="Converters\IUpConvertEvent.cs" />
     <Compile Include="EventStream.cs" />
     <Compile Include="IContractsRegistry.cs" />
