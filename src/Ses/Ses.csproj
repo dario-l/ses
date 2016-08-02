@@ -36,7 +36,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EventStore.cs" />
-    <Compile Include="EventStream.cs" />
     <Compile Include="IEventStoreSettings.cs" />
     <Compile Include="IEventStreamPersistor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

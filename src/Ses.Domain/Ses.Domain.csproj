@@ -35,16 +35,26 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Aggregate.cs" />
+    <Compile Include="AggregateNotFoundException.cs" />
+    <Compile Include="AggregateT.cs" />
     <Compile Include="IAggregate.cs" />
+    <Compile Include="IRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="Repository.cs" />
+    <Compile Include="ValueObject.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ses.Abstracts\Ses.Abstracts.csproj">
       <Project>{8872b02a-5745-4adc-a214-c953a471a9e8}</Project>
       <Name>Ses.Abstracts</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Ses\Ses.csproj">
+      <Project>{00F648AC-E5B6-47D2-843C-1F34C6FC9843}</Project>
+      <Name>Ses</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

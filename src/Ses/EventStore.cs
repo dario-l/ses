@@ -46,5 +46,10 @@ namespace Ses
         {
             throw new NotImplementedException();
         }
+
+        public Task DeleteStream(Guid streamId, int expectedVersion, CancellationToken cancellationToken = new CancellationToken())
+        {
+            throw new NotImplementedException();
+        }
     }
 }

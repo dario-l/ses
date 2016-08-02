@@ -6,7 +6,7 @@ namespace Ses.Abstracts
     public interface IEventStream
     {
         Guid CommitId { get; }
-        IEvent[] Events { get; }
-        IDictionary<string, object> Metadata { get; set; }
+        IList<IEvent> Events { get; }
+        IDictionary<string, object> Metadata { get; }
     }
 }

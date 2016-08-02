@@ -4,7 +4,7 @@ namespace Ses.Abstracts
 {
     public interface IReadOnlyEventStream
     {
-        IReadOnlyList<IEvent> Events { get; }
-        int CurrentVersion { get; }
+        IEnumerable<IEvent> CommittedEvents { get; }
+        int CommittedVersion { get; }
     }
 }

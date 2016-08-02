@@ -16,5 +16,10 @@ namespace Ses.Abstracts
             int expectedVersion,
             IEventStream stream,
             CancellationToken cancellationToken = default(CancellationToken));
+
+        Task DeleteStream(
+            Guid streamId,
+            int expectedVersion,
+            CancellationToken cancellationToken = default(CancellationToken));
     }
 }

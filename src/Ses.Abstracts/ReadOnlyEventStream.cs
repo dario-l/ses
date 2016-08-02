@@ -7,13 +7,13 @@ namespace Ses.Abstracts
     {
         private readonly List<IEvent> _events;
 
-        public ReadOnlyEventStream(IEnumerable<IEvent> events, int currentVersion)
+        public ReadOnlyEventStream(IEnumerable<IEvent> events, int committedVersion)
         {
             _events = events.ToList();
-            CurrentVersion = currentVersion;
+            CommittedVersion = committedVersion;
         }
 
-        public IReadOnlyList<IEvent> Events => _events.AsReadOnly();
-        public int CurrentVersion { get; }
+        public IEnumerable<IEvent> CommittedEvents => _events.AsReadOnly();
+        public int CommittedVersion { get; }
     }
 }

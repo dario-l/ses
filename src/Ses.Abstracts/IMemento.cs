@@ -2,6 +2,6 @@
 {
     public interface IMemento : IEvent
     {
-        int Version { get; }
+        int Version { get; set; }
     }
 }
