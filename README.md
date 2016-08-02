@@ -22,22 +22,18 @@ SimpleEventStore is a very simple event store library for .NET based on rdbms pe
 var options = new TransactionOptions {IsolationLevel = IsolationLevel.ReadCommitted};
 using (var scope = new TransactionScope(TransactionScopeOption.Required, options))
 {
-    var id = SequentalGuid.NewGuid();
-
     var aggregate = new ShoppingCart();
     aggregate.AddItem(SequentalGuid.NewGuid(), name: "Product 1", quantity: 3);
 
 
-    var stream = new EventStream(id)
-
-    // Appending events
-    stream.Append(aggregate.TakeUncommittedEvents());
+    var stream = new EventStream(id, aggregate.TakeUncommittedEvents());
 
     // Adding metadata item (key, value)
-    stream.Advanced.AddMetadata("RequestIP", "0.0.0.0");
-    stream.Advanced.AddMetadata("User", "John Doe");
+    stream.Metadata.Add("RequestIP", "0.0.0.0");
+    stream.Metadata.Add("User", "John Doe");
 
-    await store.SaveChanges(stream);
+    var expectedVersion = aggregate.CommittedVersion + stream.Events.Count;
+    await _store.SaveChanges(aggregate.Id, expectedVersion, stream);
 
     scope.Complete();
 }
