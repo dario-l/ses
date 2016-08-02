@@ -30,10 +30,15 @@ namespace Ses
             return this;
         }
 
+        public EventStoreBuilder WithPersistor(IEventStreamPersistor persistor)
+        {
+            _settings.Persistor = persistor;
+            return this;
+        }
+
         public EventStoreBuilder WithInMemoryPersistor()
         {
-            _settings.Persistor = new InMemoryPersistor();
-            return this;
+            return WithPersistor(new InMemoryPersistor());
         }
 
         public EventStoreBuilder WithSerializer(ISerializer serializer)
