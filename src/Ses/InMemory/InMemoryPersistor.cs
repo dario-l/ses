@@ -8,7 +8,7 @@ using Ses.Abstracts;
 
 namespace Ses.InMemory
 {
-    public class InMemoryPersistor : IEventStreamPersistor
+    internal class InMemoryPersistor : IEventStreamPersistor
     {
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
         private readonly ConcurrentDictionary<Guid, InMemoryStream> _streams = new ConcurrentDictionary<Guid, InMemoryStream>();
