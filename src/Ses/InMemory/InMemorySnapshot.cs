@@ -12,5 +12,11 @@
         public int Version { get; private set; }
         public byte[] Payload { get; private set; }
         public string ContractName { get; private set; }
+
+        public void Update(int version, byte[] payload)
+        {
+            Version = version;
+            Payload = payload;
+        }
     }
 }

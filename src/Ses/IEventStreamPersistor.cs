@@ -31,10 +31,12 @@ namespace Ses
         /// Adding new snapshot to data source.
         /// </summary>
         /// <param name="streamId">Stream identifier</param>
-        /// <param name="snapshot">Snaphot instance</param>
+        /// <param name="payload"></param>
         /// <param name="cancellationToken"></param>
+        /// <param name="version"></param>
+        /// <param name="contractName"></param>
         /// <returns></returns>
-        Task AddSnapshot(Guid streamId, IMemento snapshot, CancellationToken cancellationToken = default(CancellationToken));
+        Task AddSnapshot(Guid streamId, int version, string contractName, byte[] payload, CancellationToken cancellationToken = new CancellationToken());
 
         /// <summary>
         /// Fires when event was read from data source.

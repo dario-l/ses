@@ -59,17 +59,13 @@ namespace Ses.InMemory
             _lock.EnterWriteLock();
             try
             {
-                if (!_streams.ContainsKey(streamId))
+                if (!_streams.ContainsKey(streamId) && expectedVersion > 0)
                 {
-                    if (expectedVersion >= 0)
-                    {
-                        throw new WrongExpectedVersionException($"Deleting stream {streamId} is not allowed for expected version gerater or equal than ZERO.");
-                    }
-                    return Task.FromResult(0);
+                    throw new WrongExpectedVersionException($"Stream {streamId} not found.");
                 }
-                if (expectedVersion != ExpectedVersion.Any && _streams[streamId].Events.Last().Version != expectedVersion)
+                if (expectedVersion > 0 && _streams[streamId].Events.Last().Version != expectedVersion)
                 {
-                    throw new WrongExpectedVersionException("");
+                    throw new WrongExpectedVersionException($"Expected version {expectedVersion} is different than appended earlier to stream {streamId}.");
                 }
 
                 InMemoryStream inMemoryStream;
@@ -84,13 +80,23 @@ namespace Ses.InMemory
             }
         }
 
-        public Task AddSnapshot(Guid streamId, IMemento snapshot, CancellationToken cancellationToken = new CancellationToken())
+        public Task AddSnapshot(Guid streamId, int version, string contractName, byte[] payload, CancellationToken cancellationToken = new CancellationToken())
         {
             _lock.EnterWriteLock();
             try
             {
-                throw new NotImplementedException();
-                //return Task.FromResult(0);
+                InMemorySnapshot snapshot;
+                if (!_snapshots.TryGetValue(streamId, out snapshot))
+                {
+                    snapshot = new InMemorySnapshot(version, contractName, payload);
+                    _snapshots.TryAdd(streamId, snapshot);
+                }
+                else
+                {
+                    snapshot.Update(version, payload);
+                }
+
+                return Task.FromResult(0);
             }
             finally
             {
@@ -123,7 +129,7 @@ namespace Ses.InMemory
                     _streams.TryAdd(streamId, inMemoryStream);
                 }
 
-                inMemoryStream.AppendToStream(commitId, expectedVersion, events, metadata);
+                inMemoryStream.Append(commitId, expectedVersion, events, metadata);
                 return;
             }
 
@@ -131,7 +137,7 @@ namespace Ses.InMemory
             {
                 throw new WrongExpectedVersionException($"Append to stream {streamId} expected version {expectedVersion} mismatch. Stream doesn't exists.");
             }
-            inMemoryStream.AppendToStream(commitId, expectedVersion, events, metadata);
+            inMemoryStream.Append(commitId, expectedVersion, events, metadata);
         }
     }
 }
