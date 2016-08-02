@@ -36,7 +36,7 @@ namespace Ses
 
         public async Task<IReadOnlyEventStream> Load(Guid streamId, bool pessimisticLock, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var events = await _settings.Persistor.Load(streamId, pessimisticLock);
+            var events = await _settings.Persistor.Load(streamId, pessimisticLock, cancellationToken);
             var snapshot = events[0] as IMemento;
             var currentVersion = snapshot?.Version + events.Count ?? events.Count;
             return new ReadOnlyEventStream(events, currentVersion);
@@ -47,9 +47,9 @@ namespace Ses
             throw new NotImplementedException();
         }
 
-        public Task DeleteStream(Guid streamId, int expectedVersion, CancellationToken cancellationToken = new CancellationToken())
+        public async Task DeleteStream(Guid streamId, int expectedVersion, CancellationToken cancellationToken = new CancellationToken())
         {
-            throw new NotImplementedException();
+            await _settings.Persistor.DeleteStream(streamId, expectedVersion, cancellationToken);
         }
     }
 }
