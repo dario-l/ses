@@ -1,19 +1,16 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
 namespace Ses.Abstracts
 {
     public class ReadOnlyEventStream : IReadOnlyEventStream
     {
-        private readonly List<IEvent> _events;
-
         public ReadOnlyEventStream(IEnumerable<IEvent> events, int committedVersion)
         {
-            _events = events.ToList();
+            CommittedEvents = events;
             CommittedVersion = committedVersion;
         }
 
-        public IEnumerable<IEvent> CommittedEvents => _events.AsReadOnly();
+        public IEnumerable<IEvent> CommittedEvents { get; }
         public int CommittedVersion { get; }
     }
 }

@@ -8,14 +8,13 @@ namespace Ses.Domain
         protected Aggregate()
         {
             State = new TSnapshot();
-        } 
+        }
 
         protected TSnapshot State { get; set; }
 
-        public virtual TSnapshot GetSnapshot()
+        public virtual IAggregateSnapshot<TSnapshot> GetSnapshot()
         {
-            State.Version = UncommittedVersion; // To be sure that state has current version before it will be returned
-            return State;
+            return new AggregateSnapshot<TSnapshot>(CurrentVersion, State);
         }
 
         protected override void RestoreFromSnapshot(IMemento memento)
@@ -23,6 +22,11 @@ namespace Ses.Domain
             var snapshot = memento as TSnapshot;
             if (snapshot == null) throw new InvalidCastException("Memento is not type of " + typeof(TSnapshot).FullName);
             State = snapshot;
+        }
+
+        protected override void Invoke(IEvent @event)
+        {
+            RedirectToWhen.InvokeEventOptional(State, @event);
         }
     }
 }

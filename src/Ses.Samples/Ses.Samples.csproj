@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="Cart\CartItem.cs" />
     <Compile Include="Cart\ItemAddedToShoppingCart.cs" />
+    <Compile Include="Cart\ItemRemovedFromShoppingCart.cs" />
     <Compile Include="JsonNetSerializer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

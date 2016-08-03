@@ -20,6 +20,11 @@ namespace Ses.Domain
         int CommittedVersion { get; }
 
         /// <summary>
+        /// Returns aggregate current version (committed + uncommitted)
+        /// </summary>
+        int CurrentVersion { get; }
+
+        /// <summary>
         /// Returns new events registered during one scope of changes and clears internal collection.
         /// </summary>
         /// <returns>Collection of events</returns>
@@ -36,12 +41,12 @@ namespace Ses.Domain
     /// <summary>
     /// Defines aggregate root with snapshoting
     /// </summary>
-    public interface IAggregate<out TSnapshot> : IAggregate where TSnapshot : class, IMemento
+    public interface IAggregate<out TSnapshot> : IAggregate where TSnapshot : class, IMemento, new()
     {
         /// <summary>
         /// Returns snapshot from current state.
         /// </summary>
         /// <returns>Snapshot from current state</returns>
-        TSnapshot GetSnapshot();
+        IAggregateSnapshot<TSnapshot> GetSnapshot();
     }
 }

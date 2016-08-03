@@ -49,7 +49,7 @@ namespace Ses.Domain.UnitTests
             var sut = new FakeAggregate();
             IEnumerable<IEvent> events = new List<IEvent>
             {
-                new FakeAggregateState { Version = 5 },
+                new RestoredMemento(5, new FakeAggregateState()),
                 new FakeEvent(),
                 new FakeEvent()
             };
@@ -63,7 +63,7 @@ namespace Ses.Domain.UnitTests
             var sut = new FakeAggregate();
             IEnumerable<IEvent> events = new List<IEvent>
             {
-                new FakeAggregateState { Version = 5 },
+                new RestoredMemento(5, new FakeAggregateState()),
                 new FakeEvent(),
                 new FakeEvent()
             };
@@ -86,7 +86,7 @@ namespace Ses.Domain.UnitTests
             var sut = new FakeAggregate();
             sut.BussinesOperation();
             var snapshot = sut.GetSnapshot();
-            Assert.True(snapshot.FakeEventApplied);
+            Assert.True(snapshot.State.FakeEventApplied);
         }
     }
 }

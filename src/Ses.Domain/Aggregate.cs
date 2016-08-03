@@ -10,7 +10,6 @@ namespace Ses.Domain
     /// </summary>
     public abstract class Aggregate : IAggregate
     {
-        private readonly Dictionary<Type, Action<object>> _handlers = new Dictionary<Type, Action<object>>();
         private readonly IList<IEvent> _uncommittedEvents = new List<IEvent>();
 
         /// <summary>
@@ -20,11 +19,11 @@ namespace Ses.Domain
         protected void RestoreFrom(IEvent[] history)
         {
             if (history == null || history.Length == 0) return;
-            var snapshot = history[0] as IMemento;
+            var snapshot = history[0] as IRestoredMemento;
             if (snapshot != null)
             {
                 CommittedVersion = snapshot.Version;
-                RestoreFromSnapshot(snapshot);
+                RestoreFromSnapshot(snapshot.State);
             }
 
             for (var i = snapshot == null ? 0 : 1; i < history.Length; i++)
@@ -52,7 +51,10 @@ namespace Ses.Domain
         /// </summary>
         public int CommittedVersion { get; protected set; }
 
-        protected int UncommittedVersion => CommittedVersion + _uncommittedEvents.Count;
+        /// <summary>
+        /// Returns aggregate current version (committed + uncommitted)
+        /// </summary>
+        public int CurrentVersion => CommittedVersion + _uncommittedEvents.Count;
 
         /// <summary>
         /// Returns new events registered during one scope of changes.
@@ -66,21 +68,11 @@ namespace Ses.Domain
         }
 
         /// <summary>
-        /// Register aggregate internal event handler which should change internal state when an event was invoked.
-        /// </summary>
-        /// <typeparam name="TEvent">Type of an event</typeparam>
-        /// <param name="action">Event handler action</param>
-        protected void Handles<TEvent>(Action<TEvent> action) where TEvent : class, IEvent
-        {
-            _handlers[typeof (TEvent)] = item => action((TEvent)item);
-        }
-
-        /// <summary>
         /// Apply a new event and add to pending events to be committed to event store
         /// when transaction completes.
         /// </summary>
         /// <param name="event">An event which should be applied</param>
-        protected void Apply(IEvent @event)
+        protected virtual void Apply(IEvent @event)
         {
             Invoke(@event);
             _uncommittedEvents.Add(@event);
@@ -92,11 +84,9 @@ namespace Ses.Domain
         /// during the lifetime of this instance.
         /// </summary>
         /// <param name="event">An event which should be invoked</param>
-        protected void Invoke(IEvent @event)
+        protected virtual void Invoke(IEvent @event)
         {
-            Action<object> action;
-            if (!_handlers.TryGetValue(@event.GetType(), out action)) return;
-            action(@event);
+            RedirectToWhen.InvokeEventOptional(this, @event);
         }
     }
 }

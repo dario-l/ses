@@ -15,7 +15,7 @@ namespace Ses.InMemory
         private readonly ConcurrentDictionary<Guid, InMemorySnapshot> _snapshots = new ConcurrentDictionary<Guid, InMemorySnapshot>();
 
         public Func<Guid, string, byte[], IEvent> OnReadEvent { get; set; }
-        public Func<Guid, string, byte[], IEvent> OnReadSnapshot { get; set; }
+        public Func<Guid, string, int, byte[], IRestoredMemento> OnReadSnapshot { get; set; }
         public Func<Guid, IDictionary<string, object>, byte[]> OnWriteMetadata { get; set; }
 
         public Task<IList<IEvent>> Load(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = new CancellationToken())
@@ -35,11 +35,11 @@ namespace Ses.InMemory
                 InMemorySnapshot snapshot;
                 if (_snapshots.TryGetValue(streamId, out snapshot) && snapshot.Version >= fromVersion)
                 {
-                    events.Add(OnReadSnapshot(streamId, snapshot.ContractName, snapshot.Payload));
+                    events.Add(OnReadSnapshot(streamId, snapshot.ContractName, snapshot.Version, snapshot.Payload));
                 }
 
                 events.AddRange(snapshot != null
-                    ? stream.Events.Where(x => x.Version >= snapshot.Version).Select(e => CreateEventObject(streamId, e))
+                    ? stream.Events.Where(x => x.Version > snapshot.Version).Select(e => CreateEventObject(streamId, e))
                     : stream.Events.Where(x => x.Version >= fromVersion).Select(e => CreateEventObject(streamId, e)));
                 return Task.FromResult((IList<IEvent>)events);
             }
@@ -104,7 +104,7 @@ namespace Ses.InMemory
             }
         }
 
-        public Task SaveChanges(Guid streamId, Guid commitId, int expectedVersion, EventRecord[] events, byte[] metadata, CancellationToken cancellationToken = new CancellationToken())
+        public Task SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, CancellationToken cancellationToken = new CancellationToken())
         {
             _lock.EnterWriteLock();
             try
@@ -118,7 +118,7 @@ namespace Ses.InMemory
             }
         }
 
-        private void SaveChangesInternal(Guid streamId, Guid commitId, int expectedVersion, EventRecord[] events, byte[] metadata)
+        private void SaveChangesInternal(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata)
         {
             InMemoryStream inMemoryStream;
             if (expectedVersion == ExpectedVersion.NoStream || expectedVersion == ExpectedVersion.Any)
@@ -129,7 +129,7 @@ namespace Ses.InMemory
                     _streams.TryAdd(streamId, inMemoryStream);
                 }
 
-                inMemoryStream.Append(commitId, expectedVersion, events, metadata);
+                inMemoryStream.Append(commitId, expectedVersion, events.ToList(), metadata);
                 return;
             }
 
@@ -137,7 +137,7 @@ namespace Ses.InMemory
             {
                 throw new WrongExpectedVersionException($"Append to stream {streamId} expected version {expectedVersion} mismatch. Stream doesn't exists.");
             }
-            inMemoryStream.Append(commitId, expectedVersion, events, metadata);
+            inMemoryStream.Append(commitId, expectedVersion, events.ToList(), metadata);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ses.Abstracts;
@@ -10,12 +11,15 @@ namespace Ses
     {
         private readonly IEventStoreSettings _settings;
 
-        public EventStore(IEventStoreSettings settings)
+        internal EventStore(IEventStoreSettings settings)
         {
+            Advanced = new EventStoreAdvanced(settings);
             _settings = settings;
             _settings.Persistor.OnReadEvent += OnEventRead;
             _settings.Persistor.OnReadSnapshot += OnSnapshotRead;
         }
+
+        public IEventStoreAdvanced Advanced { get; }
 
         private IEvent OnEventRead(Guid streamId, string eventContract, byte[] eventData)
         {
@@ -35,13 +39,13 @@ namespace Ses
             return @event;
         }
 
-        private IEvent OnSnapshotRead(Guid streamId, string snapshotContract, byte[] snapshotData)
+        private IRestoredMemento OnSnapshotRead(Guid streamId, string snapshotContract, int version, byte[] snapshotData)
         {
             var snapshotType = _settings.ContractsRegistry.GetType(snapshotContract);
             var memento = _settings.Serializer.Deserialize<IMemento>(snapshotData, snapshotType);
             if (memento == null) throw new InvalidCastException($"Deserialized payload from stream {streamId} is not an IMemento of type {snapshotType.FullName}.");
 
-            if (_settings.UpConverterFactory == null) return memento;
+            if (_settings.UpConverterFactory == null) return new RestoredMemento(version, memento);
 
             var upConverter = _settings.UpConverterFactory.CreateInstance(snapshotType);
             while (upConverter != null)
@@ -50,7 +54,7 @@ namespace Ses
                 upConverter = _settings.UpConverterFactory.CreateInstance(memento.GetType());
             }
 
-            return memento;
+            return new RestoredMemento(version, memento);
         }
 
         public Task<IReadOnlyEventStream> Load(Guid streamId, bool pessimisticLock, CancellationToken cancellationToken = default(CancellationToken))
@@ -61,18 +65,16 @@ namespace Ses
         private async Task<IReadOnlyEventStream> LoadInternal(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken)
         {
             var events = await _settings.Persistor.Load(streamId, fromVersion, pessimisticLock, cancellationToken);
-            var snapshot = events[0] as IMemento;
-            var currentVersion = snapshot?.Version + events.Count ?? events.Count;
+            if (events == null) return null;
+            var snapshot = events[0] as IRestoredMemento;
+            var currentVersion = snapshot?.Version + (events.Count - 1) ?? events.Count;
             return new ReadOnlyEventStream(events, currentVersion);
-        }
-
-        public async Task DeleteStream(Guid streamId, int expectedVersion, CancellationToken cancellationToken = new CancellationToken())
-        {
-            await _settings.Persistor.DeleteStream(streamId, expectedVersion, cancellationToken);
         }
 
         public async Task SaveChanges(Guid streamId, int expectedVersion, IEventStream stream, CancellationToken cancellationToken = default(CancellationToken))
         {
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (!stream.Events.Any()) return;
             _settings.Logger.Debug("Saving changes for stream '{0}' with commit '{1}'...", streamId, stream.CommitId);
             await TrySaveChanges(streamId, expectedVersion, stream, cancellationToken);
         }
@@ -80,12 +82,12 @@ namespace Ses
         private async Task TrySaveChanges(Guid streamId, int expectedVersion, IEventStream stream, CancellationToken cancellationToken)
         {
             // TODO: resolving conflicts
-            var metadata = _settings.Serializer.Serialize(stream.Metadata, stream.Metadata.GetType());
+            var metadata = stream.Metadata != null ? _settings.Serializer.Serialize(stream.Metadata, stream.Metadata.GetType()) : null;
             var events = CreateEventRecords(expectedVersion, stream);
             await _settings.Persistor.SaveChanges(streamId, stream.CommitId, expectedVersion, events, metadata, cancellationToken);
         }
 
-        private EventRecord[] CreateEventRecords(int expectedVersion, IEventStream stream)
+        private IEnumerable<EventRecord> CreateEventRecords(int expectedVersion, IEventStream stream)
         {
             var records = new List<EventRecord>();
             foreach (var @event in stream.Events)
@@ -95,7 +97,7 @@ namespace Ses
                 var payload = _settings.Serializer.Serialize(@event, @event.GetType());
                 records.Add(new EventRecord(version, contractName, payload));
             }
-            return records.ToArray();
+            return records;
         }
     }
 }

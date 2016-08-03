@@ -37,6 +37,7 @@
   <ItemGroup>
     <Compile Include="Conflicts\DefaultConcurrencyConflictResolver.cs" />
     <Compile Include="EventStore.cs" />
+    <Compile Include="EventStoreAdvanced.cs" />
     <Compile Include="EventStoreBuilder.cs" />
     <Compile Include="EventStoreSettings.cs" />
     <Compile Include="IConcurrencyConflictResolver.cs" />

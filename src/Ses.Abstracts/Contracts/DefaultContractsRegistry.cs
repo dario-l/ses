@@ -15,7 +15,7 @@ namespace Ses.Abstracts.Contracts
         {
             if (assemblies == null || assemblies.Length == 0) assemblies = new[]
             {
-                Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly()
+                Assembly.GetExecutingAssembly()
             };
 
             foreach (var assembly in assemblies)

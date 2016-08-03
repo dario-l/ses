@@ -32,9 +32,9 @@ namespace Ses.MsSql
 
         public Func<Guid, string, byte[], IEvent> OnReadEvent { get; set; }
 
-        public Func<Guid, string, byte[], IEvent> OnReadSnapshot { get; set; }
+        public Func<Guid, string, int, byte[], IRestoredMemento> OnReadSnapshot { get; set; }
 
-        public Task SaveChanges(Guid streamId, Guid commitId, int expectedVersion, EventRecord[] events, byte[] metadata, CancellationToken cancellationToken = new CancellationToken())
+        public Task SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, CancellationToken cancellationToken = new CancellationToken())
         {
             throw new NotImplementedException();
         }

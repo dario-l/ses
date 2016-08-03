@@ -1,22 +1,20 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ses.Abstracts
 {
-    public interface IEventStore
+    public interface IEventStoreAdvanced
     {
-        Task<IReadOnlyEventStream> Load(
-            Guid streamId,
-            bool pessimisticLock,
-            CancellationToken cancellationToken = default(CancellationToken));
-
-        Task SaveChanges(
+        Task DeleteStream(
             Guid streamId,
             int expectedVersion,
-            IEventStream stream,
             CancellationToken cancellationToken = default(CancellationToken));
 
-        IEventStoreAdvanced Advanced { get; }
+        Task AddSnapshot(
+            Guid streamId,
+            int currentVersion,
+            IMemento snapshot,
+            CancellationToken cancellationToken = default(CancellationToken));
     }
 }

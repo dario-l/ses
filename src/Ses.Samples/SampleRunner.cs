@@ -30,7 +30,7 @@ namespace Ses.Samples
                 await Sample1(store);
                 await Sample2(store);
 
-                // await SamplePerfTest(store);
+                await SamplePerfTest(store);
             }
             catch (Exception e)
             {
@@ -50,14 +50,11 @@ namespace Ses.Samples
                 aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 1", quantity: 3);
 
                 var commitId = SequentialGuid.NewGuid();
-                var stream = new EventStream(commitId);
-
-                // Appending events
-                stream.Append(aggregate.TakeUncommittedEvents());
+                var stream = new EventStream(commitId, aggregate.TakeUncommittedEvents());
 
                 // Adding metadata item (key, value)
-                stream.Metadata.Add("RequestIP", "0.0.0.0");
-                stream.Metadata.Add("User", "John Doe");
+                //stream.Metadata.Add("RequestIP", "0.0.0.0");
+                //stream.Metadata.Add("User", "John Doe");
 
                 await store.SaveChanges(streamId, ExpectedVersion.NoStream, stream);
 
@@ -70,14 +67,20 @@ namespace Ses.Samples
             var repo = new Repository<ShoppingCart>(store);
             var streamId = SequentialGuid.NewGuid();
             var aggregate = new ShoppingCart(streamId, SequentialGuid.NewGuid());
-            aggregate.AddItem(streamId, name: "Product 1", quantity: 3);
+            aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 1", quantity: 3);
+            var item2Id = SequentialGuid.NewGuid();
+            aggregate.AddItem(item2Id, name: "Product 2", quantity: 1);
+            aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 3", quantity: 5);
+            aggregate.RemoveItem(item2Id);
+            aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 4", quantity: 1);
 
-            using (var scope = new TransactionScope(TransactionScopeOption.Required, options))
-            {
-                await repo.SaveChanges(aggregate);
-
-                scope.Complete();
-            }
+            var snap = aggregate.GetSnapshot();
+            await store.Advanced.AddSnapshot(aggregate.Id, snap.Version, snap.State);
+            
+            await repo.SaveChanges(aggregate);
+            aggregate = await repo.Load(streamId);
+            aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 5", quantity: 5);
+            await repo.SaveChanges(aggregate);
 
             aggregate = await repo.Load(streamId);
             Console.WriteLine($"Aggregate version {aggregate.CommittedVersion}");
@@ -99,7 +102,6 @@ namespace Ses.Samples
                         var repo = new Repository<ShoppingCart>(store);
                         var aggregate = new ShoppingCart(id, id);
                         aggregate.AddItem(Guid.NewGuid(), "Product 1", 1);
-                        aggregate.AddItem(Guid.NewGuid(), "Product 2", 1);
                         await repo.SaveChanges(aggregate, null, token);
 
                         scope.Complete();

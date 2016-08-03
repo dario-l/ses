@@ -60,10 +60,12 @@
     <Compile Include="IContractsRegistry.cs" />
     <Compile Include="IEvent.cs" />
     <Compile Include="IEventStore.cs" />
+    <Compile Include="IEventStoreAdvanced.cs" />
     <Compile Include="IEventStream.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="IMemento.cs" />
     <Compile Include="IReadOnlyEventStream.cs" />
+    <Compile Include="IRestoredMemento.cs" />
     <Compile Include="ISerializer.cs" />
     <Compile Include="Logging\NullLogger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -71,6 +73,7 @@
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="ReadOnlyEventStream.cs" />
+    <Compile Include="RestoredMemento.cs" />
     <Compile Include="SequentalGuid.cs" />
   </ItemGroup>
   <ItemGroup>

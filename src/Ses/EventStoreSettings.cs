@@ -4,7 +4,7 @@ using Ses.Abstracts.Converters;
 
 namespace Ses
 {
-    public class EventStoreSettings : IEventStoreSettings
+    internal class EventStoreSettings : IEventStoreSettings
     {
         public IEventStreamPersistor Persistor { get; internal set; }
         public IContractsRegistry ContractsRegistry { get; internal set; }

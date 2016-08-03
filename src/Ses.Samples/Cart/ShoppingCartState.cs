@@ -1,19 +1,19 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Ses.Abstracts;
 
 namespace Ses.Samples.Cart
 {
     public class ShoppingCartState : IMemento
     {
-        public int Version { get; set; }
-        public IList<CartItem> Items { get; set; }
+        public IList<CartItem> Items { get; private set; }
 
-        public void OnCreated(ShoppingCartCreated obj)
+        private void On(ShoppingCartCreated obj)
         {
             Items = new List<CartItem>();
         }
 
-        public void OnItemAddedToShoppingCart(ItemAddedToShoppingCart obj)
+        private void On(ItemAddedToShoppingCart obj)
         {
             Items.Add(new CartItem
             {
@@ -21,6 +21,12 @@ namespace Ses.Samples.Cart
                 Name = obj.Name,
                 Quantity = obj.Quantity
             });
+        }
+
+        private void On(ItemRemovedFromShoppingCart obj)
+        {
+            var item = Items.SingleOrDefault(x => x.Id == obj.ItemId);
+            if (item != null) Items.Remove(item);
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace Ses
 {
-    public class ExpectedVersion
+    public static class ExpectedVersion
     {
         /// <summary>
         /// This write should not conflict with anything and should always succeed.

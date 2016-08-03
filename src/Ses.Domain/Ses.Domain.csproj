@@ -37,13 +37,16 @@
   <ItemGroup>
     <Compile Include="Aggregate.cs" />
     <Compile Include="AggregateNotFoundException.cs" />
+    <Compile Include="AggregateSnapshot.cs" />
     <Compile Include="AggregateT.cs" />
     <Compile Include="IAggregate.cs" />
+    <Compile Include="IAggregateSnapshot.cs" />
     <Compile Include="IRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="RedirectToWhen.cs" />
     <Compile Include="Repository.cs" />
     <Compile Include="ValueObject.cs" />
   </ItemGroup>
