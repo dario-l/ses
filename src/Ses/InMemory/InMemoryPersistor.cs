@@ -17,7 +17,7 @@ namespace Ses.InMemory
         public event OnReadEventHandler OnReadEvent;
         public event OnReadSnapshotHandler OnReadSnapshot;
 
-        public Task<IList<IEvent>> Load(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = new CancellationToken())
+        public async Task<IList<IEvent>> Load(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = new CancellationToken())
         {
             if (pessimisticLock) throw new NotImplementedException("Pessimistic lock is not implemented.");
             _lock.EnterReadLock();
@@ -27,21 +27,34 @@ namespace Ses.InMemory
                 InMemoryStream stream;
                 if (!_streams.TryGetValue(streamId, out stream))
                 {
-                    return Task.FromResult((IList<IEvent>)null);
+                    return null;
                 }
 
-                var events = new List<IEvent>();
+                var events = new List<IEvent>(20);
                 InMemorySnapshot snapshot;
                 if (_snapshots.TryGetValue(streamId, out snapshot) && snapshot.Version >= fromVersion)
                 {
                     // ReSharper disable once PossibleNullReferenceException
-                    events.Add(OnReadSnapshot(streamId, snapshot.ContractName, snapshot.Version, snapshot.Payload));
+                    events.Add(await OnReadSnapshot(streamId, snapshot.ContractName, snapshot.Version, snapshot.Payload));
                 }
 
-                events.AddRange(snapshot != null
-                    ? stream.Events.Where(x => x.Version > snapshot.Version).Select(e => CreateEventObject(streamId, e))
-                    : stream.Events.Where(x => x.Version >= fromVersion).Select(e => CreateEventObject(streamId, e)));
-                return Task.FromResult((IList<IEvent>)events);
+                if (snapshot == null)
+                {
+                    foreach (var @event in stream.Events)
+                    {
+                        if (@event.Version < fromVersion) continue;
+                        events.Add(await CreateEventObject(streamId, @event).ConfigureAwait(false));
+                    }
+                }
+                else
+                {
+                    foreach (var @event in stream.Events)
+                    {
+                        if (@event.Version <= snapshot.Version) continue;
+                        events.Add(await CreateEventObject(streamId, @event).ConfigureAwait(false));
+                    }
+                }
+                return events;
             }
             finally
             {
@@ -49,10 +62,10 @@ namespace Ses.InMemory
             }
         }
 
-        private IEvent CreateEventObject(Guid streamId, InMemoryEventRecord arg)
+        private async Task<IEvent> CreateEventObject(Guid streamId, InMemoryEventRecord arg)
         {
             // ReSharper disable once PossibleNullReferenceException
-            return OnReadEvent(streamId, arg.ContractName, arg.Version, arg.EventData);
+            return await OnReadEvent(streamId, arg.ContractName, arg.Version, arg.EventData).ConfigureAwait(false);
         }
 
         public Task DeleteStream(Guid streamId, int expectedVersion, CancellationToken cancellationToken = new CancellationToken())

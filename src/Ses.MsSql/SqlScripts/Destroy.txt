@@ -1,0 +1,5 @@
+﻿DROP INDEX [IX_Streams_EventId] ON [Streams];
+DROP TABLE [Streams];
+DROP TABLE [StreamsMetadata];
+DROP TABLE [StreamsSnapshots];
+DROP TYPE [NewEvents];

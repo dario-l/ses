@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Transactions;
 using Ses.Abstracts;
-using Ses.Abstracts.Logging;
 using Ses.Domain;
 using Ses.Samples.Cart;
 using Ses.Samples.Serializers;

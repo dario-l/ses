@@ -5,7 +5,7 @@ using Ses.Abstracts;
 
 namespace Ses.Conflicts
 {
-    internal class DefaultConcurrencyConflictResolver : IConcurrencyConflictResolver
+    public class DefaultConcurrencyConflictResolver : IConcurrencyConflictResolver
     {
         private readonly Dictionary<Type, List<Type>> _conflictRegister;
 
@@ -14,7 +14,7 @@ namespace Ses.Conflicts
             _conflictRegister = new Dictionary<Type, List<Type>>();
         }
 
-        public bool ConflictsWith(Type eventToCheck, IEnumerable<Type> previousEvents)
+        public virtual bool ConflictsWith(Type eventToCheck, IEnumerable<Type> previousEvents)
         {
             if (eventToCheck == null) throw new ArgumentNullException(nameof(eventToCheck));
             if (previousEvents == null) throw new ArgumentNullException(nameof(previousEvents));

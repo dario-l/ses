@@ -1,8 +1,8 @@
 using System;
 
-namespace Ses.InMemory
+namespace Ses
 {
-    internal class WrongExpectedVersionException : Exception
+    public class WrongExpectedVersionException : Exception
     {
         public WrongExpectedVersionException(string message, Exception inner = null)
             : base(message, inner)

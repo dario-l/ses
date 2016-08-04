@@ -61,6 +61,6 @@ namespace Ses
         Task SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, CancellationToken cancellationToken = default(CancellationToken));
     }
 
-    public delegate IEvent OnReadEventHandler(Guid streamId, string contractName, int version, byte[] payload);
-    public delegate IRestoredMemento OnReadSnapshotHandler(Guid streamId, string contractName, int version, byte[] payload);
+    public delegate Task<IEvent> OnReadEventHandler(Guid streamId, string contractName, int version, byte[] payload);
+    public delegate Task<IRestoredMemento> OnReadSnapshotHandler(Guid streamId, string contractName, int version, byte[] payload);
 }

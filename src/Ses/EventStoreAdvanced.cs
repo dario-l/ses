@@ -16,6 +16,7 @@ namespace Ses
 
         public async Task DeleteStream(Guid streamId, int expectedVersion, CancellationToken cancellationToken = new CancellationToken())
         {
+            if (expectedVersion == ExpectedVersion.NoStream) throw new InvalidOperationException($"Can not delete stream {streamId} when expecting no stream.");
             await _settings.Persistor.DeleteStream(streamId, expectedVersion, cancellationToken);
         }
 

@@ -21,40 +21,40 @@ namespace Ses
 
         public IEventStoreAdvanced Advanced { get; }
 
-        private IEvent OnEventRead(Guid streamId, string contractName, int version, byte[] payload)
+        private Task<IEvent> OnEventRead(Guid streamId, string contractName, int version, byte[] payload)
         {
             var eventType = _settings.ContractsRegistry.GetType(contractName);
             var @event = _settings.Serializer.Deserialize<IEvent>(payload, eventType);
             if (@event == null) throw new InvalidCastException($"Deserialized payload from stream {streamId} is not an IEvent of type {eventType.FullName}.");
 
-            if (_settings.UpConverterFactory == null) return @event;
-
-            var upConverter = _settings.UpConverterFactory.CreateInstance(eventType);
-            while (upConverter != null)
+            if (_settings.UpConverterFactory != null)
             {
-                @event = ((dynamic)upConverter).Convert(@event);
-                upConverter = _settings.UpConverterFactory.CreateInstance(@event.GetType());
+                var upConverter = _settings.UpConverterFactory.CreateInstance(eventType);
+                while (upConverter != null)
+                {
+                    @event = ((dynamic)upConverter).Convert(@event);
+                    upConverter = _settings.UpConverterFactory.CreateInstance(@event.GetType());
+                }
             }
-
-            return @event;
+            return Task.FromResult(@event);
         }
 
-        private IRestoredMemento OnSnapshotRead(Guid streamId, string contractName, int version, byte[] payload)
+        private Task<IRestoredMemento> OnSnapshotRead(Guid streamId, string contractName, int version, byte[] payload)
         {
             var snapshotType = _settings.ContractsRegistry.GetType(contractName);
             var memento = _settings.Serializer.Deserialize<IMemento>(payload, snapshotType);
             if (memento == null) throw new InvalidCastException($"Deserialized payload from stream {streamId} is not an IMemento of type {snapshotType.FullName}.");
 
-            if (_settings.UpConverterFactory == null) return new RestoredMemento(version, memento);
-
-            var upConverter = _settings.UpConverterFactory.CreateInstance(snapshotType);
-            while (upConverter != null)
+            if (_settings.UpConverterFactory != null)
             {
-                memento = ((dynamic)upConverter).Convert(memento);
-                upConverter = _settings.UpConverterFactory.CreateInstance(memento.GetType());
+                var upConverter = _settings.UpConverterFactory.CreateInstance(snapshotType);
+                while (upConverter != null)
+                {
+                    memento = ((dynamic)upConverter).Convert(memento);
+                    upConverter = _settings.UpConverterFactory.CreateInstance(memento.GetType());
+                }
             }
-
-            return new RestoredMemento(version, memento);
+            return Task.FromResult((IRestoredMemento)new RestoredMemento(version, memento));
         }
 
         public Task<IReadOnlyEventStream> Load(Guid streamId, bool pessimisticLock, CancellationToken cancellationToken = default(CancellationToken))

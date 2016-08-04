@@ -49,11 +49,12 @@
     <Compile Include="InMemory\InMemorySnapshot.cs" />
     <Compile Include="InMemory\InMemoryStream.cs" />
     <Compile Include="InMemory\InMemoryStreamEvent.cs" />
-    <Compile Include="InMemory\WrongExpectedVersionException.cs" />
+    <Compile Include="WrongExpectedVersionException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="SnapshotConcurrencyException.cs" />
     <Compile Include="StreamConcurrencyException.cs" />
   </ItemGroup>
   <ItemGroup>

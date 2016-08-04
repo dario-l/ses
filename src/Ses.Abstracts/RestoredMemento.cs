@@ -1,6 +1,4 @@
-﻿using Ses.Abstracts;
-
-namespace Ses
+﻿namespace Ses.Abstracts
 {
     public sealed class RestoredMemento : IRestoredMemento
     {

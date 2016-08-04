@@ -1,0 +1,40 @@
+﻿CREATE TABLE [Streams] (
+    [StreamId] uniqueidentifier NOT NULL,
+    [Version] int NOT NULL,
+    [CommitId] uniqueidentifier NOT NULL,
+    [ContractName] nvarchar(225) NOT NULL,
+    [CreatedAtUtc] datetime NOT NULL,
+    [Payload] varbinary(max) NOT NULL,
+    [EventId] BIGINT NULL
+    CONSTRAINT [PK_Streams] PRIMARY KEY CLUSTERED ([StreamId],[Version],[CommitId])
+);
+
+
+CREATE NONCLUSTERED INDEX IX_Streams_EventId ON [dbo].[Streams] ([EventId])
+INCLUDE ([StreamId],[Version],[CommitId],[ContractName],[Payload],[CreatedAtUtc]);
+
+
+CREATE TABLE [StreamsMetadata] (
+    [StreamId] uniqueidentifier NOT NULL,
+    [CommitId] uniqueidentifier NOT NULL,
+    [Payload] varbinary(max) NOT NULL,
+    CONSTRAINT [PK_StreamsMetadata] PRIMARY KEY CLUSTERED ([StreamId],[CommitId])
+);
+
+
+CREATE TABLE [StreamsSnapshots] (
+    [StreamId] uniqueidentifier NOT NULL,
+    [Version] int NOT NULL,
+    [LastStreamVersion] int NOT NULL,
+    [ContractName] nvarchar(225) NOT NULL,
+    [GeneratedAtUtc] datetime NOT NULL,
+    [Payload] varbinary(max) NOT NULL,
+    CONSTRAINT [PK_StreamsSnapshots] PRIMARY KEY CLUSTERED ([StreamId],[Version])
+);
+
+
+CREATE TYPE dbo.NewEvents AS TABLE (
+    [Version] int NOT NULL,
+    [ContractName] nvarchar(225) NOT NULL,
+    [Payload] varbinary(max) NOT NULL
+);
