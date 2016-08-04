@@ -65,6 +65,12 @@ namespace Ses
             return WithConcurrencyConflictResolver(resolver);
         }
 
+        public EventStoreBuilder WithLogger(ILogger logger)
+        {
+            _settings.Logger = logger;
+            return this;
+        }
+
         public IEventStore Build()
         {
             _settings.Validate();

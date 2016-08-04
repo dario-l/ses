@@ -15,6 +15,9 @@ namespace Ses.MsSql
             _connectionString = connectionString;
         }
 
+        public event OnReadEventHandler OnReadEvent;
+        public event OnReadSnapshotHandler OnReadSnapshot;
+
         public Task<IList<IEvent>> Load(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = new CancellationToken())
         {
             throw new NotImplementedException();
@@ -29,10 +32,6 @@ namespace Ses.MsSql
         {
             throw new NotImplementedException();
         }
-
-        public Func<Guid, string, byte[], IEvent> OnReadEvent { get; set; }
-
-        public Func<Guid, string, int, byte[], IRestoredMemento> OnReadSnapshot { get; set; }
 
         public Task SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, CancellationToken cancellationToken = new CancellationToken())
         {

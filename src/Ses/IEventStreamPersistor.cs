@@ -41,12 +41,12 @@ namespace Ses
         /// <summary>
         /// Fires when event was read from data source.
         /// </summary>
-        Func<Guid, string, byte[], IEvent> OnReadEvent { get; set; }
+        event OnReadEventHandler OnReadEvent;
 
         /// <summary>
         /// Fires when snapshot was read from data source.
         /// </summary>
-        Func<Guid, string, int, byte[], IRestoredMemento> OnReadSnapshot { get; set; }
+        event OnReadSnapshotHandler OnReadSnapshot;
 
         /// <summary>
         /// 
@@ -60,4 +60,7 @@ namespace Ses
         /// <returns></returns>
         Task SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, CancellationToken cancellationToken = default(CancellationToken));
     }
+
+    public delegate IEvent OnReadEventHandler(Guid streamId, string contractName, int version, byte[] payload);
+    public delegate IRestoredMemento OnReadSnapshotHandler(Guid streamId, string contractName, int version, byte[] payload);
 }

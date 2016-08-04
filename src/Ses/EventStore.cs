@@ -7,11 +7,11 @@ using Ses.Abstracts;
 
 namespace Ses
 {
-    public class EventStore : IEventStore
+    internal class EventStore : IEventStore
     {
         private readonly IEventStoreSettings _settings;
 
-        internal EventStore(IEventStoreSettings settings)
+        public EventStore(IEventStoreSettings settings)
         {
             Advanced = new EventStoreAdvanced(settings);
             _settings = settings;
@@ -21,10 +21,10 @@ namespace Ses
 
         public IEventStoreAdvanced Advanced { get; }
 
-        private IEvent OnEventRead(Guid streamId, string eventContract, byte[] eventData)
+        private IEvent OnEventRead(Guid streamId, string contractName, int version, byte[] payload)
         {
-            var eventType = _settings.ContractsRegistry.GetType(eventContract);
-            var @event = _settings.Serializer.Deserialize<IEvent>(eventData, eventType);
+            var eventType = _settings.ContractsRegistry.GetType(contractName);
+            var @event = _settings.Serializer.Deserialize<IEvent>(payload, eventType);
             if (@event == null) throw new InvalidCastException($"Deserialized payload from stream {streamId} is not an IEvent of type {eventType.FullName}.");
 
             if (_settings.UpConverterFactory == null) return @event;
@@ -39,10 +39,10 @@ namespace Ses
             return @event;
         }
 
-        private IRestoredMemento OnSnapshotRead(Guid streamId, string snapshotContract, int version, byte[] snapshotData)
+        private IRestoredMemento OnSnapshotRead(Guid streamId, string contractName, int version, byte[] payload)
         {
-            var snapshotType = _settings.ContractsRegistry.GetType(snapshotContract);
-            var memento = _settings.Serializer.Deserialize<IMemento>(snapshotData, snapshotType);
+            var snapshotType = _settings.ContractsRegistry.GetType(contractName);
+            var memento = _settings.Serializer.Deserialize<IMemento>(payload, snapshotType);
             if (memento == null) throw new InvalidCastException($"Deserialized payload from stream {streamId} is not an IMemento of type {snapshotType.FullName}.");
 
             if (_settings.UpConverterFactory == null) return new RestoredMemento(version, memento);

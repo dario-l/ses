@@ -14,9 +14,8 @@ namespace Ses.InMemory
         private readonly ConcurrentDictionary<Guid, InMemoryStream> _streams = new ConcurrentDictionary<Guid, InMemoryStream>();
         private readonly ConcurrentDictionary<Guid, InMemorySnapshot> _snapshots = new ConcurrentDictionary<Guid, InMemorySnapshot>();
 
-        public Func<Guid, string, byte[], IEvent> OnReadEvent { get; set; }
-        public Func<Guid, string, int, byte[], IRestoredMemento> OnReadSnapshot { get; set; }
-        public Func<Guid, IDictionary<string, object>, byte[]> OnWriteMetadata { get; set; }
+        public event OnReadEventHandler OnReadEvent;
+        public event OnReadSnapshotHandler OnReadSnapshot;
 
         public Task<IList<IEvent>> Load(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = new CancellationToken())
         {
@@ -35,6 +34,7 @@ namespace Ses.InMemory
                 InMemorySnapshot snapshot;
                 if (_snapshots.TryGetValue(streamId, out snapshot) && snapshot.Version >= fromVersion)
                 {
+                    // ReSharper disable once PossibleNullReferenceException
                     events.Add(OnReadSnapshot(streamId, snapshot.ContractName, snapshot.Version, snapshot.Payload));
                 }
 
@@ -51,7 +51,8 @@ namespace Ses.InMemory
 
         private IEvent CreateEventObject(Guid streamId, InMemoryEventRecord arg)
         {
-            return OnReadEvent(streamId, arg.ContractName, arg.EventData);
+            // ReSharper disable once PossibleNullReferenceException
+            return OnReadEvent(streamId, arg.ContractName, arg.Version, arg.EventData);
         }
 
         public Task DeleteStream(Guid streamId, int expectedVersion, CancellationToken cancellationToken = new CancellationToken())
