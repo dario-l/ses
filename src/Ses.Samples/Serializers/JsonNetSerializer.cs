@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Ses.Abstracts;
 
-namespace Ses.Samples
+namespace Ses.Samples.Serializers
 {
     public class JsonNetSerializer : ISerializer
     {

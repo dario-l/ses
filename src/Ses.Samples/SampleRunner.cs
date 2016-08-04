@@ -6,6 +6,7 @@ using System.Transactions;
 using Ses.Abstracts;
 using Ses.Domain;
 using Ses.Samples.Cart;
+using Ses.Samples.Serializers;
 
 namespace Ses.Samples
 {
@@ -20,7 +21,7 @@ namespace Ses.Samples
                 var store = new EventStoreBuilder()
                     .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly)
                     .WithInMemoryPersistor()
-                    .WithSerializer(new JsonNetSerializer())
+                    .WithSerializer(new JilSerializer())
                     //.WithDefaultConcurrencyConflictResolver(x =>
                     //{
                     //    x.RegisterConflictList(typeof(ShoppingCartCreated), typeof(ItemAddedToShoppingCart));
@@ -30,7 +31,13 @@ namespace Ses.Samples
                 await Sample1(store);
                 await Sample2(store);
 
-                await SamplePerfTest(store);
+                var perfStore = new EventStoreBuilder()
+                    .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly)
+                    .WithInMemoryPersistor()
+                    .WithSerializer(new NullSerializer())
+                    .Build();
+
+                await SamplePerfTest(perfStore);
             }
             catch (Exception e)
             {

@@ -7,6 +7,8 @@ namespace Ses.Samples.Cart
     [DataContract(Name = "ItemAddedToShoppingCart")]
     public class ItemAddedToShoppingCart : IEvent
     {
+        protected ItemAddedToShoppingCart() { }
+
         public Guid CartId { get; private set; }
         public Guid ItemId { get; private set; }
         public string Name { get; private set; }
