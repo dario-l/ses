@@ -11,7 +11,7 @@ namespace Ses.Abstracts
             int expectedVersion,
             CancellationToken cancellationToken = default(CancellationToken));
 
-        Task AddSnapshot(
+        Task UpdateSnapshot(
             Guid streamId,
             int currentVersion,
             IMemento snapshot,

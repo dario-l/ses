@@ -49,5 +49,17 @@ namespace Ses.UnitTests
 
             Assert.Null(restoredStream);
         }
+
+        [Fact]
+        public async Task Can_not_save_changes_with_forbidden_expected_version()
+        {
+            var streamId = Guid.Empty;
+            IEventStream stream = new EventStream(Guid.Empty, new IEvent[0]);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            {
+                await _store.SaveChanges(streamId, -2, stream);
+            });
+        }
     }
 }

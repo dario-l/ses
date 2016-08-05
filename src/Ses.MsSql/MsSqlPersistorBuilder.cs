@@ -1,3 +1,4 @@
+using System;
 using System.Data.SqlClient;
 
 namespace Ses.MsSql
@@ -30,9 +31,17 @@ namespace Ses.MsSql
         public void Initialize()
         {
             using (var cnn = new SqlConnection(_connectionString))
-            using (var cmd = cnn.OpenAndCreateCommand(Scripts.Initialize))
             {
-                cmd.ExecuteNonQuery();
+                cnn.Open();
+                var scripts = Scripts.Initialize.Split(new[] { "GO" }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var script in scripts)
+                {
+                    using (var cmd = cnn.CreateCommand())
+                    {
+                        cmd.CommandText = script;
+                        cmd.ExecuteNonQuery();
+                    }
+                }
             }
         }
     }

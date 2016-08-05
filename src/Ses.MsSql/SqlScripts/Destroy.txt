@@ -1,4 +1,7 @@
-﻿DROP INDEX [IX_Streams_EventId] ON [Streams];
+﻿DROP PROCEDURE [SesSelectEvents];
+DROP PROCEDURE [SesInsertEventsNoStream];
+
+DROP INDEX [IX_Streams_EventId] ON [Streams];
 DROP TABLE [Streams];
 DROP TABLE [StreamsMetadata];
 DROP TABLE [StreamsSnapshots];

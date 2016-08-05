@@ -36,7 +36,7 @@ namespace Ses
         /// <param name="version"></param>
         /// <param name="contractName"></param>
         /// <returns></returns>
-        Task AddSnapshot(Guid streamId, int version, string contractName, byte[] payload, CancellationToken cancellationToken = new CancellationToken());
+        Task UpdateSnapshot(Guid streamId, int version, string contractName, byte[] payload, CancellationToken cancellationToken = new CancellationToken());
 
         /// <summary>
         /// Fires when event was read from data source.
@@ -56,9 +56,10 @@ namespace Ses
         /// <param name="expectedVersion"></param>
         /// <param name="events"></param>
         /// <param name="metadata"></param>
+        /// <param name="isLockable"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, CancellationToken cancellationToken = default(CancellationToken));
+        Task SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, bool isLockable, CancellationToken cancellationToken = default(CancellationToken));
     }
 
     public delegate Task<IEvent> OnReadEventHandler(Guid streamId, string contractName, int version, byte[] payload);

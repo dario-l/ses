@@ -94,7 +94,7 @@ namespace Ses.InMemory
             }
         }
 
-        public Task AddSnapshot(Guid streamId, int version, string contractName, byte[] payload, CancellationToken cancellationToken = new CancellationToken())
+        public Task UpdateSnapshot(Guid streamId, int version, string contractName, byte[] payload, CancellationToken cancellationToken = new CancellationToken())
         {
             _lock.EnterWriteLock();
             try
@@ -118,8 +118,10 @@ namespace Ses.InMemory
             }
         }
 
-        public Task SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, CancellationToken cancellationToken = new CancellationToken())
+        public Task SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, bool isLockable, CancellationToken cancellationToken = new CancellationToken())
         {
+            if (isLockable) throw new NotImplementedException("Pessimistic lock is not implemented.");
+
             _lock.EnterWriteLock();
             try
             {

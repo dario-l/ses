@@ -34,7 +34,8 @@ namespace Ses.Domain
         {
             if (aggregate == null) throw new ArgumentNullException(nameof(aggregate));
             var events = aggregate.TakeUncommittedEvents();
-            var stream = new EventStream(commitId ?? SequentialGuid.NewGuid(), events);
+            bool isLockable = false;
+            var stream = new EventStream(commitId ?? SequentialGuid.NewGuid(), events, isLockable);
             PrepareEventStream(stream);
             await _store.SaveChanges(aggregate.Id, aggregate.CommittedVersion, stream, cancellationToken);
         }

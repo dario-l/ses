@@ -67,6 +67,9 @@
   <ItemGroup>
     <Compile Include="JilSerializer.cs" />
     <Compile Include="MsSqlPersistorTests\DeleteStream.cs" />
+    <Compile Include="MsSqlPersistorTests\SaveChanges.cs" />
+    <Compile Include="MsSqlPersistorTests\Load.cs" />
+    <Compile Include="MsSqlPersistorTests\UpdateSnapshot.cs" />
     <Compile Include="TestsBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

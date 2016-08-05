@@ -2,20 +2,23 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.SqlServer.Server;
 using Ses.Abstracts;
 
 namespace Ses.MsSql
 {
     internal class MsSqlPersistor : IEventStreamPersistor
     {
-        private const short duplicateKeyViolationErrorNumber = 2627;
         private readonly string _connectionString;
+        private readonly ILogger _logger;
 
-        public MsSqlPersistor(string connectionString)
+        public MsSqlPersistor(string connectionString, ILogger logger = null)
         {
             _connectionString = connectionString;
+            _logger = logger;
         }
 
         public event OnReadEventHandler OnReadEvent;
@@ -26,12 +29,13 @@ namespace Ses.MsSql
             var list = new List<IEvent>(50);
             using (var cnn = new SqlConnection(_connectionString))
             {
-                using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.SelectStreamEvents.Query, cancellationToken).ConfigureAwait(false))
+                using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.SelectEvents.Query, cancellationToken).ConfigureAwait(false))
                 {
+                    cmd.CommandType = CommandType.StoredProcedure;
                     cmd
-                        .AddInputParam(SqlQueries.SelectStreamEvents.ParamStreamId, DbType.Guid, streamId)
-                        .AddInputParam(SqlQueries.SelectStreamEvents.ParamFromVersion, DbType.Int32, fromVersion)
-                        .AddInputParam(SqlQueries.SelectStreamEvents.ParamPessimisticLock, DbType.Boolean, pessimisticLock);
+                        .AddInputParam(SqlQueries.SelectEvents.ParamStreamId, DbType.Guid, streamId)
+                        .AddInputParam(SqlQueries.SelectEvents.ParamFromVersion, DbType.Int32, fromVersion)
+                        .AddInputParam(SqlQueries.SelectEvents.ParamPessimisticLock, DbType.Boolean, pessimisticLock);
 
                     using (var reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
                     {
@@ -46,6 +50,7 @@ namespace Ses.MsSql
                                 reader.GetInt32(1),
                                 (byte[])reader[2]).ConfigureAwait(false));
                         }
+
                         await reader.NextResultAsync(cancellationToken).ConfigureAwait(false);
 
                         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false)) // read events
@@ -68,8 +73,8 @@ namespace Ses.MsSql
             using (var cnn = new SqlConnection(_connectionString))
             {
                 var query = expectedVersion == ExpectedVersion.Any
-                    ? SqlQueries.DeleteStream.QueryWhereExpectedVersionAny
-                    : SqlQueries.DeleteStream.QueryWithExpectedVersion;
+                    ? SqlQueries.DeleteStream.QueryAny
+                    : SqlQueries.DeleteStream.QueryExpectedVersion;
 
                 using (var cmd = await cnn.OpenAndCreateCommandAsync(query, cancellationToken).ConfigureAwait(false))
                 {
@@ -93,56 +98,136 @@ namespace Ses.MsSql
             }
         }
 
-        public async Task AddSnapshot(Guid streamId, int version, string contractName, byte[] payload, CancellationToken cancellationToken = new CancellationToken())
+        public async Task UpdateSnapshot(Guid streamId, int version, string contractName, byte[] payload, CancellationToken cancellationToken = new CancellationToken())
         {
             using (var cnn = new SqlConnection(_connectionString))
             {
                 try
                 {
-                    using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertSnapshot.Query, cancellationToken).ConfigureAwait(false))
+                    using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.UpdateSnapshot.Query, cancellationToken).ConfigureAwait(false))
                     {
                         await cmd
-                            .AddInputParam(SqlQueries.InsertSnapshot.ParamStreamId, DbType.Guid, streamId)
-                            .AddInputParam(SqlQueries.InsertSnapshot.ParamVersion, DbType.Int32, version)
-                            .AddInputParam(SqlQueries.InsertSnapshot.ParamContractName, DbType.AnsiString, contractName)
-                            .AddInputParam(SqlQueries.InsertSnapshot.ParamGeneratedAtUtc, DbType.DateTime, DateTime.UtcNow)
-                            .AddInputParam(SqlQueries.InsertSnapshot.ParamPayload, DbType.Binary, payload)
+                            .AddInputParam(SqlQueries.UpdateSnapshot.ParamStreamId, DbType.Guid, streamId)
+                            .AddInputParam(SqlQueries.UpdateSnapshot.ParamVersion, DbType.Int32, version)
+                            .AddInputParam(SqlQueries.UpdateSnapshot.ParamContractName, DbType.AnsiString, contractName)
+                            .AddInputParam(SqlQueries.UpdateSnapshot.ParamGeneratedAtUtc, DbType.DateTime, DateTime.UtcNow)
+                            .AddInputParam(SqlQueries.UpdateSnapshot.ParamPayload, DbType.Binary, payload)
                             .ExecuteNonQueryAsync(cancellationToken)
                             .ConfigureAwait(false);
                     }
                 }
                 catch (SqlException e)
                 {
-                    if (e.Number != duplicateKeyViolationErrorNumber) throw;
-                    throw new SnapshotConcurrencyException(e, streamId, version, contractName);
+                    if (e.Message.StartsWith("WrongExpectedVersion"))
+                    {
+                        throw new WrongExpectedVersionException($"Updating snapshot for stream {streamId} error", e);
+                    }
+                    throw;
                 }
             }
         }
 
-        public async Task SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, CancellationToken cancellationToken = new CancellationToken())
+        public async Task SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, bool isLockable, CancellationToken cancellationToken = new CancellationToken())
         {
-            var sqlEventRecords = SqlQueries.InsertEvents.CreateSqlDataRecords(events);
-
+            var records = SqlQueries.InsertEvents.CreateSqlDataRecords(events.ToArray());
             using (var cnn = new SqlConnection(_connectionString))
             {
-                try
+                switch (expectedVersion)
                 {
-                    using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertEvents.Query, cancellationToken).ConfigureAwait(false))
-                    {
-                        await cmd
-                            .AddInputParam(SqlQueries.InsertEvents.ParamStreamId, DbType.Guid, streamId)
-                            .AddInputParam(SqlQueries.InsertEvents.ParamCommitId, DbType.Guid, commitId)
-                            .AddInputParam(SqlQueries.InsertEvents.ParamMetadataPayload, DbType.Binary, metadata)
-                            .AddInputParam(SqlQueries.InsertEvents.ParamEvents, sqlEventRecords)
-                            .ExecuteNonQueryAsync(cancellationToken)
-                            .ConfigureAwait(false);
-                    }
+                    case ExpectedVersion.NoStream:
+                        await SaveChangesNoStream(cnn, records, streamId, commitId, metadata, isLockable, cancellationToken);
+                        break;
+                    case ExpectedVersion.Any:
+                        await SaveChangesAny(cnn, records, streamId, commitId, metadata, isLockable, cancellationToken);
+                        break;
+                    default:
+                        await SaveChangesExpectedVersion(cnn, records, streamId, commitId, expectedVersion, metadata, cancellationToken);
+                        break;
                 }
-                catch (SqlException e)
+            }
+        }
+
+        private static async Task SaveChangesNoStream(SqlConnection cnn, IEnumerable<SqlDataRecord> records, Guid streamId, Guid commitId, byte[] metadata, bool isLockable, CancellationToken cancellationToken)
+        {
+            try
+            {
+                using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertEvents.QueryNoStream, cancellationToken).ConfigureAwait(false))
                 {
-                    if (e.Number != duplicateKeyViolationErrorNumber) throw;
-                    throw new StreamConcurrencyException(e, streamId, commitId, expectedVersion);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    await cmd
+                        .AddInputParam(SqlQueries.InsertEvents.ParamStreamId, DbType.Guid, streamId)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamCommitId, DbType.Guid, commitId)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamCreatedAtUtc, DbType.DateTime, DateTime.UtcNow)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamMetadataPayload, DbType.Binary, metadata, true)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamIsLockable, DbType.Boolean, isLockable)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamEvents, records)
+                        .ExecuteNonQueryAsync(cancellationToken)
+                        .ConfigureAwait(false);
                 }
+            }
+            catch (SqlException e)
+            {
+                if (e.IsUniqueConstraintViolation() || e.IsWrongExpectedVersionRised())
+                {
+                    throw new WrongExpectedVersionException($"Saving new stream {streamId} error. Stream exists.", e);
+                }
+                throw;
+            }
+        }
+
+        private static async Task SaveChangesAny(SqlConnection cnn, IEnumerable<SqlDataRecord> records, Guid streamId, Guid commitId, byte[] metadata, bool isLockable, CancellationToken cancellationToken)
+        {
+            try
+            {
+                using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertEvents.QueryAny, cancellationToken).ConfigureAwait(false))
+                {
+                    await cmd
+                        .AddInputParam(SqlQueries.InsertEvents.ParamStreamId, DbType.Guid, streamId)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamCommitId, DbType.Guid, commitId)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamCreatedAtUtc, DbType.DateTime, DateTime.UtcNow)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamMetadataPayload, DbType.Binary, metadata, true)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamIsLockable, DbType.Boolean, isLockable)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamEvents, records)
+                        .ExecuteNonQueryAsync(cancellationToken)
+                        .ConfigureAwait(false);
+                }
+            }
+            catch (SqlException e)
+            {
+                // TODO: check concurrency violation
+                if(e.IsUniqueConstraintViolation() || e.IsWrongExpectedVersionRised())
+                {
+                    throw new WrongExpectedVersionException($"Saving new or existing stream {streamId} error. Stream exists.", e);
+                }
+                throw;
+            }
+        }
+
+        private static async Task SaveChangesExpectedVersion(SqlConnection cnn, IEnumerable<SqlDataRecord> records, Guid streamId, Guid commitId, int expectedVersion, byte[] metadata, CancellationToken cancellationToken)
+        {
+            try
+            {
+                using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertEvents.QueryExpectedVersion, cancellationToken).ConfigureAwait(false))
+                {
+                    await cmd
+                        .AddInputParam(SqlQueries.InsertEvents.ParamStreamId, DbType.Guid, streamId)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamCommitId, DbType.Guid, commitId)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamCreatedAtUtc, DbType.DateTime, DateTime.UtcNow)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamMetadataPayload, DbType.Binary, metadata, true)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamExpectedVersion, DbType.Int32, expectedVersion)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamEvents, records)
+                        .ExecuteNonQueryAsync(cancellationToken)
+                        .ConfigureAwait(false);
+                }
+            }
+            catch (SqlException e)
+            {
+                // TODO: check concurrency violation
+                if (e.IsUniqueConstraintViolation() || e.IsWrongExpectedVersionRised())
+                {
+                    throw new WrongExpectedVersionException($"Saving new or existing stream {streamId} error. Stream exists.", e);
+                }
+                throw;
             }
         }
     }

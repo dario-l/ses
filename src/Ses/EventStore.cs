@@ -65,7 +65,7 @@ namespace Ses
         private async Task<IReadOnlyEventStream> LoadInternal(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken)
         {
             var events = await _settings.Persistor.Load(streamId, fromVersion, pessimisticLock, cancellationToken);
-            if (events == null) return null;
+            if (events == null || events.Count == 0) return null;
             var snapshot = events[0] as IRestoredMemento;
             var currentVersion = snapshot?.Version + (events.Count - 1) ?? events.Count;
             return new ReadOnlyEventStream(events, currentVersion);
@@ -74,6 +74,7 @@ namespace Ses
         public async Task SaveChanges(Guid streamId, int expectedVersion, IEventStream stream, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (expectedVersion < ExpectedVersion.Any) throw new InvalidOperationException($"Expected version {expectedVersion} for stream {streamId} is invalid.");
             if (!stream.Events.Any()) return;
             _settings.Logger.Debug("Saving changes for stream '{0}' with commit '{1}'...", streamId, stream.CommitId);
             await TrySaveChanges(streamId, expectedVersion, stream, cancellationToken);
@@ -84,11 +85,22 @@ namespace Ses
             // TODO: resolving conflicts
             var metadata = stream.Metadata != null ? _settings.Serializer.Serialize(stream.Metadata, stream.Metadata.GetType()) : null;
             var events = CreateEventRecords(expectedVersion, stream);
-            await _settings.Persistor.SaveChanges(streamId, stream.CommitId, expectedVersion, events, metadata, cancellationToken);
+            LogSavedStream(streamId, expectedVersion, stream.CommitId, events);
+            await _settings.Persistor.SaveChanges(streamId, stream.CommitId, expectedVersion, events, metadata, stream.IsLockable, cancellationToken);
         }
 
-        private IEnumerable<EventRecord> CreateEventRecords(int expectedVersion, IEventStream stream)
+        private void LogSavedStream(Guid streamId, int expectedVersion, Guid commitId, IEnumerable<EventRecord> events)
         {
+            _settings.Logger.Trace($"Stream {streamId} v.{ExpectedVersion.Parse(expectedVersion)} commit {commitId}");
+            foreach (var e in events)
+            {
+                _settings.Logger.Trace($"\t{e.ContractName} v.{e.Version} [{e.Payload}]");
+            }
+        }
+
+        private IList<EventRecord> CreateEventRecords(int expectedVersion, IEventStream stream)
+        {
+            if (expectedVersion < 0) expectedVersion = 0;
             var records = new List<EventRecord>();
             foreach (var @event in stream.Events)
             {
