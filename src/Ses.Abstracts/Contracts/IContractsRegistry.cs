@@ -1,6 +1,6 @@
 using System;
 
-namespace Ses.Abstracts
+namespace Ses.Abstracts.Contracts
 {
     public interface IContractsRegistry
     {

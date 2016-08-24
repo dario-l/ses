@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Ses
+namespace Ses.Conflicts
 {
     public interface IConcurrencyConflictResolver : IConcurrencyConflictResolverRegister
     {

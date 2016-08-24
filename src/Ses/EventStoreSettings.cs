@@ -1,6 +1,8 @@
 using System;
 using Ses.Abstracts;
+using Ses.Abstracts.Contracts;
 using Ses.Abstracts.Converters;
+using Ses.Conflicts;
 
 namespace Ses
 {

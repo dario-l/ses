@@ -40,7 +40,7 @@
     <Compile Include="EventStoreAdvanced.cs" />
     <Compile Include="EventStoreBuilder.cs" />
     <Compile Include="EventStoreSettings.cs" />
-    <Compile Include="IConcurrencyConflictResolver.cs" />
+    <Compile Include="Conflicts\IConcurrencyConflictResolver.cs" />
     <Compile Include="IEventStoreSettings.cs" />
     <Compile Include="IEventStreamPersistor.cs" />
     <Compile Include="ExpectedVersion.cs" />
@@ -65,6 +65,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Project.nuspec" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Subscriptions\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
