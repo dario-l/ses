@@ -23,21 +23,16 @@ namespace Ses.Samples
             {
                 var store = new EventStoreBuilder()
                     .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly)
-                    //.WithInMemoryPersistor()
                     .WithMsSqlPersistor(connectionString, x =>
                     {
                         x.Destroy(true);
                         x.Initialize();
                     })
                     .WithSerializer(new JilSerializer())
-                    //.WithDefaultConcurrencyConflictResolver(x =>
-                    //{
-                    //    x.RegisterConflictList(typeof(ShoppingCartCreated), typeof(ItemAddedToShoppingCart));
-                    //})
                     .Build();
 
                 await Sample1(store);
-                //await Sample2(store);
+                await Sample2(store);
 
                 var perfStore = new EventStoreBuilder()
                     .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly)
@@ -48,7 +43,6 @@ namespace Ses.Samples
                         x.Initialize();
                     })
                     .WithSerializer(new JilSerializer())
-                    //.WithSerializer(new NullSerializer())
                     .Build();
 
                 await SamplePerfTest(perfStore);
@@ -58,7 +52,7 @@ namespace Ses.Samples
                 Console.WriteLine(e);
             }
 
-            Console.WriteLine("Press any key to exit...");
+            Console.WriteLine(@"Press any key to exit...");
             Console.ReadKey();
         }
 
@@ -74,8 +68,11 @@ namespace Ses.Samples
                 var stream = new EventStream(commitId, aggregate.TakeUncommittedEvents());
 
                 // Adding metadata item (key, value)
-                //stream.Metadata.Add("RequestIP", "0.0.0.0");
-                //stream.Metadata.Add("User", "John Doe");
+                stream.Metadata = new Dictionary<string, object>
+                {
+                    { "RequestIP", "0.0.0.0" },
+                    { "User", "John Doe" }
+                };
 
                 await store.SaveChanges(streamId, ExpectedVersion.NoStream, stream);
 
@@ -98,15 +95,15 @@ namespace Ses.Samples
                 aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 4", quantity: 1);
 
                 var snap = aggregate.GetSnapshot();
-                await store.Advanced.UpdateSnapshot(aggregate.Id, snap.Version, snap.State);
 
                 await repo.SaveChanges(aggregate);
+                await store.Advanced.UpdateSnapshot(aggregate.Id, snap.Version, snap.State);
                 aggregate = await repo.Load(streamId);
                 aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 5", quantity: 5);
                 await repo.SaveChanges(aggregate);
 
                 aggregate = await repo.Load(streamId);
-                Console.WriteLine($"Aggregate version {aggregate.CommittedVersion}");
+                Console.WriteLine($"Aggregate expected version 7 = {aggregate.CommittedVersion}");
 
                 scope.Complete();
             }
@@ -127,7 +124,6 @@ namespace Ses.Samples
                     aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 1", quantity: 3);
                     aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 2", quantity: 2);
                     aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 1", quantity: 3);
-                    //aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 2", quantity: 2);
 
                     var commitId = SequentialGuid.NewGuid();
                     var stream = new EventStream(commitId, aggregate.TakeUncommittedEvents());
