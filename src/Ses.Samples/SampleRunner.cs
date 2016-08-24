@@ -36,7 +36,6 @@ namespace Ses.Samples
 
                 var perfStore = new EventStoreBuilder()
                     .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly)
-                    .WithInMemoryPersistor()
                     .WithMsSqlPersistor(connectionString, x =>
                     {
                         x.Destroy(true);
@@ -122,8 +121,8 @@ namespace Ses.Samples
                     var streamId = SequentialGuid.NewGuid();
                     var aggregate = new ShoppingCart(streamId, Guid.Empty);
                     aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 1", quantity: 3);
-                    aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 2", quantity: 2);
-                    aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 1", quantity: 3);
+                    //aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 2", quantity: 2);
+                    //aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 1", quantity: 3);
 
                     var commitId = SequentialGuid.NewGuid();
                     var stream = new EventStream(commitId, aggregate.TakeUncommittedEvents());
