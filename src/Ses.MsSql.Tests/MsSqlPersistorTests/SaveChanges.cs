@@ -63,6 +63,23 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
             });
         }
 
+        [Fact]
+        public async void Can_not_save_new_stream_when_saving_the_same_event_version_twice()
+        {
+            var store = await GetEventStore();
+
+            var streamId = SequentialGuid.NewGuid();
+            var stream = new EventStream(streamId, new[] { new FakeEvent(), new FakeEvent() });
+            await store.SaveChanges(streamId, ExpectedVersion.NoStream, stream);
+
+            stream = new EventStream(streamId, new[] { new FakeEvent() });
+            await store.SaveChanges(streamId, 2, stream);
+            await Assert.ThrowsAsync<WrongExpectedVersionException>(async () =>
+            {
+                await store.SaveChanges(streamId, ExpectedVersion.Any, stream);
+            });
+        }
+
         public class FakeEvent : IEvent
         {
         }

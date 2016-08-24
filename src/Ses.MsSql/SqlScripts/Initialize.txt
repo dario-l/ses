@@ -28,14 +28,6 @@ CREATE TABLE [StreamsSnapshots] (
     [Payload] varbinary(max) NOT NULL,
     CONSTRAINT [PK_StreamsSnapshots] PRIMARY KEY CLUSTERED ([StreamId],[Version])
 );
-
-CREATE TYPE dbo.NewEvents AS TABLE (
-    [Version] INT NOT NULL,
-    [ContractName] NVARCHAR(225) NOT NULL,
-    [Payload] VARBINARY(MAX) NOT NULL
-)
-    -- WITH (MEMORY_OPTIMIZED = ON) -- Works on full version of MS Sql Server 2014 or above
-;
 GO
 
 CREATE PROCEDURE [dbo].[SesSelectEvents]
@@ -47,8 +39,6 @@ CREATE PROCEDURE [dbo].[SesSelectEvents]
 AS
 BEGIN
     SET NOCOUNT ON;
-
-    BEGIN TRANSACTION SelectEvents;
     IF(@PessimisticLock = 1) BEGIN
         DECLARE @LockedStreamId uniqueidentifier
         SELECT TOP 1 @LockedStreamId = [StreamId] FROM [Streams] WITH (UPDLOCK,ROWLOCK) WHERE [StreamId] = @StreamId AND [Version] = 0
@@ -66,7 +56,6 @@ BEGIN
     END
 
     SELECT [ContractName],[Version],[Payload] FROM [Streams] WITH(READPAST,ROWLOCK) WHERE [StreamId]=@StreamId AND [Version]>=@FromVersion ORDER BY [Version] ASC
-    COMMIT TRANSACTION SelectEvents;
 END;
 GO
 
@@ -77,46 +66,103 @@ CREATE PROCEDURE [dbo].[SesInsertEventsNoStream]
     @CreatedAtUtc DATETIME,
     @MetadataPayload VARBINARY(MAX),
     @IsLockable BIT,
-    @Events NewEvents READONLY
+    @EventContractName NVARCHAR(250),
+    @EventVersion INT,
+    @EventPayload VARBINARY(MAX)
 )
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    BEGIN TRANSACTION SaveChangesNoStream;
-        IF (SELECT COUNT(1) FROM [Streams] WHERE [StreamId] = @StreamId) > 0 BEGIN
-            RAISERROR('WrongExpectedVersion', 16, 1);
-            RETURN;
-        END
+    IF @EventVersion = 1 AND (SELECT COUNT(1) FROM [Streams] WHERE [StreamId] = @StreamId) > 0 BEGIN
+        RAISERROR('WrongExpectedVersion', 16, 1);
+        RETURN;
+    END
 
-        IF(@IsLockable = 1) BEGIN
+    IF @EventVersion = 1 BEGIN
+        INSERT INTO [StreamsSnapshots]([StreamId],[Version],[LastStreamVersion],[ContractName],[GeneratedAtUtc],[Payload])
+        VALUES(@StreamId,0,0,'Init',@CreatedAtUtc,0);
+
+        IF @IsLockable = 1 BEGIN
             INSERT INTO [Streams]([StreamId],[CommitId],[Version],[ContractName],[Payload],[CreatedAtUtc])
             VALUES(@StreamId,@CommitId,0,'Lockable',0,@CreatedAtUtc);
         END
+    END
 
-        IF(@MetadataPayload IS NOT NULL AND LEN(@MetadataPayload) > 0) BEGIN
-            INSERT INTO [StreamsMetadata]([StreamId],[CommitId],[Payload])
-            VALUES(@StreamId,@CommitId,@MetadataPayload);
-        END
+    INSERT INTO [Streams]([StreamId],[CommitId],[Version],[ContractName],[Payload],[CreatedAtUtc])
+    VALUES(@StreamId,@CommitId,@EventVersion,@EventContractName,@EventPayload,@CreatedAtUtc);
 
-        INSERT INTO [Streams]([StreamId],[CommitId],[Version],[ContractName],[Payload],[CreatedAtUtc])
-        VALUES(@StreamId,@CommitId,0,'Lockable',0,@CreatedAtUtc);
-        /*
-        SELECT
-            @StreamId,
-            @CommitId,
-            [Version],
-            [ContractName],
-            [Payload],
-            @CreatedAtUtc
-        FROM
-            @Events
-        ORDER BY
-            [Version];
-            */
+    IF(@MetadataPayload IS NOT NULL AND LEN(@MetadataPayload) > 0) BEGIN
+        INSERT INTO [StreamsMetadata]([StreamId],[CommitId],[Payload])
+        VALUES(@StreamId,@CommitId,@MetadataPayload);
+    END
+END;
+GO
 
+CREATE PROCEDURE [dbo].[SesInsertEventsAny]
+(
+    @StreamId UNIQUEIDENTIFIER,
+    @CommitId UNIQUEIDENTIFIER,
+    @CreatedAtUtc DATETIME,
+    @MetadataPayload VARBINARY(MAX),
+    @IsLockable BIT,
+    @EventContractName NVARCHAR(250),
+    @EventVersion INT,
+    @EventPayload VARBINARY(MAX)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @IsNew BIT = 0
+    IF (SELECT COUNT(1) FROM [Streams] WHERE [StreamId] = @StreamId) > 0 BEGIN
+        SET @IsNew = 1
+    END
+
+    IF(@IsNew = 1 AND @IsLockable = 1) BEGIN
+        INSERT INTO [Streams]([StreamId],[CommitId],[Version],[ContractName],[CreatedAtUtc],[Payload])
+        VALUES(@StreamId,@CommitId,0,'Lockable',@CreatedAtUtc,0);
+    END
+
+    INSERT INTO [Streams]([StreamId],[CommitId],[Version],[ContractName],[Payload],[CreatedAtUtc])
+    VALUES(@StreamId,@CommitId,@EventVersion,@EventContractName,@EventPayload,@CreatedAtUtc);
+
+    IF(@MetadataPayload IS NOT NULL AND LEN(@MetadataPayload) > 0) BEGIN
+        INSERT INTO [StreamsMetadata]([StreamId],[CommitId],[Payload])
+        VALUES(@StreamId,@CommitId,@MetadataPayload);
+    END
+
+    IF(@IsNew = 1 AND @IsLockable = 1) BEGIN
         INSERT INTO [StreamsSnapshots]([StreamId],[Version],[LastStreamVersion],[ContractName],[GeneratedAtUtc],[Payload])
         VALUES(@StreamId,0,0,'Init',@CreatedAtUtc,0);
-    COMMIT TRANSACTION SaveChangesNoStream;
+    END
+END;
+GO
+
+CREATE PROCEDURE [dbo].[SesInsertEventsExpectedVersion]
+(
+    @StreamId UNIQUEIDENTIFIER,
+    @CommitId UNIQUEIDENTIFIER,
+    @CreatedAtUtc DATETIME,
+    @MetadataPayload VARBINARY(MAX),
+    @ExpectedVersion INT,
+    @EventContractName NVARCHAR(250),
+    @EventVersion INT,
+    @EventPayload VARBINARY(MAX)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF(SELECT TOP 1 1 FROM [Streams] WHERE [StreamId] = @StreamId AND (SELECT TOP 1 [Version] FROM [Streams] WHERE [StreamId] = @StreamId ORDER BY [Version] DESC) = @ExpectedVersion) <> 1 BEGIN
+        RAISERROR('WrongExpectedVersion', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO [Streams]([StreamId],[CommitId],[Version],[ContractName],[Payload],[CreatedAtUtc])
+    VALUES(@StreamId,@CommitId,@EventVersion,@EventContractName,@EventPayload,@CreatedAtUtc);
+
+    IF(@MetadataPayload IS NOT NULL AND LEN(@MetadataPayload) > 0) BEGIN
+        INSERT INTO [StreamsMetadata]([StreamId],[CommitId],[Payload])
+        VALUES(@StreamId,@CommitId,@MetadataPayload);
+    END
 END;
 GO

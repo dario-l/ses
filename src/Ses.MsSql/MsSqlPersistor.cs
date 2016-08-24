@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.SqlServer.Server;
 using Ses.Abstracts;
 
 namespace Ses.MsSql
@@ -129,40 +127,51 @@ namespace Ses.MsSql
 
         public async Task SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, bool isLockable, CancellationToken cancellationToken = new CancellationToken())
         {
-            var records = SqlQueries.InsertEvents.CreateSqlDataRecords(events.ToArray());
             using (var cnn = new SqlConnection(_connectionString))
             {
                 switch (expectedVersion)
                 {
                     case ExpectedVersion.NoStream:
-                        await SaveChangesNoStream(cnn, records, streamId, commitId, metadata, isLockable, cancellationToken);
+                        await SaveChangesNoStream(cnn, events, streamId, commitId, metadata, isLockable, cancellationToken);
                         break;
                     case ExpectedVersion.Any:
-                        await SaveChangesAny(cnn, records, streamId, commitId, metadata, isLockable, cancellationToken);
+                        await SaveChangesAny(cnn, events, streamId, commitId, metadata, isLockable, cancellationToken);
                         break;
                     default:
-                        await SaveChangesExpectedVersion(cnn, records, streamId, commitId, expectedVersion, metadata, cancellationToken);
+                        await SaveChangesExpectedVersion(cnn, events, streamId, commitId, expectedVersion, metadata, cancellationToken);
                         break;
                 }
             }
         }
 
-        private static async Task SaveChangesNoStream(SqlConnection cnn, IEnumerable<SqlDataRecord> records, Guid streamId, Guid commitId, byte[] metadata, bool isLockable, CancellationToken cancellationToken)
+        private static async Task SaveChangesNoStream(SqlConnection cnn, IEnumerable<EventRecord> events, Guid streamId, Guid commitId, byte[] metadata, bool isLockable, CancellationToken cancellationToken)
         {
             try
             {
                 using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertEvents.QueryNoStream, cancellationToken).ConfigureAwait(false))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
-                    await cmd
+                    cmd
                         .AddInputParam(SqlQueries.InsertEvents.ParamStreamId, DbType.Guid, streamId)
                         .AddInputParam(SqlQueries.InsertEvents.ParamCommitId, DbType.Guid, commitId)
                         .AddInputParam(SqlQueries.InsertEvents.ParamCreatedAtUtc, DbType.DateTime, DateTime.UtcNow)
                         .AddInputParam(SqlQueries.InsertEvents.ParamMetadataPayload, DbType.Binary, metadata, true)
                         .AddInputParam(SqlQueries.InsertEvents.ParamIsLockable, DbType.Boolean, isLockable)
-                        .AddInputParam(SqlQueries.InsertEvents.ParamEvents, records)
-                        .ExecuteNonQueryAsync(cancellationToken)
-                        .ConfigureAwait(false);
+                        .AddInputParam(SqlQueries.InsertEvents.ParamEventContractName, DbType.String, null)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamEventVersion, DbType.Int32, null)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamEventPayload, DbType.Binary, null);
+
+                    foreach (var record in events)
+                    {
+                        cmd.Parameters[5].Value = record.ContractName;
+                        cmd.Parameters[6].Value = record.Version;
+                        cmd.Parameters[7].Value = record.Payload;
+
+                        await cmd.ExecuteNonQueryAsync(cancellationToken)
+                            .ConfigureAwait(false);
+
+                        cmd.Parameters[3].Value = DBNull.Value;
+                    }
                 }
             }
             catch (SqlException e)
@@ -175,21 +184,34 @@ namespace Ses.MsSql
             }
         }
 
-        private static async Task SaveChangesAny(SqlConnection cnn, IEnumerable<SqlDataRecord> records, Guid streamId, Guid commitId, byte[] metadata, bool isLockable, CancellationToken cancellationToken)
+        private static async Task SaveChangesAny(SqlConnection cnn, IEnumerable<EventRecord> events, Guid streamId, Guid commitId, byte[] metadata, bool isLockable, CancellationToken cancellationToken)
         {
             try
             {
                 using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertEvents.QueryAny, cancellationToken).ConfigureAwait(false))
                 {
-                    await cmd
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd
                         .AddInputParam(SqlQueries.InsertEvents.ParamStreamId, DbType.Guid, streamId)
                         .AddInputParam(SqlQueries.InsertEvents.ParamCommitId, DbType.Guid, commitId)
                         .AddInputParam(SqlQueries.InsertEvents.ParamCreatedAtUtc, DbType.DateTime, DateTime.UtcNow)
                         .AddInputParam(SqlQueries.InsertEvents.ParamMetadataPayload, DbType.Binary, metadata, true)
                         .AddInputParam(SqlQueries.InsertEvents.ParamIsLockable, DbType.Boolean, isLockable)
-                        .AddInputParam(SqlQueries.InsertEvents.ParamEvents, records)
-                        .ExecuteNonQueryAsync(cancellationToken)
-                        .ConfigureAwait(false);
+                        .AddInputParam(SqlQueries.InsertEvents.ParamEventContractName, DbType.String, null)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamEventVersion, DbType.Int32, null)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamEventPayload, DbType.Binary, null);
+
+                    foreach (var record in events)
+                    {
+                        cmd.Parameters[5].Value = record.ContractName;
+                        cmd.Parameters[6].Value = record.Version;
+                        cmd.Parameters[7].Value = record.Payload;
+
+                        await cmd.ExecuteNonQueryAsync(cancellationToken)
+                            .ConfigureAwait(false);
+
+                        cmd.Parameters[3].Value = DBNull.Value;
+                    }
                 }
             }
             catch (SqlException e)
@@ -203,21 +225,34 @@ namespace Ses.MsSql
             }
         }
 
-        private static async Task SaveChangesExpectedVersion(SqlConnection cnn, IEnumerable<SqlDataRecord> records, Guid streamId, Guid commitId, int expectedVersion, byte[] metadata, CancellationToken cancellationToken)
+        private static async Task SaveChangesExpectedVersion(SqlConnection cnn, IEnumerable<EventRecord> events, Guid streamId, Guid commitId, int expectedVersion, byte[] metadata, CancellationToken cancellationToken)
         {
             try
             {
                 using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertEvents.QueryExpectedVersion, cancellationToken).ConfigureAwait(false))
                 {
-                    await cmd
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd
                         .AddInputParam(SqlQueries.InsertEvents.ParamStreamId, DbType.Guid, streamId)
                         .AddInputParam(SqlQueries.InsertEvents.ParamCommitId, DbType.Guid, commitId)
                         .AddInputParam(SqlQueries.InsertEvents.ParamCreatedAtUtc, DbType.DateTime, DateTime.UtcNow)
                         .AddInputParam(SqlQueries.InsertEvents.ParamMetadataPayload, DbType.Binary, metadata, true)
                         .AddInputParam(SqlQueries.InsertEvents.ParamExpectedVersion, DbType.Int32, expectedVersion)
-                        .AddInputParam(SqlQueries.InsertEvents.ParamEvents, records)
-                        .ExecuteNonQueryAsync(cancellationToken)
-                        .ConfigureAwait(false);
+                        .AddInputParam(SqlQueries.InsertEvents.ParamEventContractName, DbType.String, null)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamEventVersion, DbType.Int32, null)
+                        .AddInputParam(SqlQueries.InsertEvents.ParamEventPayload, DbType.Binary, null);
+
+                    foreach (var record in events)
+                    {
+                        cmd.Parameters[5].Value = record.ContractName;
+                        cmd.Parameters[6].Value = record.Version;
+                        cmd.Parameters[7].Value = record.Payload;
+
+                        await cmd.ExecuteNonQueryAsync(cancellationToken)
+                            .ConfigureAwait(false);
+
+                        cmd.Parameters[3].Value = DBNull.Value;
+                    }
                 }
             }
             catch (SqlException e)

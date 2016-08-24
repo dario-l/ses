@@ -114,7 +114,7 @@ namespace Ses.Samples
 
         private static Task SamplePerfTest(IEventStore store)
         {
-            const int count = 2000;
+            const int count = 20000;
             var tasks = new List<Task>(count);
             var token = new System.Threading.CancellationToken();
             var sw = Stopwatch.StartNew();
@@ -127,7 +127,7 @@ namespace Ses.Samples
                     aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 1", quantity: 3);
                     aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 2", quantity: 2);
                     aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 1", quantity: 3);
-                    aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 2", quantity: 2);
+                    //aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 2", quantity: 2);
 
                     var commitId = SequentialGuid.NewGuid();
                     var stream = new EventStream(commitId, aggregate.TakeUncommittedEvents());
