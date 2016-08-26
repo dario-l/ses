@@ -18,6 +18,8 @@ namespace Ses
             _settings = new EventStoreSettings { Logger = new NullLogger() };
         }
 
+        public ILogger Logger => _settings.Logger;
+
         public EventStoreBuilder WithDefaultContractsRegistry(params Assembly[] assemblies)
         {
             return WithContractsRegistry(new DefaultContractsRegistry(assemblies));

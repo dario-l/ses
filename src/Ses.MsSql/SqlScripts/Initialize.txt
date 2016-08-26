@@ -1,4 +1,5 @@
 ﻿CREATE TABLE [Streams] (
+    [InternalId] BIGINT NOT NULL IDENTITY(1,1),
     [StreamId] uniqueidentifier NOT NULL,
     [Version] int NOT NULL,
     [CommitId] uniqueidentifier NOT NULL,
@@ -11,6 +12,8 @@
 
 CREATE NONCLUSTERED INDEX IX_Streams_EventId ON [dbo].[Streams] ([EventId])
 INCLUDE ([StreamId],[Version],[CommitId],[ContractName],[Payload],[CreatedAtUtc]);
+
+CREATE NONCLUSTERED INDEX IX_Streams_InternalId ON [dbo].[Streams] ([InternalId]);
 
 CREATE TABLE [StreamsMetadata] (
     [StreamId] uniqueidentifier NOT NULL,
@@ -164,5 +167,90 @@ BEGIN
         INSERT INTO [StreamsMetadata]([StreamId],[CommitId],[Payload])
         VALUES(@StreamId,@CommitId,@MetadataPayload);
     END
+END;
+GO
+
+CREATE PROCEDURE ESSelectTimelineEvents
+(
+    @SequenceId BIGINT
+)
+AS
+BEGIN
+    SELECT TOP 1000
+        s.[StreamId],
+        s.[Version],
+        s.[CommitId],
+        s.[ContractName] AS [EventContractName],
+        s.[Payload] AS [EventPayload],
+        s.[CreatedAtUtc],
+        s.[EventId],
+        sm.[Payload] AS [MetaPayload]
+    FROM
+        [Streams] s WITH(READPAST,ROWLOCK)
+        LEFT JOIN [StreamsMetadata] sm WITH(NOLOCK) ON sm.StreamId = s.StreamId AND sm.CommitId = s.CommitId
+    WHERE
+        s.[EventId] > @SequenceId
+    ORDER BY
+        s.[EventId] ASC
+END;
+GO
+
+CREATE PROCEDURE ESDeleteStreamAny
+(
+    @StreamId UNIQUEIDENTIFIER
+)
+AS BEGIN
+    DELETE FROM [StreamsSnapshots] WHERE [StreamId]=@StreamId
+    DELETE FROM [StreamsMetadata] WHERE [StreamId]=@StreamId
+    DELETE FROM [Streams] WHERE [StreamId]=@StreamId
+END;
+GO
+
+CREATE PROCEDURE ESDeleteStreamExpectedVersion
+(
+    @StreamId UNIQUEIDENTIFIER,
+    @ExpectedVersion INT
+)
+AS BEGIN
+    DELETE FROM [StreamsSnapshots] WHERE [StreamId]=@StreamId AND (SELECT COUNT([Version]) FROM [Streams] WHERE [Version] >= @ExpectedVersion AND [StreamId] = @StreamId) = 1
+    IF @@ROWCOUNT = 0 BEGIN
+        RAISERROR('WrongExpectedVersion', 16, 1);
+        RETURN;
+    END
+    DELETE FROM [StreamsMetadata] WHERE [StreamId]=@StreamId
+    DELETE FROM [Streams] WHERE [StreamId]=@StreamId
+END;
+GO
+
+CREATE PROCEDURE ESUpdateSnapshot
+(
+    @StreamId UNIQUEIDENTIFIER,
+    @GeneratedAtUtc DATETIME,
+    @Version INT,
+    @ContractName NVARCHAR(225),
+    @Payload VARBINARY(MAX)
+)
+AS BEGIN
+    UPDATE [StreamsSnapshots] SET GeneratedAtUtc = @GeneratedAtUtc, Version = @Version, Payload = @Payload, ContractName = @ContractName WHERE [StreamId] = @StreamId
+    IF @@ROWCOUNT = 0 BEGIN
+        RAISERROR('WrongExpectedVersion', 16, 1);
+        RETURN;
+    END
+END;
+GO
+
+CREATE PROCEDURE ESLinearize AS
+BEGIN
+    DECLARE @id BIGINT
+    DECLARE cur CURSOR FOR
+        SELECT InternalId FROM Streams WITH (READPAST,ROWLOCK) WHERE EventId IS NULL ORDER BY InternalId ASC
+    OPEN cur  
+    FETCH NEXT FROM cur INTO @id
+    WHILE @@FETCH_STATUS = 0 BEGIN
+        UPDATE Streams SET EventId = (SELECT IsNull(MAX(EventId), 0) FROM Streams) + 1 WHERE InternalId = @id
+    FETCH NEXT FROM cur INTO @id END
+    CLOSE cur
+    DEALLOCATE cur
+
 END;
 GO

@@ -1,8 +1,3 @@
-using System.Collections.Generic;
-using System.Data;
-using System.Data.SqlClient;
-using Microsoft.SqlServer.Server;
-
 namespace Ses.MsSql
 {
     internal static class SqlQueries
@@ -19,23 +14,8 @@ namespace Ses.MsSql
 
         internal static class DeleteStream
         {
-            public const string QueryAny = @"
-                BEGIN TRANSACTION DeleteStreamAny;
-                    DELETE FROM [StreamsSnapshots] WHERE [StreamId]=@StreamId
-                    DELETE FROM [StreamsMetadata] WHERE [StreamId]=@StreamId
-                    DELETE FROM [Streams] WHERE [StreamId]=@StreamId
-                COMMIT TRANSACTION DeleteStreamAny;";
-
-            public const string QueryExpectedVersion = @"
-                BEGIN TRANSACTION DeleteStreamExpectedVersion;
-                    DELETE FROM [StreamsSnapshots] WHERE [StreamId]=@StreamId AND (SELECT COUNT([Version]) FROM [Streams] WHERE [Version] >= @ExpectedVersion AND [StreamId] = @StreamId) = 1
-                    IF @@ROWCOUNT = 0 BEGIN
-                        RAISERROR('WrongExpectedVersion', 16, 1);
-                        RETURN;
-                    END
-                    DELETE FROM [StreamsMetadata] WHERE [StreamId]=@StreamId
-                    DELETE FROM [Streams] WHERE [StreamId]=@StreamId
-                COMMIT TRANSACTION DeleteStreamExpectedVersion";
+            public const string QueryAny = @"ESDeleteStreamAny";
+            public const string QueryExpectedVersion = @"ESDeleteStreamExpectedVersion";
 
             public const string ParamStreamId = streamId;
             public const string ParamExpectedVersion = "@ExpectedVersion";
@@ -43,12 +23,7 @@ namespace Ses.MsSql
 
         internal static class UpdateSnapshot
         {
-            public const string Query = @"
-                UPDATE [StreamsSnapshots] SET GeneratedAtUtc = @GeneratedAtUtc, Version = @Version, Payload = @Payload, ContractName = @ContractName WHERE [StreamId] = @StreamId
-                IF @@ROWCOUNT = 0 BEGIN
-                    RAISERROR('WrongExpectedVersion', 16, 1);
-                    RETURN;
-                END";
+            public const string Query = @"ESUpdateSnapshot";
 
             public const string ParamStreamId = streamId;
             public const string ParamVersion = "@Version";
@@ -72,6 +47,11 @@ namespace Ses.MsSql
             public const string ParamEventContractName = "@EventContractName";
             public const string ParamEventVersion = "@EventVersion";
             public const string ParamEventPayload = "@EventPayload";
+        }
+
+        internal static class Linearize
+        {
+            public const string Query = @"ESLinearize";
         }
     }
 }

@@ -52,8 +52,9 @@ namespace Ses.MsSql
 
         public static async Task<SqlCommand> OpenAndCreateCommandAsync(this SqlConnection cnn, string commandText, CancellationToken cancelationToken)
         {
-            await cnn.OpenAsync(cancelationToken).ConfigureAwait(false);
+            await cnn.OpenAsync(cancelationToken).NotOnCapturedContext();
             var cmd = cnn.CreateCommand();
+            cmd.CommandType = CommandType.StoredProcedure;
             cmd.CommandText = commandText;
             return cmd;
         }

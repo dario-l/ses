@@ -5,10 +5,15 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Transactions;
 using Ses.Abstracts;
+using Ses.Abstracts.Logging;
+using Ses.Abstracts.Subscriptions;
 using Ses.Domain;
 using Ses.MsSql;
 using Ses.Samples.Cart;
 using Ses.Samples.Serializers;
+using Ses.Samples.Subscriptions;
+using Ses.Subscriptions;
+using Ses.Subscriptions.MsSql;
 
 namespace Ses.Samples
 {
@@ -27,24 +32,16 @@ namespace Ses.Samples
                     {
                         x.Destroy(true);
                         x.Initialize();
+                        x.RunLinearizer(TimeSpan.FromMilliseconds(20));
                     })
                     .WithSerializer(new JilSerializer())
                     .Build();
 
                 await Sample1(store);
-                await Sample2(store);
+                //await Sample2(store);
+                await SampleSubscriptions();
 
-                var perfStore = new EventStoreBuilder()
-                    .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly)
-                    .WithMsSqlPersistor(connectionString, x =>
-                    {
-                        x.Destroy(true);
-                        x.Initialize();
-                    })
-                    .WithSerializer(new JilSerializer())
-                    .Build();
-
-                await SamplePerfTest(perfStore);
+                //await SamplePerfTest();
             }
             catch (Exception e)
             {
@@ -75,6 +72,7 @@ namespace Ses.Samples
 
                 await store.SaveChanges(streamId, ExpectedVersion.NoStream, stream);
 
+                await store.Load(streamId, false);
                 scope.Complete();
             }
         }
@@ -108,8 +106,18 @@ namespace Ses.Samples
             }
         }
 
-        private static Task SamplePerfTest(IEventStore store)
+        private static Task SamplePerfTest()
         {
+            var store = new EventStoreBuilder()
+                .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly)
+                .WithMsSqlPersistor(connectionString, x =>
+                {
+                    x.Destroy(true);
+                    x.Initialize();
+                })
+                .WithSerializer(new JilSerializer())
+                .Build();
+
             const int count = 20000;
             var tasks = new List<Task>(count);
             var token = new System.Threading.CancellationToken();
@@ -138,6 +146,23 @@ namespace Ses.Samples
             sw.Stop();
             Console.WriteLine($"Overall time {sw.ElapsedMilliseconds}ms - {(count / sw.Elapsed.TotalSeconds)}");
             return Task.FromResult(0);
+        }
+
+        private static async Task SampleSubscriptions()
+        {
+            var sources = new ISubscriptionEventSource[]
+            {
+                new MsSqlEventSource(new JilSerializer(), connectionString),
+                // new SomeApiEventSource()
+            };
+
+            await new EventStoreSubscriber(new MsSqlPoolerStateRepository(connectionString).Initialize())
+                .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly, typeof(MsSqlEventSource).Assembly)
+                .WithLogger(new DebugLogger())
+                .Add(new ProjectionsSubscriptionPooler(sources))
+                //.Add(new ProcessManagersSubscriptionPooler(sources))
+                .Add(new EmailSenderSubscriptionPooler(sources))
+                .Start();
         }
     }
 }

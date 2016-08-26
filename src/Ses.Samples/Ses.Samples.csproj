@@ -53,6 +53,7 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Transactions" />
   </ItemGroup>
@@ -60,6 +61,10 @@
     <Compile Include="Cart\CartItem.cs" />
     <Compile Include="Cart\ItemAddedToShoppingCart.cs" />
     <Compile Include="Cart\ItemRemovedFromShoppingCart.cs" />
+    <Compile Include="Subscriptions\ProjectionsSubscriptionPooler.cs" />
+    <Compile Include="Subscriptions\Projections\CartProjection.cs" />
+    <Compile Include="Subscriptions\EmailSenderSubscriptionPooler.cs" />
+    <Compile Include="Subscriptions\ProcessManagersSubscriptionPooler.cs" />
     <Compile Include="Serializers\JilSerializer.cs" />
     <Compile Include="Serializers\JsonNetSerializer.cs" />
     <Compile Include="Program.cs" />
@@ -69,9 +74,13 @@
     <Compile Include="Cart\ShoppingCartCreated.cs" />
     <Compile Include="Cart\ShoppingCartState.cs" />
     <Compile Include="Serializers\NullSerializer.cs" />
+    <Compile Include="Subscriptions\EmailSenders\EmailSender.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <Content Include="nlog.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -87,11 +96,20 @@
       <Project>{a97505e5-4a89-4c15-ae47-d5e89f5ebd40}</Project>
       <Name>Ses.MsSql</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Ses.Subscriptions.MsSql\Ses.Subscriptions.MsSql.csproj">
+      <Project>{9ccec0dd-78a5-4646-b27d-93bc8fa136e2}</Project>
+      <Name>Ses.Subscriptions.MsSql</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Ses.Subscriptions\Ses.Subscriptions.csproj">
+      <Project>{761f0a09-0f5f-4561-b75d-d412dac573c3}</Project>
+      <Name>Ses.Subscriptions</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Ses\Ses.csproj">
       <Project>{00f648ac-e5b6-47d2-843c-1f34c6fc9843}</Project>
       <Name>Ses</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

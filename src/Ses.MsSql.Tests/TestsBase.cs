@@ -10,23 +10,21 @@ namespace Ses.MsSql.Tests
     public abstract class TestsBase : IDisposable
     {
         private readonly ISqlLocalDbInstance _localDbInstance;
-        private readonly string _databaseName;
+        private string _databaseName;
 
         protected TestsBase()
         {
             var localDbProvider = new SqlLocalDbProvider();
             _localDbInstance = localDbProvider.GetOrCreateInstance("StreamStoreTests");
             _localDbInstance.Start();
-
-            _databaseName = $"SesTests_{Guid.NewGuid().ToString("N")}";
-
-            ConnectionString = CreateConnectionString();
         }
 
         protected string ConnectionString { get; private set; }
 
         protected async Task<IEventStore> GetEventStore()
         {
+            _databaseName = $"SesTests_{Guid.NewGuid().ToString("N")}";
+            ConnectionString = CreateConnectionString();
             await CreateDatabase(GetLocation());
 
             var store = new EventStoreBuilder()

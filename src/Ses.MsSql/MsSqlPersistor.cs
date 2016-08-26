@@ -10,13 +10,13 @@ namespace Ses.MsSql
 {
     internal class MsSqlPersistor : IEventStreamPersistor
     {
+        private readonly Linearizer _linearizer;
         private readonly string _connectionString;
-        private readonly ILogger _logger;
 
-        public MsSqlPersistor(string connectionString, ILogger logger = null)
+        public MsSqlPersistor(Linearizer linearizer, string connectionString)
         {
+            _linearizer = linearizer;
             _connectionString = connectionString;
-            _logger = logger;
         }
 
         public event OnReadEventHandler OnReadEvent;
@@ -24,20 +24,19 @@ namespace Ses.MsSql
 
         public async Task<IList<IEvent>> Load(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = new CancellationToken())
         {
-            var list = new List<IEvent>(50);
+            var list = new List<IEvent>(30);
             using (var cnn = new SqlConnection(_connectionString))
             {
-                using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.SelectEvents.Query, cancellationToken).ConfigureAwait(false))
+                using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.SelectEvents.Query, cancellationToken).NotOnCapturedContext())
                 {
-                    cmd.CommandType = CommandType.StoredProcedure;
                     cmd
                         .AddInputParam(SqlQueries.SelectEvents.ParamStreamId, DbType.Guid, streamId)
                         .AddInputParam(SqlQueries.SelectEvents.ParamFromVersion, DbType.Int32, fromVersion)
                         .AddInputParam(SqlQueries.SelectEvents.ParamPessimisticLock, DbType.Boolean, pessimisticLock);
 
-                    using (var reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
+                    using (var reader = await cmd.ExecuteReaderAsync(cancellationToken).NotOnCapturedContext())
                     {
-                        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false)) // read snapshot
+                        while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext()) // read snapshot
                         {
                             if (reader[0] == DBNull.Value) break;
 
@@ -46,19 +45,19 @@ namespace Ses.MsSql
                                 streamId,
                                 reader.GetString(0),
                                 reader.GetInt32(1),
-                                (byte[])reader[2]).ConfigureAwait(false));
+                                (byte[])reader[2]).NotOnCapturedContext());
                         }
 
-                        await reader.NextResultAsync(cancellationToken).ConfigureAwait(false);
+                        await reader.NextResultAsync(cancellationToken).NotOnCapturedContext();
 
-                        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false)) // read events
+                        while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext()) // read events
                         {
                             // ReSharper disable once PossibleNullReferenceException
                             list.Add(await OnReadEvent(
                                 streamId,
                                 reader.GetString(0),
                                 reader.GetInt32(1),
-                                (byte[])reader[2]).ConfigureAwait(false));
+                                (byte[])reader[2]).NotOnCapturedContext());
                         }
                     }
                 }
@@ -74,15 +73,17 @@ namespace Ses.MsSql
                     ? SqlQueries.DeleteStream.QueryAny
                     : SqlQueries.DeleteStream.QueryExpectedVersion;
 
-                using (var cmd = await cnn.OpenAndCreateCommandAsync(query, cancellationToken).ConfigureAwait(false))
+                using (var cmd = await cnn.OpenAndCreateCommandAsync(query, cancellationToken).NotOnCapturedContext())
                 {
                     try
                     {
-                        await cmd
-                            .AddInputParam(SqlQueries.DeleteStream.ParamStreamId, DbType.Guid, streamId)
-                            .AddInputParam(SqlQueries.DeleteStream.ParamExpectedVersion, DbType.Int32, expectedVersion)
-                            .ExecuteNonQueryAsync(cancellationToken)
-                            .ConfigureAwait(false);
+                        cmd.AddInputParam(SqlQueries.DeleteStream.ParamStreamId, DbType.Guid, streamId);
+                        if(expectedVersion != ExpectedVersion.Any)
+                            cmd.AddInputParam(SqlQueries.DeleteStream.ParamExpectedVersion, DbType.Int32, expectedVersion);
+
+
+                        await cmd.ExecuteNonQueryAsync(cancellationToken)
+                            .NotOnCapturedContext();
                     }
                     catch (SqlException e)
                     {
@@ -102,7 +103,7 @@ namespace Ses.MsSql
             {
                 try
                 {
-                    using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.UpdateSnapshot.Query, cancellationToken).ConfigureAwait(false))
+                    using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.UpdateSnapshot.Query, cancellationToken).NotOnCapturedContext())
                     {
                         await cmd
                             .AddInputParam(SqlQueries.UpdateSnapshot.ParamStreamId, DbType.Guid, streamId)
@@ -111,7 +112,7 @@ namespace Ses.MsSql
                             .AddInputParam(SqlQueries.UpdateSnapshot.ParamGeneratedAtUtc, DbType.DateTime, DateTime.UtcNow)
                             .AddInputParam(SqlQueries.UpdateSnapshot.ParamPayload, DbType.Binary, payload)
                             .ExecuteNonQueryAsync(cancellationToken)
-                            .ConfigureAwait(false);
+                            .NotOnCapturedContext();
                     }
                 }
                 catch (SqlException e)
@@ -142,15 +143,16 @@ namespace Ses.MsSql
                         break;
                 }
             }
+
+            _linearizer?.Start();
         }
 
         private static async Task SaveChangesNoStream(SqlConnection cnn, IEnumerable<EventRecord> events, Guid streamId, Guid commitId, byte[] metadata, bool isLockable, CancellationToken cancellationToken)
         {
             try
             {
-                using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertEvents.QueryNoStream, cancellationToken).ConfigureAwait(false))
+                using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertEvents.QueryNoStream, cancellationToken).NotOnCapturedContext())
                 {
-                    cmd.CommandType = CommandType.StoredProcedure;
                     cmd
                         .AddInputParam(SqlQueries.InsertEvents.ParamStreamId, DbType.Guid, streamId)
                         .AddInputParam(SqlQueries.InsertEvents.ParamCommitId, DbType.Guid, commitId)
@@ -168,7 +170,7 @@ namespace Ses.MsSql
                         cmd.Parameters[7].Value = record.Payload;
 
                         await cmd.ExecuteNonQueryAsync(cancellationToken)
-                            .ConfigureAwait(false);
+                            .NotOnCapturedContext();
 
                         cmd.Parameters[3].Value = DBNull.Value;
                     }
@@ -188,9 +190,8 @@ namespace Ses.MsSql
         {
             try
             {
-                using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertEvents.QueryAny, cancellationToken).ConfigureAwait(false))
+                using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertEvents.QueryAny, cancellationToken).NotOnCapturedContext())
                 {
-                    cmd.CommandType = CommandType.StoredProcedure;
                     cmd
                         .AddInputParam(SqlQueries.InsertEvents.ParamStreamId, DbType.Guid, streamId)
                         .AddInputParam(SqlQueries.InsertEvents.ParamCommitId, DbType.Guid, commitId)
@@ -208,7 +209,7 @@ namespace Ses.MsSql
                         cmd.Parameters[7].Value = record.Payload;
 
                         await cmd.ExecuteNonQueryAsync(cancellationToken)
-                            .ConfigureAwait(false);
+                            .NotOnCapturedContext();
 
                         cmd.Parameters[3].Value = DBNull.Value;
                     }
@@ -229,9 +230,8 @@ namespace Ses.MsSql
         {
             try
             {
-                using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertEvents.QueryExpectedVersion, cancellationToken).ConfigureAwait(false))
+                using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertEvents.QueryExpectedVersion, cancellationToken).NotOnCapturedContext())
                 {
-                    cmd.CommandType = CommandType.StoredProcedure;
                     cmd
                         .AddInputParam(SqlQueries.InsertEvents.ParamStreamId, DbType.Guid, streamId)
                         .AddInputParam(SqlQueries.InsertEvents.ParamCommitId, DbType.Guid, commitId)
@@ -249,7 +249,7 @@ namespace Ses.MsSql
                         cmd.Parameters[7].Value = record.Payload;
 
                         await cmd.ExecuteNonQueryAsync(cancellationToken)
-                            .ConfigureAwait(false);
+                            .NotOnCapturedContext();
 
                         cmd.Parameters[3].Value = DBNull.Value;
                     }

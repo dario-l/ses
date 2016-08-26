@@ -2,8 +2,14 @@
 DROP PROCEDURE [SesInsertEventsNoStream];
 DROP PROCEDURE [SesInsertEventsAny];
 DROP PROCEDURE [SesInsertEventsExpectedVersion];
+DROP PROCEDURE [ESSelectTimelineEvents];
+DROP PROCEDURE [ESDeleteStreamAny];
+DROP PROCEDURE [ESDeleteStreamExpectedVersion];
+DROP PROCEDURE [ESUpdateSnapshot];
+DROP PROCEDURE [ESLinearize];
 
 DROP INDEX [IX_Streams_EventId] ON [Streams];
+DROP INDEX [IX_Streams_InternalId] ON [Streams];
 DROP TABLE [Streams];
 DROP TABLE [StreamsMetadata];
 DROP TABLE [StreamsSnapshots];

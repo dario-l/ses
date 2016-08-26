@@ -85,10 +85,13 @@ namespace Ses
             // TODO: resolving conflicts
             var metadata = stream.Metadata != null ? _settings.Serializer.Serialize(stream.Metadata, stream.Metadata.GetType()) : null;
             var events = CreateEventRecords(expectedVersion, stream);
+#if DEBUG
             LogSavedStream(streamId, expectedVersion, stream.CommitId, events);
+#endif
             await _settings.Persistor.SaveChanges(streamId, stream.CommitId, expectedVersion, events, metadata, stream.IsLockable, cancellationToken);
         }
 
+#if DEBUG
         private void LogSavedStream(Guid streamId, int expectedVersion, Guid commitId, IEnumerable<EventRecord> events)
         {
             _settings.Logger.Trace($"Stream {streamId} v.{ExpectedVersion.Parse(expectedVersion)} commit {commitId}");
@@ -97,6 +100,7 @@ namespace Ses
                 _settings.Logger.Trace($"\t{e.ContractName} v.{e.Version} [{e.Payload}]");
             }
         }
+#endif
 
         private IList<EventRecord> CreateEventRecords(int expectedVersion, IEventStream stream)
         {

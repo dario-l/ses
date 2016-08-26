@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
+using Ses.Abstracts.Subscriptions;
 
 namespace Ses.Abstracts.Contracts
 {
@@ -47,8 +48,9 @@ namespace Ses.Abstracts.Contracts
             return t.IsClass
                    && (typeof(IEvent).IsAssignableFrom(t)
                        || typeof(IMemento).IsAssignableFrom(t)
-                       //|| typeof(IHandle).IsAssignableFrom(t)
-                       //|| typeof(IStreamReader).IsAssignableFrom(t)
+                       || typeof(IHandle).IsAssignableFrom(t)
+                       || typeof(ISubscriptionEventSource).IsAssignableFrom(t)
+                       || typeof(ISubscriptionPooler).IsAssignableFrom(t)
                        );
         }
 

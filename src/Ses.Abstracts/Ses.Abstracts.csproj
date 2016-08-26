@@ -53,6 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Contracts\DefaultContractsRegistry.cs" />
+    <Compile Include="Subscriptions\ISubscriptionPooler.cs" />
     <Compile Include="Converters\DefaultEventConverterFactory.cs" />
     <Compile Include="Converters\IUpConverterFactory.cs" />
     <Compile Include="Converters\IUpConvertEvent.cs" />
@@ -67,6 +68,8 @@
     <Compile Include="IReadOnlyEventStream.cs" />
     <Compile Include="IRestoredMemento.cs" />
     <Compile Include="ISerializer.cs" />
+    <Compile Include="Subscriptions\IHandle.cs" />
+    <Compile Include="Subscriptions\ISubscriptionEventSource.cs" />
     <Compile Include="Logging\DebugLogger.cs" />
     <Compile Include="Logging\NullLogger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -76,6 +79,8 @@
     <Compile Include="ReadOnlyEventStream.cs" />
     <Compile Include="RestoredMemento.cs" />
     <Compile Include="SequentalGuid.cs" />
+    <Compile Include="Subscriptions\EventEnvelope.cs" />
+    <Compile Include="Subscriptions\ExtractedEvent.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
