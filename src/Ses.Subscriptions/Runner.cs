@@ -91,7 +91,7 @@ namespace Ses.Subscriptions
             if (fetchTimeout != TimeSpan.Zero)
             {
                 notDispatchingCounter = 0;
-                return fetchTimeout.TotalMilliseconds;
+                return anyDispatched ? minTimeoutValue : fetchTimeout.TotalMilliseconds;
             }
 
             if (!anyDispatched)
