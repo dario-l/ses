@@ -9,7 +9,7 @@ using Ses.Abstracts.Logging;
 
 namespace Ses.Subscriptions
 {
-    public class EventStoreSubscriber : IDisposable
+    public class EventStoreSubscriptions : IDisposable
     {
         private readonly IDictionary<Type, Runner> _runners;
         private readonly IList<SubscriptionPooler> _poolers;
@@ -17,7 +17,7 @@ namespace Ses.Subscriptions
         private IContractsRegistry _contractRegistry;
         private ILogger _logger;
 
-        public EventStoreSubscriber(IPoolerStateRepository poolerStateRepository)
+        public EventStoreSubscriptions(IPoolerStateRepository poolerStateRepository)
         {
             _poolerStateRepository = poolerStateRepository;
             _poolers = new List<SubscriptionPooler>();
@@ -25,31 +25,31 @@ namespace Ses.Subscriptions
             _logger = new NullLogger();
         }
 
-        public EventStoreSubscriber Add(SubscriptionPooler pooler)
+        public EventStoreSubscriptions Add(SubscriptionPooler pooler)
         {
             if (_poolers.Contains(pooler)) return this;
             _poolers.Add(pooler);
             return this;
         }
 
-        public EventStoreSubscriber WithDefaultContractsRegistry(params Assembly[] assemblies)
+        public EventStoreSubscriptions WithDefaultContractsRegistry(params Assembly[] assemblies)
         {
             return WithContractsRegistry(new DefaultContractsRegistry(assemblies));
         }
 
-        public EventStoreSubscriber WithContractsRegistry(IContractsRegistry registry)
+        public EventStoreSubscriptions WithContractsRegistry(IContractsRegistry registry)
         {
             _contractRegistry = registry;
             return this;
         }
 
-        public EventStoreSubscriber WithLogger(DebugLogger logger)
+        public EventStoreSubscriptions WithLogger(DebugLogger logger)
         {
             _logger = logger;
             return this;
         }
 
-        public async Task<EventStoreSubscriber> Start()
+        public async Task<EventStoreSubscriptions> Start()
         {
             if (_contractRegistry == null) throw new InvalidOperationException("Contract registry is not set. Use own IContractRegistry implementation or DefaultContractsRegistry.");
 

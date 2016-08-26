@@ -37,7 +37,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EnumerableExtensions.cs" />
-    <Compile Include="EventStoreSubscriber.cs" />
+    <Compile Include="EventStoreSubscriptions.cs" />
     <Compile Include="HandlerRegistrar.cs" />
     <Compile Include="IPoolerStateRepository.cs" />
     <Compile Include="PeriodicTask.cs" />

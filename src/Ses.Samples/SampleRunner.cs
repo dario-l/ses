@@ -38,10 +38,11 @@ namespace Ses.Samples
                     .Build();
 
                 await Sample1(store);
-                //await Sample2(store);
-                await SampleSubscriptions();
+                await Sample2(store);
 
-                //await SamplePerfTest();
+                await SamplePerfTest();
+
+                await SampleSubscriptions();
             }
             catch (Exception e)
             {
@@ -156,11 +157,11 @@ namespace Ses.Samples
                 // new SomeApiEventSource()
             };
 
-            await new EventStoreSubscriber(new MsSqlPoolerStateRepository(connectionString).Initialize())
+            await new EventStoreSubscriptions(new MsSqlPoolerStateRepository(connectionString).Initialize())
                 .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly, typeof(MsSqlEventSource).Assembly)
                 .WithLogger(new DebugLogger())
                 .Add(new ProjectionsSubscriptionPooler(sources))
-                //.Add(new ProcessManagersSubscriptionPooler(sources))
+                .Add(new ProcessManagersSubscriptionPooler(sources))
                 .Add(new EmailSenderSubscriptionPooler(sources))
                 .Start();
         }

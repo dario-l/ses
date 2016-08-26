@@ -74,7 +74,7 @@ namespace Ses.Subscriptions
                     logger.Trace("Dispatching event {0} to {1}...", envelope.Event.GetType().FullName, handlerType.FullName);
                     ((dynamic)handlerInstance).Handle((dynamic)envelope.Event, envelope);
                 }
-                state.EventSequenceId = envelope.Version;
+                state.EventSequenceId = envelope.SequenceId;
                 await poolerStateRepository.InsertOrUpdate(state);
                 scope.Complete();
             }

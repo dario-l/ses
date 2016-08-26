@@ -61,6 +61,7 @@
     <Compile Include="Cart\CartItem.cs" />
     <Compile Include="Cart\ItemAddedToShoppingCart.cs" />
     <Compile Include="Cart\ItemRemovedFromShoppingCart.cs" />
+    <Compile Include="Subscriptions\ProcessManagers\SomeProcessManager.cs" />
     <Compile Include="Subscriptions\ProjectionsSubscriptionPooler.cs" />
     <Compile Include="Subscriptions\Projections\CartProjection.cs" />
     <Compile Include="Subscriptions\EmailSenderSubscriptionPooler.cs" />
