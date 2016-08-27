@@ -14,8 +14,8 @@ namespace Ses.MsSql
 
         internal static class DeleteStream
         {
-            public const string QueryAny = @"ESDeleteStreamAny";
-            public const string QueryExpectedVersion = @"ESDeleteStreamExpectedVersion";
+            public const string QueryAny = "SesDeleteStreamAny";
+            public const string QueryExpectedVersion = "SesDeleteStreamExpectedVersion";
 
             public const string ParamStreamId = streamId;
             public const string ParamExpectedVersion = "@ExpectedVersion";
@@ -23,7 +23,7 @@ namespace Ses.MsSql
 
         internal static class UpdateSnapshot
         {
-            public const string Query = @"ESUpdateSnapshot";
+            public const string Query = "SesUpdateSnapshot";
 
             public const string ParamStreamId = streamId;
             public const string ParamVersion = "@Version";
@@ -51,7 +51,7 @@ namespace Ses.MsSql
 
         internal static class Linearize
         {
-            public const string Query = @"ESLinearize";
+            public const string Query = "SesLinearize";
         }
     }
 }

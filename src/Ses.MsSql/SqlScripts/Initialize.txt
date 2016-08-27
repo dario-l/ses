@@ -170,7 +170,7 @@ BEGIN
 END;
 GO
 
-CREATE PROCEDURE ESSelectTimelineEvents
+CREATE PROCEDURE SesSelectTimelineEvents
 (
     @SequenceId BIGINT
 )
@@ -195,7 +195,7 @@ BEGIN
 END;
 GO
 
-CREATE PROCEDURE ESDeleteStreamAny
+CREATE PROCEDURE SesDeleteStreamAny
 (
     @StreamId UNIQUEIDENTIFIER
 )
@@ -206,7 +206,7 @@ AS BEGIN
 END;
 GO
 
-CREATE PROCEDURE ESDeleteStreamExpectedVersion
+CREATE PROCEDURE SesDeleteStreamExpectedVersion
 (
     @StreamId UNIQUEIDENTIFIER,
     @ExpectedVersion INT
@@ -222,7 +222,7 @@ AS BEGIN
 END;
 GO
 
-CREATE PROCEDURE ESUpdateSnapshot
+CREATE PROCEDURE SesUpdateSnapshot
 (
     @StreamId UNIQUEIDENTIFIER,
     @GeneratedAtUtc DATETIME,
@@ -239,7 +239,7 @@ AS BEGIN
 END;
 GO
 
-CREATE PROCEDURE ESLinearize AS
+CREATE PROCEDURE SesLinearize AS
 BEGIN
     DECLARE @id BIGINT
     DECLARE cur CURSOR FOR
