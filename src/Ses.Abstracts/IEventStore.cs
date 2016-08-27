@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Ses.Abstracts
 {
-    public interface IEventStore
+    public interface IEventStore : IDisposable
     {
         Task<IReadOnlyEventStream> Load(
             Guid streamId,

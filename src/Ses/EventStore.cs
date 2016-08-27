@@ -102,7 +102,7 @@ namespace Ses
         }
 #endif
 
-        private IList<EventRecord> CreateEventRecords(int expectedVersion, IEventStream stream)
+        private IEnumerable<EventRecord> CreateEventRecords(int expectedVersion, IEventStream stream)
         {
             if (expectedVersion < 0) expectedVersion = 0;
             var records = new List<EventRecord>();
@@ -114,6 +114,11 @@ namespace Ses
                 records.Add(new EventRecord(version, contractName, payload));
             }
             return records;
+        }
+
+        public void Dispose()
+        {
+            _settings.Persistor.Dispose();
         }
     }
 }

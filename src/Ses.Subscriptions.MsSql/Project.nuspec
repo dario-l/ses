@@ -1,0 +1,19 @@
+﻿<?xml version="1.0"?>
+<package xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+        <id>SimpleEventStore.Subscriptions.MsSql</id>
+        <title>SimpleEventStore.Subscriptions.MsSql</title>
+        <version>$version$</version>
+        <authors>Dariusz Lenartowicz</authors>
+        <owners>Dariusz Lenartowicz</owners>
+        <projectUrl>https://github.com/dario-l/Ses</projectUrl>
+        <licenseUrl>https://github.com/dario-l/Ses/blob/master/License.txt</licenseUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>MsSql subscriptions implementation for SimpleEventStore.</description>
+        <tags>eventstore mssql subscriptions</tags>
+    </metadata>
+    <files>
+        <file src="bin\Release\Ses.Abstracts.*" target="lib\net45" />
+        <file src="bin\Release\Ses.Subscriptions.*" target="lib\net45" />
+    </files>
+</package>

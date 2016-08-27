@@ -7,7 +7,7 @@ using Ses.Abstracts;
 
 namespace Ses.MsSql
 {
-    internal class Linearizer
+    internal class Linearizer : IDisposable
     {
         private readonly ILogger _logger;
         private readonly string _connectionString;
@@ -72,6 +72,11 @@ namespace Ses.MsSql
             {
                 _logger.Error(e.ToString());
             }
+        }
+
+        public void Dispose()
+        {
+            _timer.Dispose();
         }
     }
 }

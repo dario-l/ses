@@ -265,5 +265,10 @@ namespace Ses.MsSql
                 throw;
             }
         }
+
+        public void Dispose()
+        {
+            _linearizer.Dispose();
+        }
     }
 }

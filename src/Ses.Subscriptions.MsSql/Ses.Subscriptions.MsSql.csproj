@@ -43,6 +43,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SqlClientScripts.cs" />
     <Compile Include="TaskExtensions.cs" />
+      <Compile Include="..\SharedAssemblyInfo.cs">
+          <Link>Properties\SharedAssemblyInfo.cs</Link>
+      </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ses.Abstracts\Ses.Abstracts.csproj">
@@ -53,6 +56,9 @@
       <Project>{761f0a09-0f5f-4561-b75d-d412dac573c3}</Project>
       <Name>Ses.Subscriptions</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Project.nuspec" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

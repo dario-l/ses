@@ -155,5 +155,10 @@ namespace Ses.InMemory
             }
             inMemoryStream.Append(commitId, expectedVersion, events.ToList(), metadata);
         }
+
+        public void Dispose()
+        {
+            _lock.Dispose();
+        }
     }
 }

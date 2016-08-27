@@ -6,7 +6,7 @@ using Ses.Abstracts;
 
 namespace Ses
 {
-    public interface IEventStreamPersistor
+    public interface IEventStreamPersistor : IDisposable
     {
         /// <summary>
         /// Loads events from data source.

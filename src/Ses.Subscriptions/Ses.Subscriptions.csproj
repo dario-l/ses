@@ -46,12 +46,18 @@
     <Compile Include="Runner.cs" />
     <Compile Include="SubscriptionPooler.cs" />
     <Compile Include="TaskExtensions.cs" />
+    <Compile Include="..\SharedAssemblyInfo.cs">
+      <Link>Properties\SharedAssemblyInfo.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ses.Abstracts\Ses.Abstracts.csproj">
       <Project>{8872b02a-5745-4adc-a214-c953a471a9e8}</Project>
       <Name>Ses.Abstracts</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Project.nuspec" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
