@@ -107,7 +107,7 @@ namespace Ses.Samples
             }
         }
 
-        private static Task SamplePerfTest()
+        private static async Task SamplePerfTest()
         {
             var store = new EventStoreBuilder()
                 .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly)
@@ -119,34 +119,30 @@ namespace Ses.Samples
                 .WithSerializer(new JilSerializer())
                 .Build();
 
-            const int count = 20000;
+            const int count = 10000;
             var tasks = new List<Task>(count);
             var token = new System.Threading.CancellationToken();
             var sw = Stopwatch.StartNew();
             for (var i = 0; i < count; i++)
             {
-                var task = Task.Run(async () =>
-                {
-                    var streamId = SequentialGuid.NewGuid();
-                    var aggregate = new ShoppingCart(streamId, Guid.Empty);
-                    aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 1", quantity: 3);
-                    //aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 2", quantity: 2);
-                    //aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 1", quantity: 3);
+                var streamId = SequentialGuid.NewGuid();
+                var aggregate = new ShoppingCart(streamId, Guid.Empty);
+                aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 1", quantity: 3);
+                //aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 2", quantity: 2);
+                //aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 1", quantity: 3);
 
-                    var commitId = SequentialGuid.NewGuid();
-                    var stream = new EventStream(commitId, aggregate.TakeUncommittedEvents());
+                var commitId = SequentialGuid.NewGuid();
+                var stream = new EventStream(commitId, aggregate.TakeUncommittedEvents());
 
-                    await store.SaveChanges(streamId, ExpectedVersion.NoStream, stream, token);
-                }, token);
+                var task = store.SaveChanges(streamId, ExpectedVersion.NoStream, stream, token);
                 tasks.Add(task);
             }
             sw.Stop();
             Console.WriteLine($"Build tasks time {sw.ElapsedMilliseconds}ms");
             sw.Start();
-            Task.WaitAll(tasks.ToArray(), token);
+            await Task.WhenAll(tasks);
             sw.Stop();
             Console.WriteLine($"Overall time {sw.ElapsedMilliseconds}ms - {(count / sw.Elapsed.TotalSeconds)}");
-            return Task.FromResult(0);
         }
 
         private static async Task SampleSubscriptions()

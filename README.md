@@ -2,7 +2,7 @@
 
 *THIS PROJECT IS HIGHLY EXPERIMENTAL*
 
-SimpleEventStore is a very simple event store library for .NET based on rdbms persistance.
+SimpleEventStore is a simple event store library for .NET based on rdbms persistance.
 
 ##### Main goals
 
@@ -13,14 +13,16 @@ SimpleEventStore is a very simple event store library for .NET based on rdbms pe
  - Support any kind of serialization through ISerializer interface
  - Support any kind of loggers through ILogger interface
  - Support up-conversion of events/snapshots to the newest version
- - Subscribing to event stream for processmanagers and denormalizers with pluggable stream readers
+ - Subscriptions to one or many event stream sources for processmanagers/projections/others with pluggable stream readers
+ - Built-in implementation for: MS SQL Server, InMemory
+ - Built-in single-writer pattern
 
 
 ##### Basic example of usage
 
 ``` c#
 var options = new TransactionOptions {IsolationLevel = IsolationLevel.ReadCommitted};
-using (var scope = new TransactionScope(TransactionScopeOption.Required, options))
+using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, options, TransactionScopeAsyncFlowOption.Enabled))
 {
     var aggregate = new ShoppingCart();
     aggregate.AddItem(SequentalGuid.NewGuid(), name: "Product 1", quantity: 3);
@@ -29,8 +31,11 @@ using (var scope = new TransactionScope(TransactionScopeOption.Required, options
     var stream = new EventStream(id, aggregate.TakeUncommittedEvents());
 
     // Adding metadata item (key, value)
-    stream.Metadata.Add("RequestIP", "0.0.0.0");
-    stream.Metadata.Add("User", "John Doe");
+    stream.Metadata = new Dictionary<string, object>
+    {
+        { "RequestIP", "0.0.0.0" },
+        { "User", "John Doe" }
+    };
 
     var expectedVersion = aggregate.CommittedVersion + stream.Events.Count;
     await _store.SaveChanges(aggregate.Id, expectedVersion, stream);
@@ -42,7 +47,7 @@ using (var scope = new TransactionScope(TransactionScopeOption.Required, options
 Using repository pattern:
 ``` c#
 // Usually transaction scope will be hidden somewhere in infrastructural part of code
-using (var scope = new TransactionScope(TransactionScopeOption.Required, options))
+using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, options, TransactionScopeAsyncFlowOption.Enabled))
 {
     using (var repo = new SourcedRepo<ShoppingCart>(store))
     {
