@@ -15,7 +15,7 @@ SimpleEventStore is a simple event store library for .NET based on rdbms persist
  - Support up-conversion of events/snapshots to the newest version
  - Subscriptions to one or many event stream sources for processmanagers/projections/others with pluggable stream readers
  - Built-in implementation for: MS SQL Server, InMemory
- - Built-in single-writer pattern
+ - Built-in single-writer pattern for MS SQL Server implementation
 
 
 ##### Basic example of usage
