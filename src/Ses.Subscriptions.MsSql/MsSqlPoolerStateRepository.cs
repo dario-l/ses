@@ -57,10 +57,10 @@ namespace Ses.Subscriptions.MsSql
             {
                 await cnn.OpenAsync().NotOnCapturedContext();
                 cmd.CommandText = SqlClientScripts.UpdateState;
-                cmd.AddInputParam("@PoolerContractName", DbType.String, state.PoolerContractName);
-                cmd.AddInputParam("@SourceContractName", DbType.String, state.SourceContractName);
-                cmd.AddInputParam("@HandlerContractName", DbType.String, state.HandlerContractName);
-                cmd.AddInputParam("@EventSequence", DbType.Int64, state.EventSequenceId);
+                cmd.AddInputParam(SqlClientScripts.ParamPoolerContractName, DbType.String, state.PoolerContractName);
+                cmd.AddInputParam(SqlClientScripts.ParamSourceContractName, DbType.String, state.SourceContractName);
+                cmd.AddInputParam(SqlClientScripts.ParamHandlerContractName, DbType.String, state.HandlerContractName);
+                cmd.AddInputParam(SqlClientScripts.ParamEventSequence, DbType.Int64, state.EventSequenceId);
                 if (await cmd.ExecuteNonQueryAsync().NotOnCapturedContext() != 0) return;
                 cmd.CommandText = SqlClientScripts.InsertState;
                 await cmd.ExecuteNonQueryAsync().NotOnCapturedContext();
@@ -74,9 +74,9 @@ namespace Ses.Subscriptions.MsSql
             using (var cmd = cnn.CreateCommand())
             {
                 cmd.CommandText = SqlClientScripts.DeleteNotUsedStates;
-                cmd.AddInputParam("@PoolerContractName", DbType.String, poolerContractName);
-                cmd.AddArrayParameters("@HandlerContractNames", DbType.String, handlerContractNames);
-                cmd.AddArrayParameters("@SourceContractNames", DbType.String, sourceContractNames);
+                cmd.AddInputParam(SqlClientScripts.ParamPoolerContractName, DbType.String, poolerContractName);
+                cmd.AddArrayParameters(SqlClientScripts.ParamHandlerContractNames, DbType.String, handlerContractNames);
+                cmd.AddArrayParameters(SqlClientScripts.ParamSourceContractNames, DbType.String, sourceContractNames);
                 await cnn.OpenAsync().NotOnCapturedContext();
                 await cmd.ExecuteNonQueryAsync().NotOnCapturedContext();
             }

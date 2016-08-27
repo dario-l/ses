@@ -17,5 +17,13 @@ namespace Ses.Subscriptions.MsSql
                 CONSTRAINT [PK_StreamsSubscriptionStates] PRIMARY KEY CLUSTERED ([PoolerContractName],[SourceContractName],[HandlerContractName])
             )
         END";
+
+
+        public const string ParamPoolerContractName = "@PoolerContractName";
+        public const string ParamSourceContractName = "@SourceContractName";
+        public const string ParamHandlerContractName = "@HandlerContractName";
+        public const string ParamEventSequence = "@EventSequence";
+        public const string ParamHandlerContractNames = ParamHandlerContractName + "s";
+        public const string ParamSourceContractNames = ParamSourceContractName + "s";
     }
 }

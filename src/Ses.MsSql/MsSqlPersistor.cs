@@ -172,7 +172,7 @@ namespace Ses.MsSql
                         await cmd.ExecuteNonQueryAsync(cancellationToken)
                             .NotOnCapturedContext();
 
-                        cmd.Parameters[3].Value = DBNull.Value;
+                        cmd.Parameters[3].Value = DBNull.Value; // metadata is one per CommitId
                     }
                 }
             }
@@ -211,7 +211,7 @@ namespace Ses.MsSql
                         await cmd.ExecuteNonQueryAsync(cancellationToken)
                             .NotOnCapturedContext();
 
-                        cmd.Parameters[3].Value = DBNull.Value;
+                        cmd.Parameters[3].Value = DBNull.Value; // metadata is one per CommitId
                     }
                 }
             }
@@ -251,7 +251,7 @@ namespace Ses.MsSql
                         await cmd.ExecuteNonQueryAsync(cancellationToken)
                             .NotOnCapturedContext();
 
-                        cmd.Parameters[3].Value = DBNull.Value;
+                        cmd.Parameters[3].Value = DBNull.Value; // metadata is one per CommitId
                     }
                 }
             }
