@@ -7,6 +7,7 @@ namespace Ses.Subscriptions.MsSql
         public const string SelectStates = @"SELECT [PoolerContractName], [SourceContractName],[HandlerContractName],[EventSequence] FROM [StreamsSubscriptionStates]";
         public const string DeleteNotUsedStates = @"DELETE FROM StreamsSubscriptionStates WHERE (([HandlerContractName] NOT IN (@HandlerContractNames)) OR ([SourceContractName] NOT IN (@SourceContractNames))) AND [PoolerContractName] = @PoolerContractName";
 
+        public const string Destroy = @"DROP TABLE [StreamsSubscriptionStates]";
         public const string Initialize = @"
         IF (NOT EXISTS (SELECT TOP 1 TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'StreamsSubscriptionStates')) BEGIN
             CREATE TABLE [StreamsSubscriptionStates] (

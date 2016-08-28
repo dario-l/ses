@@ -153,7 +153,7 @@ namespace Ses.Samples
                 // new SomeApiEventSource()
             };
 
-            await new EventStoreSubscriptions(new MsSqlPoolerStateRepository(connectionString).Initialize())
+            await new EventStoreSubscriptions(new MsSqlPoolerStateRepository(connectionString).Destroy(true).Initialize())
                 .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly, typeof(MsSqlEventSource).Assembly)
                 .WithLogger(new DebugLogger())
                 .Add(new ProjectionsSubscriptionPooler(sources))

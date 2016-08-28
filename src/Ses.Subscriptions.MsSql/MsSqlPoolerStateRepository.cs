@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -23,6 +24,25 @@ namespace Ses.Subscriptions.MsSql
                 cmd.CommandText = SqlClientScripts.Initialize;
                 cnn.Open();
                 cmd.ExecuteNonQuery();
+            }
+            return this;
+        }
+
+        public MsSqlPoolerStateRepository Destroy(bool ignoreErrors = false)
+        {
+            using (var cnn = new SqlConnection(_connectionString))
+            using (var cmd = cnn.CreateCommand())
+            {
+                try
+                {
+                    cmd.CommandText = SqlClientScripts.Destroy;
+                    cnn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+                catch
+                {
+                    if (!ignoreErrors) throw;
+                }
             }
             return this;
         }
