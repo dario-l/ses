@@ -247,7 +247,7 @@ BEGIN
     OPEN cur  
     FETCH NEXT FROM cur INTO @id
     WHILE @@FETCH_STATUS = 0 BEGIN
-        UPDATE Streams SET EventId = (SELECT IsNull(MAX(EventId), 0) FROM Streams) + 1 WHERE InternalId = @id
+        UPDATE Streams SET EventId = (SELECT IsNull(MAX(EventId), 0) FROM Streams WITH (READPAST,ROWLOCK)) + 1 WHERE InternalId = @id
     FETCH NEXT FROM cur INTO @id END
     CLOSE cur
     DEALLOCATE cur
