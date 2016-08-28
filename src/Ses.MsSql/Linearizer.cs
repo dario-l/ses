@@ -9,6 +9,7 @@ namespace Ses.MsSql
 {
     internal class Linearizer : IDisposable
     {
+        private const byte defaultRunForDurationInSeconds = 60;
         private readonly ILogger _logger;
         private readonly string _connectionString;
         private readonly System.Timers.Timer _timer;
@@ -22,7 +23,7 @@ namespace Ses.MsSql
             _connectionString = connectionString;
             _timer = new System.Timers.Timer(linearizerTimeout.TotalMilliseconds) { AutoReset = false };
             _timer.Elapsed += (_, __) => Run().SwallowException();
-            _runForDuration = TimeSpan.FromSeconds(5);
+            _runForDuration = TimeSpan.FromSeconds(defaultRunForDurationInSeconds);
         }
 
         public void Start()
