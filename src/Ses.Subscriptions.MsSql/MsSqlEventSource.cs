@@ -15,7 +15,7 @@ namespace Ses.Subscriptions.MsSql
     {
         private readonly ISerializer _serializer;
         private readonly string _connectionString;
-        private const string selectTimelineEventsProcedure = "ESSelectTimelineEvents";
+        private const string selectTimelineEventsProcedure = "SesSelectTimelineEvents";
         private const string sequenceIdParamName = "@SequenceId";
         private static readonly Type metadataType = typeof(Dictionary<string, string>);
 
