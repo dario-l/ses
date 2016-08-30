@@ -6,6 +6,7 @@ namespace Ses.MsSql
 {
     internal class MsSqlPersistorBuilder : IMsSqlPersistorBuilder
     {
+        private const byte defaultLinearizerDurationWork = 60;
         private readonly ILogger _logger;
         private readonly string _connectionString;
 
@@ -65,9 +66,10 @@ namespace Ses.MsSql
 
         public Linearizer Linearizer { get; private set; }
 
-        public void RunLinearizer(TimeSpan timeout)
+        public void RunLinearizer(TimeSpan timeout, TimeSpan? durationWork = null)
         {
-            Linearizer = new Linearizer(_logger, timeout, _connectionString);
+            if (durationWork == null) durationWork = TimeSpan.FromSeconds(defaultLinearizerDurationWork);
+            Linearizer = new Linearizer(_logger, timeout, durationWork.Value, _connectionString);
             Linearizer.Start();
         }
     }

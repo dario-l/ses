@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Data.SqlClient;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Ses.Abstracts;
@@ -9,21 +8,20 @@ namespace Ses.MsSql
 {
     internal class Linearizer : IDisposable
     {
-        private const byte defaultRunForDurationInSeconds = 60;
         private readonly ILogger _logger;
         private readonly string _connectionString;
         private readonly System.Timers.Timer _timer;
-        private readonly TimeSpan _runForDuration;
+        private readonly TimeSpan _durationWork;
         private DateTime? _startedAt;
         private bool _isRunning;
 
-        public Linearizer(ILogger logger, TimeSpan linearizerTimeout, string connectionString)
+        public Linearizer(ILogger logger, TimeSpan timeout, TimeSpan durationWork, string connectionString)
         {
             _logger = logger;
             _connectionString = connectionString;
-            _timer = new System.Timers.Timer(linearizerTimeout.TotalMilliseconds) { AutoReset = false };
+            _timer = new System.Timers.Timer(timeout.TotalMilliseconds) { AutoReset = false };
             _timer.Elapsed += (_, __) => Run().SwallowException();
-            _runForDuration = TimeSpan.FromSeconds(defaultRunForDurationInSeconds);
+            _durationWork = durationWork;
         }
 
         public void Start()
@@ -43,7 +41,7 @@ namespace Ses.MsSql
                 _logger.Trace("Linealizer stopped.");
                 return;
             }
-            Debug.WriteLine("Linearize....");
+
             await Linearize();
             _isRunning = false;
             _timer.Start();
@@ -51,7 +49,7 @@ namespace Ses.MsSql
 
         private bool ShouldStop()
         {
-            return _startedAt.HasValue && ((DateTime.UtcNow - _startedAt.Value) > _runForDuration);
+            return _startedAt.HasValue && ((DateTime.UtcNow - _startedAt.Value) > _durationWork);
         }
 
         private async Task Linearize()
