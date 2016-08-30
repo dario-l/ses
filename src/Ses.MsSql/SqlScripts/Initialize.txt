@@ -10,10 +10,18 @@
     CONSTRAINT [PK_Streams] PRIMARY KEY CLUSTERED ([StreamId],[Version],[CommitId])
 );
 
-CREATE NONCLUSTERED INDEX IX_Streams_EventId ON [dbo].[Streams] ([EventId])
-INCLUDE ([StreamId],[Version],[CommitId],[ContractName],[Payload],[CreatedAtUtc]);
-
-CREATE NONCLUSTERED INDEX IX_Streams_InternalId ON [dbo].[Streams] ([InternalId]);
+CREATE NONCLUSTERED INDEX [IX_Streams_EventId_InternalId] ON [dbo].[Streams] (
+    [EventId] ASC,
+    [InternalId] ASC
+)
+INCLUDE (
+    [StreamId],
+    [Version],
+    [CommitId],
+    [ContractName],
+    [Payload],
+    [CreatedAtUtc]
+)
 
 CREATE TABLE [StreamsMetadata] (
     [StreamId] uniqueidentifier NOT NULL,
@@ -251,6 +259,5 @@ BEGIN
     FETCH NEXT FROM cur INTO @id END
     CLOSE cur
     DEALLOCATE cur
-
 END;
 GO
