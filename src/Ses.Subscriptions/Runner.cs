@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ses.Abstracts;
 using Ses.Abstracts.Contracts;
+using Ses.Abstracts.Extensions;
 
 namespace Ses.Subscriptions
 {

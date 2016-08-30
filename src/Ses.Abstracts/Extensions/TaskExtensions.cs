@@ -1,9 +1,9 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
-namespace Ses.MsSql
+namespace Ses.Abstracts.Extensions
 {
-    internal static class TaskExtensions
+    public static class TaskExtensions
     {
         public static ConfiguredTaskAwaitable<T> NotOnCapturedContext<T>(this Task<T> task)
         {

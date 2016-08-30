@@ -6,6 +6,7 @@ using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Ses.Abstracts;
 using Ses.Abstracts.Contracts;
+using Ses.Abstracts.Extensions;
 using Ses.Abstracts.Subscriptions;
 
 namespace Ses.Subscriptions.MsSql
