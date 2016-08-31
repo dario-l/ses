@@ -1,7 +1,8 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Ses.Abstracts.Extensions;
 
@@ -9,11 +10,14 @@ namespace Ses.Subscriptions.MsSql
 {
     public class MsSqlPoolerStateRepository : IPoolerStateRepository
     {
+        private static readonly object locker = new object();
         private readonly string _connectionString;
+        private volatile ConcurrentBag<PoolerState> _states;
 
         public MsSqlPoolerStateRepository(string connectionString)
         {
             _connectionString = connectionString;
+            _states = new ConcurrentBag<PoolerState>();
         }
 
         public MsSqlPoolerStateRepository Initialize()
@@ -47,9 +51,10 @@ namespace Ses.Subscriptions.MsSql
             return this;
         }
 
-        public async Task<IList<PoolerState>> LoadAll()
+        public async Task<IReadOnlyList<PoolerState>> LoadAll()
         {
-            var states = new List<PoolerState>(50); // TODO: states should be cached
+            if (_states.Count > 0) return _states.ToList();
+
             using (var cnn = new SqlConnection(_connectionString))
             using (var cmd = cnn.CreateCommand())
             {
@@ -60,18 +65,16 @@ namespace Ses.Subscriptions.MsSql
                     while (await reader.ReadAsync().NotOnCapturedContext())
                     {
                         var state = new PoolerState((string)reader[0], (string)reader[1], (string)reader[2]) { EventSequenceId = (long)reader[3] };
-                        states.Add(state);
+                        _states.Add(state);
                     }
                 }
             }
 
-            return states;
+            return _states.ToList();
         }
 
         public async Task InsertOrUpdate(PoolerState state)
         {
-            Debug.WriteLine("InsertOrUpdate: " + state);
-            // TODO: update state in the cache
             using (var cnn = new SqlConnection(_connectionString))
             using (var cmd = cnn.CreateCommand())
             {
@@ -81,15 +84,18 @@ namespace Ses.Subscriptions.MsSql
                 cmd.AddInputParam(SqlClientScripts.ParamSourceContractName, DbType.String, state.SourceContractName);
                 cmd.AddInputParam(SqlClientScripts.ParamHandlerContractName, DbType.String, state.HandlerContractName);
                 cmd.AddInputParam(SqlClientScripts.ParamEventSequence, DbType.Int64, state.EventSequenceId);
-                if (await cmd.ExecuteNonQueryAsync().NotOnCapturedContext() != 0) return;
-                cmd.CommandText = SqlClientScripts.InsertState;
-                await cmd.ExecuteNonQueryAsync().NotOnCapturedContext();
+                if (await cmd.ExecuteNonQueryAsync().NotOnCapturedContext() == 0)
+                {
+                    cmd.CommandText = SqlClientScripts.InsertState;
+                    await cmd.ExecuteNonQueryAsync().NotOnCapturedContext();
+
+                    _states.Add(state);
+                }
             }
         }
 
         public async Task RemoveNotUsedStates(string poolerContractName, IEnumerable<string> handlerContractNames, IEnumerable<string> sourceContractNames)
         {
-            // TODO: empty state cache
             using (var cnn = new SqlConnection(_connectionString))
             using (var cmd = cnn.CreateCommand())
             {
@@ -99,6 +105,14 @@ namespace Ses.Subscriptions.MsSql
                 cmd.AddArrayParameters(SqlClientScripts.ParamSourceContractNames, DbType.String, sourceContractNames);
                 await cnn.OpenAsync().NotOnCapturedContext();
                 await cmd.ExecuteNonQueryAsync().NotOnCapturedContext();
+            }
+            lock(locker)
+            {
+                while (!_states.IsEmpty)
+                {
+                    PoolerState someItem;
+                    _states.TryTake(out someItem);
+                }
             }
         }
     }

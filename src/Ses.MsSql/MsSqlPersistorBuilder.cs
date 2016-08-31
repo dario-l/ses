@@ -27,7 +27,7 @@ namespace Ses.MsSql
                     {
                         cmd.ExecuteNonQuery();
                     }
-                    catch
+                    catch(Exception e)
                     {
                         if (!ignoreErrors) throw;
                     }

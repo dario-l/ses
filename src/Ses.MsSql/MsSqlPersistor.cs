@@ -269,7 +269,7 @@ namespace Ses.MsSql
 
         public void Dispose()
         {
-            _linearizer.Dispose();
+            _linearizer?.Dispose();
         }
     }
 }

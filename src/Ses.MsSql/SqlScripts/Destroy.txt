@@ -3,6 +3,7 @@ DROP PROCEDURE [SesInsertEventsNoStream];
 DROP PROCEDURE [SesInsertEventsAny];
 DROP PROCEDURE [SesInsertEventsExpectedVersion];
 DROP PROCEDURE [SesSelectTimelineEvents];
+DROP PROCEDURE [SesSelectTimelineSubscriptionEvents];
 DROP PROCEDURE [SesDeleteStreamAny];
 DROP PROCEDURE [SesDeleteStreamExpectedVersion];
 DROP PROCEDURE [SesUpdateSnapshot];
@@ -13,3 +14,5 @@ DROP INDEX [IX_Streams_InternalId] ON [Streams];
 DROP TABLE [Streams];
 DROP TABLE [StreamsMetadata];
 DROP TABLE [StreamsSnapshots];
+DROP TABLE [StreamsSubscriptions]
+DROP TABLE [StreamsSubscriptionContracts]

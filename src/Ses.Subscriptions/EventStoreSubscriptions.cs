@@ -56,9 +56,14 @@ namespace Ses.Subscriptions
             foreach (var pooler in _poolers)
             {
                 await ClearStates(pooler);
+                await pooler.OnStart(_contractRegistry);
 
                 var runner = new Runner(_contractRegistry, _logger, _poolerStateRepository, pooler);
                 _runners.Add(pooler.GetType(), runner);
+            }
+
+            foreach (var runner in _runners.Values)
+            {
                 runner.Start();
             }
             return this;
@@ -66,14 +71,21 @@ namespace Ses.Subscriptions
 
         private async Task ClearStates(SubscriptionPooler pooler)
         {
-            var poolerContractName = _contractRegistry.GetContractName(pooler.GetType());
-            var handlerTypes = pooler.GetRegisteredHanlders();
-            var sourceTypes = pooler.Sources.Select(x => x.GetType()).ToList();
+            try
+            {
+                var poolerContractName = _contractRegistry.GetContractName(pooler.GetType());
+                var handlerTypes = pooler.GetRegisteredHanlders();
+                var sourceTypes = pooler.Sources.Select(x => x.GetType()).ToList();
 
-            await _poolerStateRepository.RemoveNotUsedStates(
-                poolerContractName,
-                handlerTypes.Select(x => _contractRegistry.GetContractName(x)).ToList(),
-                sourceTypes.Select(x => _contractRegistry.GetContractName(x)).ToList());
+                await _poolerStateRepository.RemoveNotUsedStates(
+                    poolerContractName,
+                    handlerTypes.Select(x => _contractRegistry.GetContractName(x)).ToList(),
+                    sourceTypes.Select(x => _contractRegistry.GetContractName(x)).ToList());
+            }
+            catch (Exception e)
+            {
+                _logger.Error(e.ToString());
+            }
         }
 
         public void Dispose()

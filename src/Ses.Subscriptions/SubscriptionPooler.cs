@@ -14,11 +14,14 @@ namespace Ses.Subscriptions
     {
         private readonly TransactionOptions _transactionOptions = new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted };
         private readonly HandlerRegistrar _handlerRegistrar;
+        private readonly IDictionary<ISubscriptionEventSource, int> _contractSubscriptions;
+        private string _poolerContractName;
 
         protected SubscriptionPooler(ISubscriptionEventSource[] sources)
         {
             Sources = sources;
             _handlerRegistrar = new HandlerRegistrar(FindHandlerTypes());
+            _contractSubscriptions = new Dictionary<ISubscriptionEventSource, int>(Sources.Length);
         }
 
         public ISubscriptionEventSource[] Sources { get; }
@@ -27,23 +30,38 @@ namespace Ses.Subscriptions
 
         protected abstract IEnumerable<Type> FindHandlerTypes();
         protected abstract IHandle CreateHandlerInstance(Type handlerType);
+        protected virtual IEnumerable<Type> GetConcreteSubscriptionEventTypes() => null;
 
         internal IEnumerable<Type> GetRegisteredHanlders() => _handlerRegistrar.GetRegisteredHandlerTypes();
+
+        internal async Task OnStart(IContractsRegistry contractsRegistry)
+        {
+            _poolerContractName = contractsRegistry.GetContractName(GetType());
+            var eventTypes = GetConcreteSubscriptionEventTypes();
+            if (eventTypes == null) return;
+
+            var contractNames = eventTypes.Select(contractsRegistry.GetContractName).ToArray();
+
+            foreach (var source in Sources)
+            {
+                var id = await source.CreateSubscriptionForContracts(_poolerContractName, contractNames);
+                _contractSubscriptions.Add(source, id);
+            }
+        }
 
         internal async Task<bool> Execute(IContractsRegistry contractsRegistry, IPoolerStateRepository poolerStateRepository, ILogger logger, CancellationToken cancellationToken = default(CancellationToken))
         {
             var anyDispatched = false;
             try
             {
-                var poolerContractName = contractsRegistry.GetContractName(GetType());
                 var poolerStates = await poolerStateRepository.LoadAll();
-                var timeline = await FetchEventTimeline(contractsRegistry, poolerStates, poolerContractName, logger);
+                var timeline = await FetchEventTimeline(contractsRegistry, poolerStates, logger);
 
                 foreach (var item in timeline)
                 {
                     foreach (var handlerType in _handlerRegistrar.GetRegisteredHandlerTypes()) // all handlers can/should run in parallel
                     {
-                        var state = FindOrCreateState(contractsRegistry, poolerStates, item.SourceType, handlerType, poolerContractName);
+                        var state = FindOrCreateState(contractsRegistry, poolerStates, item.SourceType, handlerType);
                         if (item.Envelope.SequenceId > state.EventSequenceId)
                         {
                             anyDispatched = await TryDispatch(poolerStateRepository, handlerType, item.Envelope, state, logger);
@@ -90,24 +108,28 @@ namespace Ses.Subscriptions
             return _handlerRegistrar.GetRegisteredEventTypesFor(handlerType).Contains(envelope.Event.GetType());
         }
 
-        private static PoolerState FindOrCreateState(IContractsRegistry contractsRegistry, IEnumerable<PoolerState> poolerStates, Type sourceType, Type handlerType, string poolerContractName)
+        private PoolerState FindOrCreateState(IContractsRegistry contractsRegistry, IEnumerable<PoolerState> poolerStates, Type sourceType, Type handlerType)
         {
             var sourceContractName = contractsRegistry.GetContractName(sourceType);
             var handlerContractName = contractsRegistry.GetContractName(handlerType);
 
-            var state = poolerStates.FirstOrDefault(x => x.PoolerContractName == poolerContractName && x.HandlerContractName == handlerContractName && x.SourceContractName == sourceContractName)
-                ?? new PoolerState(poolerContractName, sourceContractName, handlerContractName);
+            var state = poolerStates.FirstOrDefault(x => x.PoolerContractName == _poolerContractName && x.HandlerContractName == handlerContractName && x.SourceContractName == sourceContractName)
+                ?? new PoolerState(_poolerContractName, sourceContractName, handlerContractName);
             return state;
         }
 
-        private async Task<IList<ExtractedEvent>> FetchEventTimeline(IContractsRegistry contractsRegistry, IList<PoolerState> poolerStates, string poolerContractName, ILogger logger)
+        private async Task<IList<ExtractedEvent>> FetchEventTimeline(IContractsRegistry contractsRegistry, IReadOnlyList<PoolerState> poolerStates, ILogger logger)
         {
             var tasks = new List<Task<IList<ExtractedEvent>>>(Sources.Length);
             foreach (var source in Sources)
             {
-                var minSequenceId = GetMinSequenceIdFor(contractsRegistry, poolerStates, source, poolerContractName);
-                logger.Trace("Min sequence id for {0} is {1}", poolerContractName, minSequenceId);
-                var task = source.Fetch(contractsRegistry, minSequenceId);
+                var minSequenceId = GetMinSequenceIdFor(contractsRegistry, poolerStates, source, _poolerContractName);
+                logger.Trace("Min sequence id for {0} is {1}", _poolerContractName, minSequenceId);
+
+                var concreteSubscriptionIdentifier = _contractSubscriptions.Count > 0 && _contractSubscriptions.ContainsKey(source)
+                    ? _contractSubscriptions[source]
+                    : (int?)null;
+                var task = source.Fetch(contractsRegistry, minSequenceId, concreteSubscriptionIdentifier);
                 tasks.Add(task);
             }
 

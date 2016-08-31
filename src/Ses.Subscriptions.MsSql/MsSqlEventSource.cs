@@ -16,8 +16,10 @@ namespace Ses.Subscriptions.MsSql
     {
         private readonly ISerializer _serializer;
         private readonly string _connectionString;
-        private const string selectTimelineEventsProcedure = "SesSelectTimelineEvents";
+        private const string selectEventsProcedure = "SesSelectTimelineEvents";
+        private const string selectSubscriptionEventsProcedure = "SesSelectTimelineSubscriptionEvents";
         private const string sequenceIdParamName = "@SequenceId";
+        private const string subscriptionIdParamName = "@SubscriptionId";
         private static readonly Type metadataType = typeof(Dictionary<string, string>);
 
         public MsSqlEventSource(ISerializer serializer, string connectionString)
@@ -26,21 +28,25 @@ namespace Ses.Subscriptions.MsSql
             _connectionString = connectionString;
         }
 
-        protected virtual void OnSqlCommandCreated(SqlCommand cmd, long lastVersion)
+        protected virtual void OnSqlCommandCreated(SqlCommand cmd, long lastVersion, int? subscriptionId)
         {
             cmd.CommandType = CommandType.StoredProcedure;
-            cmd.CommandText = selectTimelineEventsProcedure;
+            cmd.CommandText = subscriptionId.HasValue ? selectSubscriptionEventsProcedure : selectEventsProcedure;
             cmd.AddInputParam(sequenceIdParamName, DbType.Int64, lastVersion);
+            if (subscriptionId.HasValue)
+            {
+                cmd.AddInputParam(subscriptionIdParamName, DbType.Int32, subscriptionId.Value);
+            }
         }
 
-        public async Task<IList<ExtractedEvent>> Fetch(IContractsRegistry registry, long lastVersion)
+        public async Task<IList<ExtractedEvent>> Fetch(IContractsRegistry registry, long lastVersion, int? subscriptionId)
         {
             var extractedEvents = new List<ExtractedEvent>(100);
             using (var cnn = new SqlConnection(_connectionString))
             {
                 await cnn.OpenAsync().NotOnCapturedContext();
                 var cmd = cnn.CreateCommand();
-                OnSqlCommandCreated(cmd, lastVersion);
+                OnSqlCommandCreated(cmd, lastVersion, subscriptionId);
                 using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult).NotOnCapturedContext())
                 {
                     while (await reader.ReadAsync().NotOnCapturedContext())
@@ -67,6 +73,42 @@ namespace Ses.Subscriptions.MsSql
                 }
             }
             return extractedEvents;
+        }
+
+        public virtual async Task<int> CreateSubscriptionForContracts(string name, params string[] contractNames)
+        {
+            using (var cnn = new SqlConnection(_connectionString))
+            using (var cmd = cnn.CreateCommand())
+            {
+                try
+                {
+                    await cnn.OpenAsync().NotOnCapturedContext();
+                    cmd.Transaction = cnn.BeginTransaction();
+                    cmd.CommandText = "IF(SELECT Count(1) FROM StreamsSubscriptions WHERE Name = @Name) = 0 BEGIN INSERT INTO StreamsSubscriptions(Name) OUTPUT Inserted.ID VALUES(@Name); END;";
+                    cmd.AddInputParam("@Name", DbType.String, name);
+                    var subscriptionId = (int)(await cmd.ExecuteScalarAsync().NotOnCapturedContext());
+                    cmd.Parameters.Clear();
+                    cmd.CommandText = "INSERT INTO StreamsSubscriptionContracts(StreamsSubscriptionId,EventContractName)VALUES(@SubscriptionId,@ContractName)";
+                    cmd.AddInputParam("@SubscriptionId", DbType.Int32, subscriptionId);
+                    cmd.AddInputParam("@ContractName", DbType.String, null);
+                    foreach (var contractName in contractNames)
+                    {
+                        cmd.Parameters[1].Value = contractName;
+                        await cmd.ExecuteNonQueryAsync().NotOnCapturedContext();
+                    }
+                    cmd.Transaction.Commit();
+                    return subscriptionId;
+                }
+                catch
+                {
+                    cmd.Transaction?.Rollback();
+                    throw;
+                }
+                finally
+                {
+                    cnn.Close();
+                }
+            }
         }
     }
 }
