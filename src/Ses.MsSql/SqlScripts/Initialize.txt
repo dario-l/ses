@@ -39,6 +39,22 @@ CREATE TABLE [StreamsSnapshots] (
     [Payload] varbinary(max) NOT NULL,
     CONSTRAINT [PK_StreamsSnapshots] PRIMARY KEY CLUSTERED ([StreamId],[Version])
 );
+
+CREATE TABLE [dbo].[StreamsSubscriptions] (
+    [Id] [int] IDENTITY(1,1) NOT NULL,
+    [Name] [nvarchar](50) NOT NULL,
+    CONSTRAINT [PK_StreamsSubscriptions_1] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+CREATE TABLE [dbo].[StreamsSubscriptionContracts](
+    [StreamsSubscriptionId] [int] NOT NULL,
+    [EventContractName] [nvarchar](225) NOT NULL,
+    CONSTRAINT [PK_StreamsSubscriptionContracts_1] PRIMARY KEY CLUSTERED
+    (
+        [EventContractName] ASC,
+        [StreamsSubscriptionId] ASC
+    )
+);
 GO
 
 CREATE PROCEDURE [dbo].[SesSelectEvents]
@@ -198,6 +214,34 @@ BEGIN
         LEFT JOIN [StreamsMetadata] sm WITH(NOLOCK) ON sm.StreamId = s.StreamId AND sm.CommitId = s.CommitId
     WHERE
         s.[EventId] > @SequenceId
+    ORDER BY
+        s.[EventId] ASC
+END;
+GO
+
+CREATE PROCEDURE SesSelectTimelineSubscriptionEvents
+(
+    @SequenceId BIGINT,
+    @SubscriptionId INT
+)
+AS
+BEGIN
+    SELECT TOP 500
+        s.[StreamId],
+        s.[Version],
+        s.[CommitId],
+        s.[ContractName] AS [EventContractName],
+        s.[Payload] AS [EventPayload],
+        s.[CreatedAtUtc],
+        s.[EventId],
+        sm.[Payload] AS [MetaPayload]
+    FROM
+        [Streams] s WITH(READPAST,ROWLOCK)
+        INNER JOIN [StreamsSubscriptionContracts] ssc WITH(NOLOCK) ON ssc.EventContractName = s.ContractName
+        LEFT JOIN [StreamsMetadata] sm WITH(NOLOCK) ON sm.StreamId = s.StreamId AND sm.CommitId = s.CommitId
+    WHERE
+        s.[EventId] > @SequenceId
+        AND ssc.StreamsSubscriptionId = @SubscriptionId
     ORDER BY
         s.[EventId] ASC
 END;
