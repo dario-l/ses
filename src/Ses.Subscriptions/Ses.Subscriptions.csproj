@@ -40,7 +40,6 @@
     <Compile Include="EventStoreSubscriptions.cs" />
     <Compile Include="HandlerRegistrar.cs" />
     <Compile Include="IPoolerStateRepository.cs" />
-    <Compile Include="PeriodicTask.cs" />
     <Compile Include="PoolerState.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Runner.cs" />
