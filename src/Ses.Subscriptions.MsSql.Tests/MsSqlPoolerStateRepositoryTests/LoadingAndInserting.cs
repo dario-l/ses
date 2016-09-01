@@ -5,25 +5,25 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
     public class LoadingAndInserting : TestsBase
     {
         [Fact]
-        public async void When_load_all_doesnt_throw()
+        public async void When_load_doesnt_throw()
         {
             await GetEventStore();
 
             var sut = new MsSqlPoolerStateRepository(ConnectionString).Initialize();
 
-            var x = await Record.ExceptionAsync(async () => await sut.LoadAll());
+            var x = await Record.ExceptionAsync(async () => await sut.Load("fakePooler"));
 
             Assert.Null(x);
         }
 
         [Fact]
-        public async void When_load_all_with_empty_store_returns_empty_list()
+        public async void When_load_with_empty_store_returns_empty_list()
         {
             await GetEventStore();
 
             var sut = new MsSqlPoolerStateRepository(ConnectionString).Initialize();
 
-            var result = await sut.LoadAll();
+            var result = await sut.Load("fakePooler");
 
             Assert.Empty(result);
         }
@@ -54,14 +54,14 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
             await sut.InsertOrUpdate(new PoolerState("fakePooler", "fakeSource", "fakeHandler")); // inserting
             await sut.InsertOrUpdate(new PoolerState("fakePooler", "fakeSource", "fakeHandler")); // updating
 
-            var result = await sut.LoadAll();
+            var result = await sut.Load("fakePooler");
 
 
             Assert.True(result.Count == 1);
         }
 
         [Fact]
-        public async void When_inserting_two_different_load_all_returns_two()
+        public async void When_inserting_two_different_load_for_first_returns_one()
         {
             await GetEventStore();
 
@@ -70,10 +70,10 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
             await sut.InsertOrUpdate(new PoolerState("fakePooler", "fakeSource", "fakeHandler"));
             await sut.InsertOrUpdate(new PoolerState("fakePooler2", "fakeSource2", "fakeHandler2"));
 
-            var result = await sut.LoadAll();
+            var result = await sut.Load("fakePooler");
 
 
-            Assert.True(result.Count == 2);
+            Assert.True(result.Count == 1);
         }
     }
 }

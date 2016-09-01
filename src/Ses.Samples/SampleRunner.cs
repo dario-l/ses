@@ -158,7 +158,7 @@ namespace Ses.Samples
 
             await new EventStoreSubscriptions(new MsSqlPoolerStateRepository(connectionString).Destroy(true).Initialize())
                 .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly, typeof(MsSqlEventSource).Assembly)
-                .WithLogger(new DebugLogger())
+                .WithLogger(new NLogLogger())
                 .Add(new ProjectionsSubscriptionPooler(sources))
                 .Add(new ProcessManagersSubscriptionPooler(sources))
                 .Add(new EmailSenderSubscriptionPooler(sources))

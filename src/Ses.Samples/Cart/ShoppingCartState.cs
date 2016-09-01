@@ -25,7 +25,7 @@ namespace Ses.Samples.Cart
 
         private void On(ItemRemovedFromShoppingCart obj)
         {
-            var item = Items.SingleOrDefault(x => x.Id == obj.ItemId);
+            var item = Items.FirstOrDefault(x => x.Id == obj.ItemId);
             if (item != null) Items.Remove(item);
         }
     }

@@ -43,7 +43,7 @@ namespace Ses.Subscriptions
             return this;
         }
 
-        public EventStoreSubscriptions WithLogger(DebugLogger logger)
+        public EventStoreSubscriptions WithLogger(ILogger logger)
         {
             _logger = logger;
             return this;
@@ -77,8 +77,8 @@ namespace Ses.Subscriptions
 
             await _poolerStateRepository.RemoveNotUsedStates(
                 poolerContractName,
-                handlerTypes.Select(x => _contractRegistry.GetContractName(x)).ToList(),
-                sourceTypes.Select(x => _contractRegistry.GetContractName(x)).ToList());
+                handlerTypes.Select(x => _contractRegistry.GetContractName(x)).ToArray(),
+                sourceTypes.Select(x => _contractRegistry.GetContractName(x)).ToArray());
         }
 
         public void Dispose()

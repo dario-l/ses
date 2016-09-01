@@ -5,8 +5,7 @@ namespace Ses.Subscriptions
 {
     public interface IPoolerStateRepository
     {
-        Task<IReadOnlyList<PoolerState>> LoadAll();
         Task InsertOrUpdate(PoolerState state);
-        Task RemoveNotUsedStates(string poolerContractName, IEnumerable<string> handlerContractNames, IEnumerable<string> sourceContractNames);
+        Task RemoveNotUsedStates(string poolerContractName, string[] handlerContractNames, string[] sourceContractNames);
     }
 }

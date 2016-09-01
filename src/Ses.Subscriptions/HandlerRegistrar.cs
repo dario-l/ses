@@ -37,10 +37,7 @@ namespace Ses.Subscriptions
             return type.IsClass && typeof(IHandle).IsAssignableFrom(type);
         }
 
-        public IEnumerable<Type> GetRegisteredHandlerTypes()
-        {
-            return _types.Keys;
-        }
+        public IEnumerable<Type> RegisteredHandlerTypes => _types.Keys;
 
         public IEnumerable<Type> GetRegisteredEventTypesFor(Type handlerType)
         {

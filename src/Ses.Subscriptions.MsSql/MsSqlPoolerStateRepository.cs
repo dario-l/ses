@@ -52,9 +52,9 @@ namespace Ses.Subscriptions.MsSql
             return this;
         }
 
-        public async Task<IReadOnlyList<PoolerState>> LoadAll()
+        public async Task<IReadOnlyCollection<PoolerState>> Load(string poolerContractName)
         {
-            if (_states.Count > 0) return _states.ToList();
+            if (!_states.IsEmpty) return _states.Where(x => x.PoolerContractName == poolerContractName).ToList();
 
             await _mySemaphoreSlim.WaitAsync();
             try
@@ -68,7 +68,10 @@ namespace Ses.Subscriptions.MsSql
                     {
                         while (await reader.ReadAsync().NotOnCapturedContext())
                         {
-                            var state = new PoolerState((string)reader[0], (string)reader[1], (string)reader[2]) { EventSequenceId = (long)reader[3] };
+                            var state = new PoolerState((string)reader[0], (string)reader[1], (string)reader[2])
+                            {
+                                EventSequenceId = (long)reader[3]
+                            };
                             _states.Add(state);
                         }
                     }
@@ -103,8 +106,10 @@ namespace Ses.Subscriptions.MsSql
             }
         }
 
-        public async Task RemoveNotUsedStates(string poolerContractName, IEnumerable<string> handlerContractNames, IEnumerable<string> sourceContractNames)
+        public async Task RemoveNotUsedStates(string poolerContractName, string[] handlerContractNames, string[] sourceContractNames)
         {
+            if (handlerContractNames.Length == 0 || sourceContractNames.Length == 0) return;
+
             await _mySemaphoreSlim.WaitAsync();
             try
             {
