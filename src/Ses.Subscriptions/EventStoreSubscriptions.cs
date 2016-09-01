@@ -55,7 +55,7 @@ namespace Ses.Subscriptions
 
             foreach (var pooler in _poolers)
             {
-                await ClearStates(pooler);
+                await ClearUnusedStates(pooler);
                 await pooler.OnStart(_contractRegistry);
 
                 var runner = new Runner(_contractRegistry, _logger, _poolerStateRepository, pooler);
@@ -69,23 +69,16 @@ namespace Ses.Subscriptions
             return this;
         }
 
-        private async Task ClearStates(SubscriptionPooler pooler)
+        private async Task ClearUnusedStates(SubscriptionPooler pooler)
         {
-            try
-            {
-                var poolerContractName = _contractRegistry.GetContractName(pooler.GetType());
-                var handlerTypes = pooler.GetRegisteredHanlders();
-                var sourceTypes = pooler.Sources.Select(x => x.GetType()).ToList();
+            var poolerContractName = _contractRegistry.GetContractName(pooler.GetType());
+            var handlerTypes = pooler.GetRegisteredHanlders();
+            var sourceTypes = pooler.Sources.Select(x => x.GetType()).ToList();
 
-                await _poolerStateRepository.RemoveNotUsedStates(
-                    poolerContractName,
-                    handlerTypes.Select(x => _contractRegistry.GetContractName(x)).ToList(),
-                    sourceTypes.Select(x => _contractRegistry.GetContractName(x)).ToList());
-            }
-            catch (Exception e)
-            {
-                _logger.Error(e.ToString());
-            }
+            await _poolerStateRepository.RemoveNotUsedStates(
+                poolerContractName,
+                handlerTypes.Select(x => _contractRegistry.GetContractName(x)).ToList(),
+                sourceTypes.Select(x => _contractRegistry.GetContractName(x)).ToList());
         }
 
         public void Dispose()
