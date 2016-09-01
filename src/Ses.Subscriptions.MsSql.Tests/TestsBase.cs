@@ -4,8 +4,9 @@ using System.Data.SqlLocalDb;
 using System.IO;
 using System.Threading.Tasks;
 using Ses.Abstracts;
+using Ses.MsSql;
 
-namespace Ses.MsSql.Tests
+namespace Ses.Subscriptions.MsSql.Tests
 {
     public abstract class TestsBase : IDisposable
     {
@@ -15,7 +16,7 @@ namespace Ses.MsSql.Tests
         protected TestsBase()
         {
             var localDbProvider = new SqlLocalDbProvider();
-            _localDbInstance = localDbProvider.GetOrCreateInstance("Ses.MsSql.Tests");
+            _localDbInstance = localDbProvider.GetOrCreateInstance("Ses.Subscriptions.MsSql.Tests");
             _localDbInstance.Start();
         }
 
