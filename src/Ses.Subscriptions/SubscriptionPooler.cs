@@ -64,7 +64,15 @@ namespace Ses.Subscriptions
                         var state = FindOrCreateState(contractsRegistry, poolerStates, item.SourceType, handlerType);
                         if (item.Envelope.SequenceId > state.EventSequenceId)
                         {
-                            anyDispatched = await TryDispatch(poolerStateRepository, handlerType, item.Envelope, state, logger);
+                            try
+                            {
+                                anyDispatched = await TryDispatch(poolerStateRepository, handlerType, item.Envelope, state, logger);
+                            }
+                            catch (Exception ex)
+                            {
+                                PostHandleEventException(item.Envelope, handlerType, ex);
+                                throw;
+                            }
                         }
                     }
                 }
@@ -102,6 +110,7 @@ namespace Ses.Subscriptions
 
         protected virtual void PreHandleEvent(EventEnvelope envelope, Type handlerType) { }
         protected virtual void PostHandleEvent(EventEnvelope envelope, Type handlerType) { }
+        protected virtual void PostHandleEventException(EventEnvelope envelope, Type handlerType, Exception e) { }
 
         private bool IsHandlerFor(Type handlerType, EventEnvelope envelope)
         {
