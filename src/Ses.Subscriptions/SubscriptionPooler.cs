@@ -31,8 +31,9 @@ namespace Ses.Subscriptions
         protected abstract IEnumerable<Type> FindHandlerTypes();
         protected abstract IHandle CreateHandlerInstance(Type handlerType);
         protected virtual IEnumerable<Type> GetConcreteSubscriptionEventTypes() => null;
+        protected virtual bool LogStats => false;
 
-        internal IEnumerable<Type> GetRegisteredHanlders() => _handlerRegistrar.GetRegisteredHandlerTypes();
+        internal IEnumerable<Type> GetRegisteredHanlders() => _handlerRegistrar.RegisteredHandlerTypes;
 
         internal async Task OnStart(IContractsRegistry contractsRegistry)
         {
@@ -54,12 +55,12 @@ namespace Ses.Subscriptions
             var anyDispatched = false;
             try
             {
-                var poolerStates = await poolerStateRepository.LoadAll();
+                var poolerStates = await poolerStateRepository.Load(_poolerContractName);
                 var timeline = await FetchEventTimeline(contractsRegistry, poolerStates, logger);
 
                 foreach (var item in timeline)
                 {
-                    foreach (var handlerType in _handlerRegistrar.GetRegisteredHandlerTypes()) // all handlers can/should run in parallel
+                    foreach (var handlerType in _handlerRegistrar.RegisteredHandlerTypes) // all handlers can/should run in parallel
                     {
                         var state = FindOrCreateState(contractsRegistry, poolerStates, item.SourceType, handlerType);
                         if (item.Envelope.SequenceId > state.EventSequenceId)
@@ -94,9 +95,7 @@ namespace Ses.Subscriptions
                 if (shouldDispatch)
                 {
                     var handlerInstance = CreateHandlerInstance(handlerType);
-                    if (handlerInstance == null)
-                        throw new NullReferenceException($"Handler instance {handlerType.FullName} is null.");
-
+                    if (handlerInstance == null) throw new NullReferenceException($"Handler instance {handlerType.FullName} is null.");
                     logger.Trace("Dispatching event {0} to {1}...", envelope.Event.GetType().FullName, handlerType.FullName);
                     ((dynamic)handlerInstance).Handle((dynamic)envelope.Event, envelope);
                 }
@@ -122,17 +121,17 @@ namespace Ses.Subscriptions
             var sourceContractName = contractsRegistry.GetContractName(sourceType);
             var handlerContractName = contractsRegistry.GetContractName(handlerType);
 
-            var state = poolerStates.FirstOrDefault(x => x.PoolerContractName == _poolerContractName && x.HandlerContractName == handlerContractName && x.SourceContractName == sourceContractName)
+            var state = poolerStates.FirstOrDefault(x => x.HandlerContractName == handlerContractName && x.SourceContractName == sourceContractName)
                 ?? new PoolerState(_poolerContractName, sourceContractName, handlerContractName);
             return state;
         }
 
-        private async Task<IList<ExtractedEvent>> FetchEventTimeline(IContractsRegistry contractsRegistry, IReadOnlyList<PoolerState> poolerStates, ILogger logger)
+        private async Task<IList<ExtractedEvent>> FetchEventTimeline(IContractsRegistry contractsRegistry, IReadOnlyCollection<PoolerState> poolerStates, ILogger logger)
         {
             var tasks = new List<Task<IList<ExtractedEvent>>>(Sources.Length);
             foreach (var source in Sources)
             {
-                var minSequenceId = GetMinSequenceIdFor(contractsRegistry, poolerStates, source, _poolerContractName);
+                var minSequenceId = GetMinSequenceIdFor(contractsRegistry, poolerStates, source);
                 logger.Trace("Min sequence id for {0} is {1}", _poolerContractName, minSequenceId);
 
                 var concreteSubscriptionIdentifier = _contractSubscriptions.Count > 0 && _contractSubscriptions.ContainsKey(source)
@@ -164,13 +163,12 @@ namespace Ses.Subscriptions
             return merged;
         }
 
-        private static long GetMinSequenceIdFor(IContractsRegistry contractsRegistry, IEnumerable<PoolerState> poolerStates, ISubscriptionEventSource source, string poolerContractName)
+        private static long GetMinSequenceIdFor(IContractsRegistry contractsRegistry, IEnumerable<PoolerState> poolerStates, ISubscriptionEventSource source)
         {
             var sourceContractName = contractsRegistry.GetContractName(source.GetType());
             long? min = null;
             foreach (var x in poolerStates)
             {
-                if (x.PoolerContractName != poolerContractName) continue;
                 if (x.SourceContractName != sourceContractName) continue;
                 if (!min.HasValue || min.Value > x.EventSequenceId) min = x.EventSequenceId;
             }
