@@ -25,7 +25,7 @@ namespace Ses.Subscriptions.MsSql.Tests
         protected async Task<IEventStore> GetEventStore()
         {
             _databaseName = "SesTests_" + Guid.NewGuid().ToString("N");
-            ConnectionString = CreateConnectionString();
+            ConnectionString = CreateConnectionString(_localDbInstance, _databaseName);
             await CreateDatabase(GetLocation());
 
             var store = new EventStoreBuilder()
@@ -64,12 +64,12 @@ namespace Ses.Subscriptions.MsSql.Tests
             }
         }
 
-        private string CreateConnectionString()
+        private static string CreateConnectionString(ISqlLocalDbInstance localDbInstance, string databaseName)
         {
-            var connectionStringBuilder = _localDbInstance.CreateConnectionStringBuilder();
+            var connectionStringBuilder = localDbInstance.CreateConnectionStringBuilder();
             connectionStringBuilder.MultipleActiveResultSets = true;
             connectionStringBuilder.IntegratedSecurity = true;
-            connectionStringBuilder.InitialCatalog = _databaseName;
+            connectionStringBuilder.InitialCatalog = databaseName;
 
             return connectionStringBuilder.ToString();
         }

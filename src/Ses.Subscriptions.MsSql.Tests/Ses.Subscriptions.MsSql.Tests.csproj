@@ -65,6 +65,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="JilSerializer.cs" />
+    <Compile Include="MsSqlPoolerStateRepositoryTests\RemovingNotUsedStates.cs" />
+    <Compile Include="MsSqlPoolerStateRepositoryTests\LoadingAndInserting.cs" />
+    <Compile Include="MsSqlPoolerStateRepositoryTests\Initializing.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestsBase.cs" />
   </ItemGroup>
@@ -74,8 +77,16 @@
       <Name>Ses.Abstracts</Name>
     </ProjectReference>
     <ProjectReference Include="..\Ses.MsSql\Ses.MsSql.csproj">
-      <Project>{A97505E5-4A89-4C15-AE47-D5E89F5EBD40}</Project>
+      <Project>{a97505e5-4a89-4c15-ae47-d5e89f5ebd40}</Project>
       <Name>Ses.MsSql</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Ses.Subscriptions.MsSql\Ses.Subscriptions.MsSql.csproj">
+      <Project>{9CCEC0DD-78A5-4646-B27D-93BC8FA136E2}</Project>
+      <Name>Ses.Subscriptions.MsSql</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Ses.Subscriptions\Ses.Subscriptions.csproj">
+      <Project>{761f0a09-0f5f-4561-b75d-d412dac573c3}</Project>
+      <Name>Ses.Subscriptions</Name>
     </ProjectReference>
     <ProjectReference Include="..\Ses\Ses.csproj">
       <Project>{00F648AC-E5B6-47D2-843C-1F34C6FC9843}</Project>

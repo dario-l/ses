@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Ses.Abstracts.Extensions;
 
@@ -10,9 +11,9 @@ namespace Ses.Subscriptions.MsSql
 {
     public class MsSqlPoolerStateRepository : IPoolerStateRepository
     {
-        private static readonly object locker = new object();
         private readonly string _connectionString;
         private volatile ConcurrentBag<PoolerState> _states;
+        private readonly SemaphoreSlim _mySemaphoreSlim = new SemaphoreSlim(1, 1);
 
         public MsSqlPoolerStateRepository(string connectionString)
         {
@@ -55,22 +56,30 @@ namespace Ses.Subscriptions.MsSql
         {
             if (_states.Count > 0) return _states.ToList();
 
-            using (var cnn = new SqlConnection(_connectionString))
-            using (var cmd = cnn.CreateCommand())
+            await _mySemaphoreSlim.WaitAsync();
+            try
             {
-                cmd.CommandText = SqlClientScripts.SelectStates;
-                await cmd.Connection.OpenAsync().NotOnCapturedContext();
-                using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult | CommandBehavior.SequentialAccess).NotOnCapturedContext())
+                using (var cnn = new SqlConnection(_connectionString))
+                using (var cmd = cnn.CreateCommand())
                 {
-                    while (await reader.ReadAsync().NotOnCapturedContext())
+                    cmd.CommandText = SqlClientScripts.SelectStates;
+                    await cmd.Connection.OpenAsync().NotOnCapturedContext();
+                    using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult | CommandBehavior.SequentialAccess).NotOnCapturedContext())
                     {
-                        var state = new PoolerState((string)reader[0], (string)reader[1], (string)reader[2]) { EventSequenceId = (long)reader[3] };
-                        _states.Add(state);
+                        while (await reader.ReadAsync().NotOnCapturedContext())
+                        {
+                            var state = new PoolerState((string)reader[0], (string)reader[1], (string)reader[2]) { EventSequenceId = (long)reader[3] };
+                            _states.Add(state);
+                        }
                     }
                 }
-            }
 
-            return _states.ToList();
+                return _states.ToList();
+            }
+            finally
+            {
+                _mySemaphoreSlim.Release();
+            }
         }
 
         public async Task InsertOrUpdate(PoolerState state)
@@ -96,23 +105,29 @@ namespace Ses.Subscriptions.MsSql
 
         public async Task RemoveNotUsedStates(string poolerContractName, IEnumerable<string> handlerContractNames, IEnumerable<string> sourceContractNames)
         {
-            using (var cnn = new SqlConnection(_connectionString))
-            using (var cmd = cnn.CreateCommand())
-            {
-                cmd.CommandText = SqlClientScripts.DeleteNotUsedStates;
-                cmd.AddInputParam(SqlClientScripts.ParamPoolerContractName, DbType.String, poolerContractName);
-                cmd.AddArrayParameters(SqlClientScripts.ParamHandlerContractNames, DbType.String, handlerContractNames);
-                cmd.AddArrayParameters(SqlClientScripts.ParamSourceContractNames, DbType.String, sourceContractNames);
-                await cnn.OpenAsync().NotOnCapturedContext();
-                await cmd.ExecuteNonQueryAsync().NotOnCapturedContext();
-            }
-            lock(locker)
+            await _mySemaphoreSlim.WaitAsync();
+            try
             {
                 while (!_states.IsEmpty)
                 {
                     PoolerState someItem;
                     _states.TryTake(out someItem);
                 }
+
+                using (var cnn = new SqlConnection(_connectionString))
+                using (var cmd = cnn.CreateCommand())
+                {
+                    cmd.CommandText = SqlClientScripts.DeleteNotUsedStates;
+                    cmd.AddInputParam(SqlClientScripts.ParamPoolerContractName, DbType.String, poolerContractName);
+                    cmd.AddArrayParameters(SqlClientScripts.ParamHandlerContractNames, DbType.String, handlerContractNames);
+                    cmd.AddArrayParameters(SqlClientScripts.ParamSourceContractNames, DbType.String, sourceContractNames);
+                    await cnn.OpenAsync().NotOnCapturedContext();
+                    await cmd.ExecuteNonQueryAsync().NotOnCapturedContext();
+                }
+            }
+            finally
+            {
+                _mySemaphoreSlim.Release();
             }
         }
     }
