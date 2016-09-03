@@ -26,7 +26,5 @@ namespace Ses.Samples.Subscriptions
         }
 
         public override TimeSpan? RunForDuration => TimeSpan.FromMinutes(5); // to run again use: subscriber.RunPooler(typeof(DenormalizersSubscriptionPooler));
-
-        protected override bool LogStats => true;
     }
 }

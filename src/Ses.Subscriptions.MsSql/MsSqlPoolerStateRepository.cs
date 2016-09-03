@@ -52,21 +52,21 @@ namespace Ses.Subscriptions.MsSql
             return this;
         }
 
-        public async Task<IReadOnlyCollection<PoolerState>> Load(string poolerContractName)
+        public async Task<IReadOnlyCollection<PoolerState>> Load(string poolerContractName, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (!_states.IsEmpty) return _states.Where(x => x.PoolerContractName == poolerContractName).ToList();
 
-            await _mySemaphoreSlim.WaitAsync();
+            await _mySemaphoreSlim.WaitAsync(cancellationToken);
             try
             {
                 using (var cnn = new SqlConnection(_connectionString))
                 using (var cmd = cnn.CreateCommand())
                 {
                     cmd.CommandText = SqlClientScripts.SelectStates;
-                    await cmd.Connection.OpenAsync().NotOnCapturedContext();
-                    using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult | CommandBehavior.SequentialAccess).NotOnCapturedContext())
+                    await cmd.Connection.OpenAsync(cancellationToken).NotOnCapturedContext();
+                    using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult | CommandBehavior.SequentialAccess, cancellationToken).NotOnCapturedContext())
                     {
-                        while (await reader.ReadAsync().NotOnCapturedContext())
+                        while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext())
                         {
                             var state = new PoolerState((string)reader[0], (string)reader[1], (string)reader[2])
                             {
@@ -85,32 +85,32 @@ namespace Ses.Subscriptions.MsSql
             }
         }
 
-        public async Task InsertOrUpdate(PoolerState state)
+        public async Task InsertOrUpdate(PoolerState state, CancellationToken cancellationToken = default(CancellationToken))
         {
             using (var cnn = new SqlConnection(_connectionString))
             using (var cmd = cnn.CreateCommand())
             {
-                await cnn.OpenAsync().NotOnCapturedContext();
+                await cnn.OpenAsync(cancellationToken).NotOnCapturedContext();
                 cmd.CommandText = SqlClientScripts.UpdateState;
                 cmd.AddInputParam(SqlClientScripts.ParamPoolerContractName, DbType.String, state.PoolerContractName);
                 cmd.AddInputParam(SqlClientScripts.ParamSourceContractName, DbType.String, state.SourceContractName);
                 cmd.AddInputParam(SqlClientScripts.ParamHandlerContractName, DbType.String, state.HandlerContractName);
                 cmd.AddInputParam(SqlClientScripts.ParamEventSequence, DbType.Int64, state.EventSequenceId);
-                if (await cmd.ExecuteNonQueryAsync().NotOnCapturedContext() == 0)
+                if (await cmd.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext() == 0)
                 {
                     cmd.CommandText = SqlClientScripts.InsertState;
-                    await cmd.ExecuteNonQueryAsync().NotOnCapturedContext();
+                    await cmd.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();
 
                     _states.Add(state);
                 }
             }
         }
 
-        public async Task RemoveNotUsedStates(string poolerContractName, string[] handlerContractNames, string[] sourceContractNames)
+        public async Task RemoveNotUsedStates(string poolerContractName, string[] handlerContractNames, string[] sourceContractNames, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (handlerContractNames.Length == 0 || sourceContractNames.Length == 0) return;
 
-            await _mySemaphoreSlim.WaitAsync();
+            await _mySemaphoreSlim.WaitAsync(cancellationToken);
             try
             {
                 while (!_states.IsEmpty)
@@ -126,8 +126,8 @@ namespace Ses.Subscriptions.MsSql
                     cmd.AddInputParam(SqlClientScripts.ParamPoolerContractName, DbType.String, poolerContractName);
                     cmd.AddArrayParameters(SqlClientScripts.ParamHandlerContractNames, DbType.String, handlerContractNames);
                     cmd.AddArrayParameters(SqlClientScripts.ParamSourceContractNames, DbType.String, sourceContractNames);
-                    await cnn.OpenAsync().NotOnCapturedContext();
-                    await cmd.ExecuteNonQueryAsync().NotOnCapturedContext();
+                    await cnn.OpenAsync(cancellationToken).NotOnCapturedContext();
+                    await cmd.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();
                 }
             }
             finally
