@@ -60,10 +60,6 @@ namespace Ses.Subscriptions
 
                 var runner = new Runner(_contractRegistry, _logger, _poolerStateRepository, pooler);
                 _runners.Add(pooler.GetType(), runner);
-            }
-
-            foreach (var runner in _runners.Values)
-            {
                 runner.Start();
             }
             return this;

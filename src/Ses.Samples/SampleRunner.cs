@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Transactions;
 using Ses.Abstracts;
-using Ses.Abstracts.Logging;
 using Ses.Abstracts.Subscriptions;
 using Ses.Domain;
 using Ses.MsSql;
