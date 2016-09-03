@@ -54,7 +54,7 @@ namespace Ses.Subscriptions.MsSql
 
         public async Task<IReadOnlyCollection<PoolerState>> Load(string poolerContractName, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (!_states.IsEmpty) return _states.Where(x => x.PoolerContractName == poolerContractName).ToList();
+            if (!_states.IsEmpty) return _states.Where(x => x.PoolerContractName == poolerContractName).ToList(); // TODO: this is so stupid, pooler should cache own collection of states -> locking no needed
 
             await _mySemaphoreSlim.WaitAsync(cancellationToken);
             try
