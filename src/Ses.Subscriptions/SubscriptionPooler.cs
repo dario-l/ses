@@ -84,7 +84,8 @@ namespace Ses.Subscriptions
 
         private async Task<bool> TryDispatch(PoolerContext ctx, Type handlerType, EventEnvelope envelope, PoolerState state)
         {
-            var shouldDispatch = IsHandlerFor(handlerType, envelope);
+            var eventType = envelope.Event.GetType();
+            var shouldDispatch = IsHandlerFor(handlerType, eventType);
             if (shouldDispatch) PreHandleEvent(envelope, handlerType);
 
             using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, _transactionOptions, TransactionScopeAsyncFlowOption.Enabled))
@@ -93,7 +94,7 @@ namespace Ses.Subscriptions
                 {
                     var handlerInstance = CreateHandlerInstance(handlerType);
                     if (handlerInstance == null) throw new NullReferenceException($"Handler instance {handlerType.FullName} is null.");
-                    ctx.Logger.Trace("Dispatching event {0} to {1}...", envelope.Event.GetType().FullName, handlerType.FullName);
+                    ctx.Logger.Trace("Dispatching event {0} to {1}...", eventType.FullName, handlerType.FullName);
                     await ((dynamic)handlerInstance).Handle((dynamic)envelope.Event, envelope);
                 }
                 state.EventSequenceId = envelope.SequenceId;
@@ -108,9 +109,9 @@ namespace Ses.Subscriptions
         protected virtual void PostHandleEvent(EventEnvelope envelope, Type handlerType) { }
         protected virtual void PostHandleEventException(EventEnvelope envelope, Type handlerType, Exception e) { }
 
-        private bool IsHandlerFor(Type handlerType, EventEnvelope envelope)
+        private bool IsHandlerFor(Type handlerType, Type eventType)
         {
-            return _handlerRegistrar.GetRegisteredEventTypesFor(handlerType).Contains(envelope.Event.GetType());
+            return _handlerRegistrar.GetRegisteredEventTypesFor(handlerType).Contains(eventType);
         }
 
         private PoolerState FindOrCreateState(IContractsRegistry contractsRegistry, IEnumerable<PoolerState> poolerStates, Type sourceType, Type handlerType)
