@@ -9,7 +9,7 @@ using Ses.Abstracts.Logging;
 
 namespace Ses.Subscriptions
 {
-    public class EventStoreSubscriptions : IDisposable
+    public class EventStoreSubscriptions : IEventStoreSubscriptions
     {
         private readonly IDictionary<Type, Runner> _runners;
         private readonly IList<SubscriptionPooler> _poolers;
@@ -91,6 +91,14 @@ namespace Ses.Subscriptions
         {
             if (!_runners.ContainsKey(type)) throw new InvalidOperationException($"Pooler {type.FullName} is not registered.");
             _runners[type].Start();
+        }
+
+        public void RunStoppedPoolers()
+        {
+            foreach (var runner in _runners)
+            {
+                runner.Value.Start();
+            }
         }
     }
 }
