@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Threading.Tasks;
 using Ses.Abstracts.Subscriptions;
 using Ses.Samples.Cart;
 
@@ -6,9 +7,10 @@ namespace Ses.Samples.Subscriptions.ProcessManagers
 {
     public class SomeProcessManager : IHandle<ShoppingCartCreated>
     {
-        public void Handle(ShoppingCartCreated e, EventEnvelope envelope)
+        public Task Handle(ShoppingCartCreated e, EventEnvelope envelope)
         {
             Debug.WriteLine("Act for " + e.GetType().Name);
+            return Task.FromResult(0);
         }
     }
 }

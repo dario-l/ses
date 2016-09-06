@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Threading.Tasks;
 using Ses.Abstracts.Subscriptions;
 using Ses.Samples.Cart;
 
@@ -9,19 +10,22 @@ namespace Ses.Samples.Subscriptions.Projections
         IHandle<ItemAddedToShoppingCart>,
         IHandle<ItemRemovedFromShoppingCart>
     {
-        public void Handle(ShoppingCartCreated e, EventEnvelope envelope)
+        public Task Handle(ShoppingCartCreated e, EventEnvelope envelope)
         {
             Debug.WriteLine("Projected " + e.GetType().Name);
+            return Task.FromResult(0);
         }
 
-        public void Handle(ItemAddedToShoppingCart e, EventEnvelope envelope)
+        public Task Handle(ItemAddedToShoppingCart e, EventEnvelope envelope)
         {
             Debug.WriteLine("Projected " + e.GetType().Name);
+            return Task.FromResult(0);
         }
 
-        public void Handle(ItemRemovedFromShoppingCart e, EventEnvelope envelope)
+        public Task Handle(ItemRemovedFromShoppingCart e, EventEnvelope envelope)
         {
             Debug.WriteLine("Projected " + e.GetType().Name);
+            return Task.FromResult(0);
         }
     }
 }

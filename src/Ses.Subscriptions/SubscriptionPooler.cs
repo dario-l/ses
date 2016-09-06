@@ -94,7 +94,7 @@ namespace Ses.Subscriptions
                     var handlerInstance = CreateHandlerInstance(handlerType);
                     if (handlerInstance == null) throw new NullReferenceException($"Handler instance {handlerType.FullName} is null.");
                     ctx.Logger.Trace("Dispatching event {0} to {1}...", envelope.Event.GetType().FullName, handlerType.FullName);
-                    ((dynamic)handlerInstance).Handle((dynamic)envelope.Event, envelope);
+                    await ((dynamic)handlerInstance).Handle((dynamic)envelope.Event, envelope);
                 }
                 state.EventSequenceId = envelope.SequenceId;
                 await ctx.StateRepository.InsertOrUpdate(state);
