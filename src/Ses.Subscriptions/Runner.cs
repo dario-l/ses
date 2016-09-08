@@ -75,7 +75,7 @@ namespace Ses.Subscriptions
             _runnerTimer.Stop();
             _isRunning = false;
             _startedAt.Set(DateTime.MaxValue);
-            _poolerContext.Logger.Debug($"Stopping runner for pooler {Pooler.GetType().FullName}...");
+            _poolerContext.Logger.Debug($"Runner for pooler {Pooler.GetType().FullName} stopped.");
         }
 
         public void Dispose()
