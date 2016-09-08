@@ -13,7 +13,7 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
 
             await Assert.ThrowsAsync<WrongExpectedVersionException>(async () =>
             {
-                await store.Advanced.UpdateSnapshot(
+                await store.Advanced.UpdateSnapshotAsync(
                     Guid.Empty,
                     5,
                     new FakeSnapshot());

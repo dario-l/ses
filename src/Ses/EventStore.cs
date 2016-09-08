@@ -21,7 +21,7 @@ namespace Ses
 
         public IEventStoreAdvanced Advanced { get; }
 
-        private Task<IEvent> OnEventRead(Guid streamId, string contractName, int version, byte[] payload)
+        private IEvent OnEventRead(Guid streamId, string contractName, int version, byte[] payload)
         {
             var eventType = _settings.ContractsRegistry.GetType(contractName);
             var @event = _settings.Serializer.Deserialize<IEvent>(payload, eventType);
@@ -36,10 +36,10 @@ namespace Ses
                     upConverter = _settings.UpConverterFactory.CreateInstance(@event.GetType());
                 }
             }
-            return Task.FromResult(@event);
+            return @event;
         }
 
-        private Task<IRestoredMemento> OnSnapshotRead(Guid streamId, string contractName, int version, byte[] payload)
+        private IRestoredMemento OnSnapshotRead(Guid streamId, string contractName, int version, byte[] payload)
         {
             var snapshotType = _settings.ContractsRegistry.GetType(contractName);
             var memento = _settings.Serializer.Deserialize<IMemento>(payload, snapshotType);
@@ -54,24 +54,41 @@ namespace Ses
                     upConverter = _settings.UpConverterFactory.CreateInstance(memento.GetType());
                 }
             }
-            return Task.FromResult((IRestoredMemento)new RestoredMemento(version, memento));
+            return new RestoredMemento(version, memento);
         }
 
-        public Task<IReadOnlyEventStream> Load(Guid streamId, bool pessimisticLock, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<IReadOnlyEventStream> LoadAsync(Guid streamId, bool pessimisticLock, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return LoadInternal(streamId, 1, pessimisticLock, cancellationToken);
-        }
-
-        private async Task<IReadOnlyEventStream> LoadInternal(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken)
-        {
-            var events = await _settings.Persistor.Load(streamId, fromVersion, pessimisticLock, cancellationToken);
+            var events = await _settings.Persistor.LoadAsync(streamId, 1, pessimisticLock, cancellationToken);
             if (events == null || events.Count == 0) return null;
             var snapshot = events[0] as IRestoredMemento;
             var currentVersion = snapshot?.Version + (events.Count - 1) ?? events.Count;
             return new ReadOnlyEventStream(events, currentVersion);
         }
 
-        public async Task SaveChanges(Guid streamId, int expectedVersion, IEventStream stream, CancellationToken cancellationToken = default(CancellationToken))
+        public IReadOnlyEventStream Load(Guid streamId, bool pessimisticLock)
+        {
+            var events = _settings.Persistor.Load(streamId, 1, pessimisticLock);
+            if (events == null || events.Count == 0) return null;
+            var snapshot = events[0] as IRestoredMemento;
+            var currentVersion = snapshot?.Version + (events.Count - 1) ?? events.Count;
+            return new ReadOnlyEventStream(events, currentVersion);
+        }
+
+        public void SaveChanges(Guid streamId, int expectedVersion, IEventStream stream)
+        {
+            if (stream == null) throw new ArgumentNullException(nameof(stream));
+            if (expectedVersion < ExpectedVersion.Any) throw new InvalidOperationException($"Expected version {expectedVersion} for stream {streamId} is invalid.");
+            if (!stream.Events.Any()) return;
+            _settings.Logger.Debug("Saving changes for stream '{0}' with commit '{1}'...", streamId, stream.CommitId);
+
+            var metadata = stream.Metadata != null ? _settings.Serializer.Serialize(stream.Metadata, stream.Metadata.GetType()) : null;
+            var events = CreateEventRecords(expectedVersion, stream);
+
+            _settings.Persistor.SaveChanges(streamId, stream.CommitId, expectedVersion, events, metadata, stream.IsLockable);
+        }
+
+        public async Task SaveChangesAsync(Guid streamId, int expectedVersion, IEventStream stream, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             if (expectedVersion < ExpectedVersion.Any) throw new InvalidOperationException($"Expected version {expectedVersion} for stream {streamId} is invalid.");
@@ -88,7 +105,7 @@ namespace Ses
 #if DEBUG
             LogSavedStream(streamId, expectedVersion, stream.CommitId, events);
 #endif
-            await _settings.Persistor.SaveChanges(streamId, stream.CommitId, expectedVersion, events, metadata, stream.IsLockable, cancellationToken);
+            await _settings.Persistor.SaveChangesAsync(streamId, stream.CommitId, expectedVersion, events, metadata, stream.IsLockable, cancellationToken);
         }
 
 #if DEBUG

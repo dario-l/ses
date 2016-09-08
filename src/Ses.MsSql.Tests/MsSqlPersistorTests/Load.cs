@@ -12,7 +12,7 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
         {
             var store = await GetEventStore();
 
-            var events = await store.Load(Guid.Empty, false);
+            var events = await store.LoadAsync(Guid.Empty, false);
             Assert.Null(events);
         }
 
@@ -23,9 +23,9 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
 
             var streamId = SequentialGuid.NewGuid();
             var stream = new EventStream(streamId, new[] { new FakeEvent() });
-            await store.SaveChanges(streamId, ExpectedVersion.NoStream, stream);
+            await store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream);
 
-            var events = await store.Load(streamId, false);
+            var events = await store.LoadAsync(streamId, false);
             Assert.True(events.CommittedVersion == 1);
             Assert.True(events.CommittedEvents.Count() == 1);
         }

@@ -7,22 +7,32 @@ namespace Ses.Subscriptions
 {
     internal class HandlerRegistrar
     {
-        private readonly IDictionary<Type, IList<Type>> _types;
+        private static readonly Type asyncHandlerType = typeof(IHandleAsync<>);
+        private static readonly Type syncHandlerType = typeof(IHandle<>);
+        private readonly IDictionary<Type, HandlerTypeInfo> _types;
 
         public HandlerRegistrar(IEnumerable<Type> handlerTypes)
         {
-            _types = new Dictionary<Type, IList<Type>>();
+            _types = new Dictionary<Type, HandlerTypeInfo>();
+
             foreach (var type in handlerTypes.Where(TypeIsHandler))
             {
                 if (_types.ContainsKey(type)) continue;
-                _types.Add(type, GetEventTypes(type));
+
+                var interfaces = type.GetInterfaces();
+                var hasAsync = interfaces.Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == asyncHandlerType);
+                var hasSync = interfaces.Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == syncHandlerType);
+
+                if (hasAsync == hasSync) throw new Exception($"Type '{type.FullName}' can not have mixed sync and async handlers implemented.");
+
+                _types.Add(type, new HandlerTypeInfo(type, GetEventTypes(type, hasAsync ? asyncHandlerType : syncHandlerType), hasAsync));
             }
         }
 
-        private static IList<Type> GetEventTypes(Type type)
+        private static IList<Type> GetEventTypes(Type type, Type handlerType)
         {
             var interfaces = type.GetInterfaces()
-                .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IHandle<>));
+                .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == handlerType);
 
             var list = new List<Type>();
             foreach (var eventTypes in interfaces.Select(i => i.GetGenericArguments()))
@@ -38,10 +48,27 @@ namespace Ses.Subscriptions
         }
 
         public IEnumerable<Type> RegisteredHandlerTypes => _types.Keys;
+        public IEnumerable<HandlerTypeInfo> RegisteredHandlerInfos => _types.Values;
 
-        public IEnumerable<Type> GetRegisteredEventTypesFor(Type handlerType)
+        public HandlerTypeInfo GetHandlerInfoFor(Type handlerType)
         {
-            return !_types.ContainsKey(handlerType) ? new List<Type>(0) : _types[handlerType];
+            HandlerTypeInfo info;
+            _types.TryGetValue(handlerType, out info);
+            return info;
+        }
+
+        public class HandlerTypeInfo
+        {
+            public HandlerTypeInfo(Type handlerType, IList<Type> events, bool isAsync)
+            {
+                HandlerType = handlerType;
+                Events = events;
+                IsAsync = isAsync;
+            }
+
+            public Type HandlerType { get; private set; }
+            public IList<Type> Events { get; private set; }
+            public bool IsAsync { get; private set; }
         }
     }
 }

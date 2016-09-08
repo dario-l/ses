@@ -68,7 +68,7 @@ namespace Ses.Subscriptions
         private async Task ClearUnusedStates(SubscriptionPooler pooler)
         {
             var poolerContractName = _contractRegistry.GetContractName(pooler.GetType());
-            var handlerTypes = pooler.GetRegisteredHanlders();
+            var handlerTypes = pooler.GetRegisteredHandlers();
             var sourceTypes = pooler.Sources.Select(x => x.GetType()).ToList();
 
             await _poolerStateRepository.RemoveNotUsedStates(

@@ -6,15 +6,19 @@ namespace Ses.Abstracts
 {
     public interface IEventStoreAdvanced
     {
-        Task DeleteStream(
+        Task DeleteStreamAsync(
             Guid streamId,
             int expectedVersion,
             CancellationToken cancellationToken = default(CancellationToken));
 
-        Task UpdateSnapshot(
+        Task UpdateSnapshotAsync(
             Guid streamId,
             int currentVersion,
             IMemento snapshot,
             CancellationToken cancellationToken = default(CancellationToken));
+
+        void DeleteStream(Guid streamId, int expectedVersion);
+
+        void UpdateSnapshot(Guid streamId, int currentVersion, IMemento snapshot);
     }
 }

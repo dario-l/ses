@@ -14,10 +14,15 @@ namespace Ses.InMemory
         private readonly ConcurrentDictionary<Guid, InMemoryStream> _streams = new ConcurrentDictionary<Guid, InMemoryStream>();
         private readonly ConcurrentDictionary<Guid, InMemorySnapshot> _snapshots = new ConcurrentDictionary<Guid, InMemorySnapshot>();
 
+        public void UpdateSnapshot(Guid streamId, int version, string contractName, byte[] payload)
+        {
+            throw new NotImplementedException();
+        }
+
         public event OnReadEventHandler OnReadEvent;
         public event OnReadSnapshotHandler OnReadSnapshot;
 
-        public async Task<IList<IEvent>> Load(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = new CancellationToken())
+        public IList<IEvent> Load(Guid streamId, int fromVersion, bool pessimisticLock)
         {
             if (pessimisticLock) throw new NotImplementedException("Pessimistic lock is not implemented.");
             _lock.EnterReadLock();
@@ -35,7 +40,7 @@ namespace Ses.InMemory
                 if (_snapshots.TryGetValue(streamId, out snapshot) && snapshot.Version >= fromVersion)
                 {
                     // ReSharper disable once PossibleNullReferenceException
-                    events.Add(await OnReadSnapshot(streamId, snapshot.ContractName, snapshot.Version, snapshot.Payload));
+                    events.Add(OnReadSnapshot(streamId, snapshot.ContractName, snapshot.Version, snapshot.Payload));
                 }
 
                 if (snapshot == null)
@@ -43,7 +48,7 @@ namespace Ses.InMemory
                     foreach (var @event in stream.Events)
                     {
                         if (@event.Version < fromVersion) continue;
-                        events.Add(await CreateEventObject(streamId, @event).ConfigureAwait(false));
+                        events.Add(CreateEventObject(streamId, @event));
                     }
                 }
                 else
@@ -51,7 +56,7 @@ namespace Ses.InMemory
                     foreach (var @event in stream.Events)
                     {
                         if (@event.Version <= snapshot.Version) continue;
-                        events.Add(await CreateEventObject(streamId, @event).ConfigureAwait(false));
+                        events.Add(CreateEventObject(streamId, @event));
                     }
                 }
                 return events;
@@ -62,13 +67,24 @@ namespace Ses.InMemory
             }
         }
 
-        private async Task<IEvent> CreateEventObject(Guid streamId, InMemoryEventRecord arg)
+        public Task<IList<IEvent>> LoadAsync(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = new CancellationToken())
         {
-            // ReSharper disable once PossibleNullReferenceException
-            return await OnReadEvent(streamId, arg.ContractName, arg.Version, arg.EventData).ConfigureAwait(false);
+            return Task.FromResult(Load(streamId, fromVersion, pessimisticLock));
         }
 
-        public Task DeleteStream(Guid streamId, int expectedVersion, CancellationToken cancellationToken = new CancellationToken())
+        private IEvent CreateEventObject(Guid streamId, InMemoryEventRecord arg)
+        {
+            // ReSharper disable once PossibleNullReferenceException
+            return OnReadEvent(streamId, arg.ContractName, arg.Version, arg.EventData);
+        }
+
+        public Task DeleteStreamAsync(Guid streamId, int expectedVersion, CancellationToken cancellationToken = new CancellationToken())
+        {
+            DeleteStream(streamId, expectedVersion);
+            return Task.FromResult(0);
+        }
+
+        public void DeleteStream(Guid streamId, int expectedVersion)
         {
             _lock.EnterWriteLock();
             try
@@ -83,10 +99,9 @@ namespace Ses.InMemory
                 }
 
                 InMemoryStream inMemoryStream;
-                if (!_streams.TryGetValue(streamId, out inMemoryStream)) return Task.FromResult(0);
+                if (!_streams.TryGetValue(streamId, out inMemoryStream)) return;
 
                 inMemoryStream.DeleteAllEvents();
-                return Task.FromResult(0);
             }
             finally
             {
@@ -94,7 +109,7 @@ namespace Ses.InMemory
             }
         }
 
-        public Task UpdateSnapshot(Guid streamId, int version, string contractName, byte[] payload, CancellationToken cancellationToken = new CancellationToken())
+        public Task UpdateSnapshotAsync(Guid streamId, int version, string contractName, byte[] payload, CancellationToken cancellationToken = new CancellationToken())
         {
             _lock.EnterWriteLock();
             try
@@ -118,7 +133,13 @@ namespace Ses.InMemory
             }
         }
 
-        public Task SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, bool isLockable, CancellationToken cancellationToken = new CancellationToken())
+        public Task SaveChangesAsync(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, bool isLockable, CancellationToken cancellationToken = new CancellationToken())
+        {
+            SaveChanges(streamId, commitId, expectedVersion, events, metadata, isLockable);
+            return Task.FromResult(0);
+        }
+
+        public void SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, bool isLockable)
         {
             if (isLockable) throw new NotImplementedException("Pessimistic lock is not implemented.");
 
@@ -126,7 +147,6 @@ namespace Ses.InMemory
             try
             {
                 SaveChangesInternal(streamId, commitId, expectedVersion, events, metadata);
-                return Task.FromResult(0);
             }
             finally
             {

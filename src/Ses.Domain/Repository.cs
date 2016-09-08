@@ -16,10 +16,17 @@ namespace Ses.Domain
             _store = store;
         }
 
-        public async Task<TAggregate> Load(Guid streamId, bool pessimisticLock = false, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<TAggregate> LoadAsync(Guid streamId, bool pessimisticLock = false, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var stream = await _store.Load(streamId, pessimisticLock, cancellationToken);
+            var stream = await _store.LoadAsync(streamId, pessimisticLock, cancellationToken);
             if(stream == null) throw new AggregateNotFoundException(streamId, typeof(TAggregate));
+            return RestoreAggregate(streamId, stream);
+        }
+
+        public TAggregate Load(Guid streamId, bool pessimisticLock = false)
+        {
+            var stream = _store.Load(streamId, pessimisticLock);
+            if (stream == null) throw new AggregateNotFoundException(streamId, typeof(TAggregate));
             return RestoreAggregate(streamId, stream);
         }
 
@@ -30,13 +37,23 @@ namespace Ses.Domain
             return aggregate;
         }
 
-        public async Task SaveChanges(TAggregate aggregate, Guid? commitId = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task SaveChangesAsync(TAggregate aggregate, Guid? commitId = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (aggregate == null) throw new ArgumentNullException(nameof(aggregate));
             var events = aggregate.TakeUncommittedEvents();
             var stream = PrepareEventStreamToSave(commitId, events);
             OnBeforeSaveChanges(aggregate.Id, aggregate.CommittedVersion, stream);
-            await _store.SaveChanges(aggregate.Id, aggregate.CommittedVersion, stream, cancellationToken);
+            await _store.SaveChangesAsync(aggregate.Id, aggregate.CommittedVersion, stream, cancellationToken);
+            OnAfterSaveChanges(aggregate.Id, aggregate.CommittedVersion, stream);
+        }
+
+        public void SaveChanges(TAggregate aggregate, Guid? commitId = null)
+        {
+            if (aggregate == null) throw new ArgumentNullException(nameof(aggregate));
+            var events = aggregate.TakeUncommittedEvents();
+            var stream = PrepareEventStreamToSave(commitId, events);
+            OnBeforeSaveChanges(aggregate.Id, aggregate.CommittedVersion, stream);
+            _store.SaveChanges(aggregate.Id, aggregate.CommittedVersion, stream);
             OnAfterSaveChanges(aggregate.Id, aggregate.CommittedVersion, stream);
         }
 
@@ -59,9 +76,14 @@ namespace Ses.Domain
             stream.Metadata.Add(aggregateTypeClrMeta, typeof(TAggregate).FullName);
         }
 
-        public async Task Delete(Guid streamId, int expectedVersion, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task DeleteAsync(Guid streamId, int expectedVersion, CancellationToken cancellationToken = default(CancellationToken))
         {
-            await _store.Advanced.DeleteStream(streamId, expectedVersion, cancellationToken);
+            await _store.Advanced.DeleteStreamAsync(streamId, expectedVersion, cancellationToken);
+        }
+
+        public void Delete(Guid streamId, int expectedVersion)
+        {
+            _store.Advanced.DeleteStream(streamId, expectedVersion);
         }
     }
 }

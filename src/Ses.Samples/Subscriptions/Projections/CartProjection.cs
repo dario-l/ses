@@ -6,9 +6,9 @@ using Ses.Samples.Cart;
 namespace Ses.Samples.Subscriptions.Projections
 {
     public class CartProjection :
-        IHandle<ShoppingCartCreated>,
-        IHandle<ItemAddedToShoppingCart>,
-        IHandle<ItemRemovedFromShoppingCart>
+        IHandleAsync<ShoppingCartCreated>,
+        IHandleAsync<ItemAddedToShoppingCart>,
+        IHandleAsync<ItemRemovedFromShoppingCart>
     {
         public Task Handle(ShoppingCartCreated e, EventEnvelope envelope)
         {

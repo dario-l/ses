@@ -5,7 +5,7 @@ using Ses.Samples.Cart;
 
 namespace Ses.Samples.Subscriptions.ProcessManagers
 {
-    public class SomeProcessManager : IHandle<ShoppingCartCreated>
+    public class SomeProcessManager : IHandleAsync<ShoppingCartCreated>
     {
         public Task Handle(ShoppingCartCreated e, EventEnvelope envelope)
         {

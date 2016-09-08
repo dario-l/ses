@@ -21,13 +21,16 @@ namespace Ses.MsSql
             try
             {
                 using (var cnn = new SqlConnection(_connectionString))
-                using (var cmd = cnn.OpenAndCreateCommand(Scripts.Destroy))
+                using (var cmd = cnn.CreateCommand())
                 {
+                    cmd.CommandText = Scripts.Destroy;
+                    cnn.Open();
+
                     try
                     {
                         cmd.ExecuteNonQuery();
                     }
-                    catch(Exception e)
+                    catch(Exception)
                     {
                         if (!ignoreErrors) throw;
                     }

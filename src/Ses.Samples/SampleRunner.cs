@@ -71,9 +71,9 @@ namespace Ses.Samples
                     { "User", "John Doe" }
                 };
 
-                await store.SaveChanges(streamId, ExpectedVersion.NoStream, stream);
+                await store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream);
 
-                await store.Load(streamId, false);
+                await store.LoadAsync(streamId, false);
                 scope.Complete();
             }
         }
@@ -94,13 +94,13 @@ namespace Ses.Samples
 
                 var snap = aggregate.GetSnapshot();
 
-                await repo.SaveChanges(aggregate);
-                await store.Advanced.UpdateSnapshot(aggregate.Id, snap.Version, snap.State);
-                aggregate = await repo.Load(streamId);
+                await repo.SaveChangesAsync(aggregate);
+                await store.Advanced.UpdateSnapshotAsync(aggregate.Id, snap.Version, snap.State);
+                aggregate = await repo.LoadAsync(streamId);
                 aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 5", quantity: 5);
-                await repo.SaveChanges(aggregate);
+                await repo.SaveChangesAsync(aggregate);
 
-                aggregate = await repo.Load(streamId);
+                aggregate = await repo.LoadAsync(streamId);
                 Console.WriteLine($"Aggregate expected version 7 = {aggregate.CommittedVersion}");
 
                 scope.Complete();
@@ -135,7 +135,7 @@ namespace Ses.Samples
                     var commitId = SequentialGuid.NewGuid();
                     var stream = new EventStream(commitId, aggregate.TakeUncommittedEvents());
 
-                    var task = store.SaveChanges(streamId, ExpectedVersion.NoStream, stream, token);
+                    var task = store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream, token);
                     tasks.Add(task);
                 }
                 sw.Stop();

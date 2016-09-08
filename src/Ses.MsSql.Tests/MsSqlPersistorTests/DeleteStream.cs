@@ -10,7 +10,7 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
         {
             var store = await GetEventStore();
 
-            var x = await Record.ExceptionAsync(async () => await store.Advanced.DeleteStream(Guid.Empty, ExpectedVersion.Any));
+            var x = await Record.ExceptionAsync(async () => await store.Advanced.DeleteStreamAsync(Guid.Empty, ExpectedVersion.Any));
 
             Assert.Null(x);
         }
@@ -22,7 +22,7 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
 
             await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             {
-                await store.Advanced.DeleteStream(Guid.Empty, ExpectedVersion.NoStream);
+                await store.Advanced.DeleteStreamAsync(Guid.Empty, ExpectedVersion.NoStream);
             });
         }
 
@@ -31,7 +31,7 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
         {
             var store = await GetEventStore();
 
-            var x = await Record.ExceptionAsync(async () => await store.Advanced.DeleteStream(Guid.Empty, 1));
+            var x = await Record.ExceptionAsync(async () => await store.Advanced.DeleteStreamAsync(Guid.Empty, 1));
 
             Assert.NotNull(x);
         }

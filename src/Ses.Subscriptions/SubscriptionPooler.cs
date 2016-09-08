@@ -30,7 +30,7 @@ namespace Ses.Subscriptions
         protected abstract IHandle CreateHandlerInstance(Type handlerType);
         protected virtual IEnumerable<Type> GetConcreteSubscriptionEventTypes() => null;
 
-        internal IEnumerable<Type> GetRegisteredHanlders() => _handlerRegistrar.RegisteredHandlerTypes;
+        internal IEnumerable<Type> GetRegisteredHandlers() => _handlerRegistrar.RegisteredHandlerTypes;
 
         internal async Task OnStart(IContractsRegistry contractsRegistry)
         {
@@ -57,18 +57,18 @@ namespace Ses.Subscriptions
 
                 foreach (var item in timeline)
                 {
-                    foreach (var handlerType in _handlerRegistrar.RegisteredHandlerTypes) // all handlers can/should run in parallel
+                    foreach (var handlerInfo in _handlerRegistrar.RegisteredHandlerInfos) // all handlers can/should run in parallel
                     {
-                        var state = FindOrCreateState(ctx.ContractsRegistry, poolerStates, item.SourceType, handlerType);
+                        var state = FindOrCreateState(ctx.ContractsRegistry, poolerStates, item.SourceType, handlerInfo.HandlerType);
                         if (item.Envelope.SequenceId > state.EventSequenceId)
                         {
                             try
                             {
-                                anyDispatched = await TryDispatch(ctx, handlerType, item.Envelope, state);
+                                anyDispatched = await TryDispatch(ctx, handlerInfo, item.Envelope, state);
                             }
                             catch (Exception ex)
                             {
-                                PostHandleEventException(item.Envelope, handlerType, ex);
+                                PostHandleEventException(item.Envelope, handlerInfo.HandlerType, ex);
                                 throw;
                             }
                         }
@@ -82,26 +82,33 @@ namespace Ses.Subscriptions
             return anyDispatched;
         }
 
-        private async Task<bool> TryDispatch(PoolerContext ctx, Type handlerType, EventEnvelope envelope, PoolerState state)
+        private async Task<bool> TryDispatch(PoolerContext ctx, HandlerRegistrar.HandlerTypeInfo handlerInfo, EventEnvelope envelope, PoolerState state)
         {
             var eventType = envelope.Event.GetType();
-            var shouldDispatch = IsHandlerFor(handlerType, eventType);
-            if (shouldDispatch) PreHandleEvent(envelope, handlerType);
+            var shouldDispatch = handlerInfo.Events.Contains(eventType);
+            if (shouldDispatch) PreHandleEvent(envelope, handlerInfo.HandlerType);
 
             using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, _transactionOptions, TransactionScopeAsyncFlowOption.Enabled))
             {
                 if (shouldDispatch)
                 {
-                    var handlerInstance = CreateHandlerInstance(handlerType);
-                    if (handlerInstance == null) throw new NullReferenceException($"Handler instance {handlerType.FullName} is null.");
-                    ctx.Logger.Trace("Dispatching event {0} to {1}...", eventType.FullName, handlerType.FullName);
-                    await ((dynamic)handlerInstance).Handle((dynamic)envelope.Event, envelope);
+                    var handlerInstance = CreateHandlerInstance(handlerInfo.HandlerType);
+                    if (handlerInstance == null) throw new NullReferenceException($"Handler instance {handlerInfo.HandlerType.FullName} is null.");
+                    ctx.Logger.Trace("Dispatching event {0} to {1}...", eventType.FullName, handlerInfo.HandlerType.FullName);
+                    if (handlerInfo.IsAsync)
+                    {
+                        await ((dynamic)handlerInstance).Handle((dynamic)envelope.Event, envelope);
+                    }
+                    else
+                    {
+                        ((dynamic)handlerInstance).Handle((dynamic)envelope.Event, envelope);
+                    }
                 }
                 state.EventSequenceId = envelope.SequenceId;
                 await ctx.StateRepository.InsertOrUpdate(state);
                 scope.Complete();
             }
-            if (shouldDispatch) PostHandleEvent(envelope, handlerType);
+            if (shouldDispatch) PostHandleEvent(envelope, handlerInfo.HandlerType);
             return true;
         }
 
@@ -111,7 +118,8 @@ namespace Ses.Subscriptions
 
         private bool IsHandlerFor(Type handlerType, Type eventType)
         {
-            return _handlerRegistrar.GetRegisteredEventTypesFor(handlerType).Contains(eventType);
+            var info = _handlerRegistrar.GetHandlerInfoFor(handlerType);
+            return info?.Events.Contains(eventType) ?? false;
         }
 
         private PoolerState FindOrCreateState(IContractsRegistry contractsRegistry, IEnumerable<PoolerState> poolerStates, Type sourceType, Type handlerType)

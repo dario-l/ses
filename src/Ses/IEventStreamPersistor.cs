@@ -16,7 +16,9 @@ namespace Ses
         /// <param name="pessimisticLock">If <c>true</c> then acquires pessimistic lock.</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<IList<IEvent>> Load(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = default(CancellationToken));
+        Task<IList<IEvent>> LoadAsync(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = default(CancellationToken));
+
+        IList<IEvent> Load(Guid streamId, int fromVersion, bool pessimisticLock);
 
         /// <summary>
         /// Deletes stream for a given id.
@@ -25,7 +27,9 @@ namespace Ses
         /// <param name="expectedVersion"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task DeleteStream(Guid streamId, int expectedVersion, CancellationToken cancellationToken = default(CancellationToken));
+        Task DeleteStreamAsync(Guid streamId, int expectedVersion, CancellationToken cancellationToken = default(CancellationToken));
+
+        void DeleteStream(Guid streamId, int expectedVersion);
 
         /// <summary>
         /// Adding new snapshot to data source.
@@ -36,7 +40,9 @@ namespace Ses
         /// <param name="version"></param>
         /// <param name="contractName"></param>
         /// <returns></returns>
-        Task UpdateSnapshot(Guid streamId, int version, string contractName, byte[] payload, CancellationToken cancellationToken = new CancellationToken());
+        Task UpdateSnapshotAsync(Guid streamId, int version, string contractName, byte[] payload, CancellationToken cancellationToken = new CancellationToken());
+
+        void UpdateSnapshot(Guid streamId, int version, string contractName, byte[] payload);
 
         /// <summary>
         /// Fires when event was read from data source.
@@ -59,9 +65,11 @@ namespace Ses
         /// <param name="isLockable"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, bool isLockable, CancellationToken cancellationToken = default(CancellationToken));
+        Task SaveChangesAsync(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, bool isLockable, CancellationToken cancellationToken = default(CancellationToken));
+
+        void SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, bool isLockable);
     }
 
-    public delegate Task<IEvent> OnReadEventHandler(Guid streamId, string contractName, int version, byte[] payload);
-    public delegate Task<IRestoredMemento> OnReadSnapshotHandler(Guid streamId, string contractName, int version, byte[] payload);
+    public delegate IEvent OnReadEventHandler(Guid streamId, string contractName, int version, byte[] payload);
+    public delegate IRestoredMemento OnReadSnapshotHandler(Guid streamId, string contractName, int version, byte[] payload);
 }

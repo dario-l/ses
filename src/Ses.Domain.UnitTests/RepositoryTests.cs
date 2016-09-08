@@ -16,13 +16,13 @@ namespace Ses.Domain.UnitTests
             var streamId = Guid.Empty;
 
             var store = A.Fake<IEventStore>();
-            A.CallTo(() => store.Load(streamId, false, CancellationToken.None)).Returns((IReadOnlyEventStream)null);
+            A.CallTo(() => store.LoadAsync(streamId, false, CancellationToken.None)).Returns((IReadOnlyEventStream)null);
 
             var repo = new Repository<FakeAggregate>(store);
 
             await Assert.ThrowsAsync<AggregateNotFoundException>(async () =>
             {
-                await repo.Load(streamId);
+                await repo.LoadAsync(streamId);
             });
         }
 
@@ -34,11 +34,11 @@ namespace Ses.Domain.UnitTests
             var committedVersion = events.Count;
 
             var store = A.Fake<IEventStore>();
-            A.CallTo(() => store.Load(streamId, false, CancellationToken.None))
+            A.CallTo(() => store.LoadAsync(streamId, false, CancellationToken.None))
                 .Returns(new ReadOnlyEventStream(events, committedVersion));
 
             var repo = new Repository<FakeAggregate>(store);
-            var aggregate = await repo.Load(streamId);
+            var aggregate = await repo.LoadAsync(streamId);
 
             Assert.Equal(1, aggregate.CommittedVersion);
         }

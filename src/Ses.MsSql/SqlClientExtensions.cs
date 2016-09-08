@@ -47,6 +47,7 @@ namespace Ses.MsSql
         {
             cnn.Open();
             var cmd = cnn.CreateCommand();
+            cmd.CommandType = CommandType.StoredProcedure;
             cmd.CommandText = commandText;
             return cmd;
         }

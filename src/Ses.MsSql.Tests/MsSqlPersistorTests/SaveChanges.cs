@@ -12,7 +12,7 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
 
             var streamId = SequentialGuid.NewGuid();
             var stream = new EventStream(streamId, new[] { new FakeEvent() });
-            await store.SaveChanges(streamId, ExpectedVersion.NoStream, stream);
+            await store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream);
         }
 
         [Fact]
@@ -22,12 +22,12 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
 
             var streamId = SequentialGuid.NewGuid();
             var stream = new EventStream(streamId, new[] { new FakeEvent() });
-            await store.SaveChanges(streamId, ExpectedVersion.NoStream, stream);
+            await store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream);
 
             stream = new EventStream(streamId, new[] { new FakeEvent() });
             await Assert.ThrowsAsync<WrongExpectedVersionException>(async () =>
             {
-                await store.SaveChanges(streamId, ExpectedVersion.NoStream, stream);
+                await store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream);
             });
         }
 
@@ -38,12 +38,12 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
 
             var streamId = SequentialGuid.NewGuid();
             var stream = new EventStream(streamId, new[] { new FakeEvent() });
-            await store.SaveChanges(streamId, ExpectedVersion.NoStream, stream);
+            await store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream);
 
             stream = new EventStream(streamId, new[] { new FakeEvent() });
             await Assert.ThrowsAsync<WrongExpectedVersionException>(async () =>
             {
-                await store.SaveChanges(streamId, ExpectedVersion.Any, stream);
+                await store.SaveChangesAsync(streamId, ExpectedVersion.Any, stream);
             });
         }
 
@@ -54,12 +54,12 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
 
             var streamId = SequentialGuid.NewGuid();
             var stream = new EventStream(streamId, new[] { new FakeEvent(), new FakeEvent() });
-            await store.SaveChanges(streamId, ExpectedVersion.NoStream, stream);
+            await store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream);
 
             stream = new EventStream(streamId, new[] { new FakeEvent() });
             await Assert.ThrowsAsync<WrongExpectedVersionException>(async () =>
             {
-                await store.SaveChanges(streamId, 1, stream);
+                await store.SaveChangesAsync(streamId, 1, stream);
             });
         }
 
@@ -70,13 +70,13 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
 
             var streamId = SequentialGuid.NewGuid();
             var stream = new EventStream(streamId, new[] { new FakeEvent(), new FakeEvent() });
-            await store.SaveChanges(streamId, ExpectedVersion.NoStream, stream);
+            await store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream);
 
             stream = new EventStream(streamId, new[] { new FakeEvent() });
-            await store.SaveChanges(streamId, 2, stream);
+            await store.SaveChangesAsync(streamId, 2, stream);
             await Assert.ThrowsAsync<WrongExpectedVersionException>(async () =>
             {
-                await store.SaveChanges(streamId, ExpectedVersion.Any, stream);
+                await store.SaveChangesAsync(streamId, ExpectedVersion.Any, stream);
             });
         }
 
