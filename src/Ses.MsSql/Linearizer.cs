@@ -30,7 +30,9 @@ namespace Ses.MsSql
         {
             _startedAt.Set(DateTime.UtcNow);
             if (_isRunning) return;
+            _logger.Debug($"Starting linearizer for duration {_durationWork.TotalMinutes} minute(s)...");
             _timer.Start();
+            _isRunning = true;
         }
 
         public void Stop()
@@ -39,7 +41,7 @@ namespace Ses.MsSql
             _timer.Stop();
             _isRunning = false;
             _startedAt.Set(DateTime.MaxValue);
-            _logger.Trace("Linealizer stopped.");
+            _logger.Debug("Linealizer stopped.");
         }
 
         private async Task Run()

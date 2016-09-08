@@ -47,6 +47,7 @@ namespace Ses.Subscriptions
                 ? $"Starting runner for pooler {Pooler.GetType().FullName} for duration {Pooler.RunForDuration.Value.TotalMinutes} minute(s)..."
                 : $"Starting runner for pooler {Pooler.GetType().FullName}...");
             _runnerTimer.Start();
+            _isRunning = true;
         }
 
         private async Task Run()
