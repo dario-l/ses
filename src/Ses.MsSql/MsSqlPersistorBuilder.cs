@@ -73,7 +73,6 @@ namespace Ses.MsSql
         {
             if (durationWork == null) durationWork = TimeSpan.FromSeconds(defaultLinearizerDurationWork);
             Linearizer = new Linearizer(_logger, timeout, durationWork.Value, _connectionString);
-            Linearizer.Start();
         }
     }
 }

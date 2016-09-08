@@ -66,6 +66,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="JilSerializer.cs" />
+    <Compile Include="LinearizerTests.cs" />
     <Compile Include="MsSqlPersistorTests\DeleteStream.cs" />
     <Compile Include="MsSqlPersistorTests\SaveChanges.cs" />
     <Compile Include="MsSqlPersistorTests\Load.cs" />

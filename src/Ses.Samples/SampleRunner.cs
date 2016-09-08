@@ -26,6 +26,7 @@ namespace Ses.Samples
             try
             {
                 using (var store = new EventStoreBuilder()
+                    .WithLogger(new NLogLogger())
                     .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly)
                     .WithMsSqlPersistor(connectionString, x =>
                     {

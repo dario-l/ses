@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("SimpleEventStore - MsSql")]
 [assembly: AssemblyDescription("")]
@@ -9,3 +10,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
 [assembly: Guid("a97505e5-4a89-4c15-ae47-d5e89f5ebd40")]
+[assembly: InternalsVisibleTo("Ses.MsSql.Tests")]

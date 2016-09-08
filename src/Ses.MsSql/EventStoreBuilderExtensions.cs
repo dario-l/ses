@@ -7,9 +7,8 @@ namespace Ses.MsSql
         public static EventStoreBuilder WithMsSqlPersistor(this EventStoreBuilder builder, string connectionString, Action<IMsSqlPersistorBuilder> persistorBuilder = null)
         {
             var sqlPersistorBuilder = new MsSqlPersistorBuilder(builder.Logger, connectionString);
-            var persistor = new MsSqlPersistor(sqlPersistorBuilder.Linearizer, connectionString);
-            builder.WithPersistor(persistor);
-            persistorBuilder?.Invoke(sqlPersistorBuilder);
+            if (persistorBuilder != null) persistorBuilder(sqlPersistorBuilder);
+            builder.WithPersistor(new MsSqlPersistor(sqlPersistorBuilder.Linearizer, connectionString));
             return builder;
         }
     }

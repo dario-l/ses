@@ -28,11 +28,12 @@ namespace Ses.MsSql
 
         public void Start()
         {
+            _logger.Debug($"Starting linearizer for duration {_durationWork.TotalMinutes} minute(s)...");
             _startedAt.Set(DateTime.UtcNow);
             if (_isRunning) return;
-            _logger.Debug($"Starting linearizer for duration {_durationWork.TotalMinutes} minute(s)...");
             _timer.Start();
             _isRunning = true;
+            _logger.Debug($"Linearizer for duration {_durationWork.TotalMinutes} minute(s) started.");
         }
 
         public void Stop()
@@ -66,6 +67,7 @@ namespace Ses.MsSql
         {
             try
             {
+                if (_connectionString == null) return;
                 var cancellationToken = new CancellationToken();
                 using (var cnn = new SqlConnection(_connectionString))
                 {
@@ -87,5 +89,7 @@ namespace Ses.MsSql
         {
             _timer.Dispose();
         }
+
+        public bool IsRunning => _isRunning;
     }
 }

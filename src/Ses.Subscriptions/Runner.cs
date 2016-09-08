@@ -40,12 +40,16 @@ namespace Ses.Subscriptions
 
         public void Start()
         {
+            _poolerContext.Logger.Trace(Pooler.RunForDuration.HasValue
+                // ReSharper disable once PossibleInvalidOperationException
+                ? $"Starting runner for pooler {Pooler.GetType().FullName} for duration {Pooler.RunForDuration.Value.TotalMinutes} minute(s)..."
+                : $"Starting runner for pooler {Pooler.GetType().FullName}...");
             _startedAt.Set(DateTime.UtcNow);
             if (_isRunning) return;
             _poolerContext.Logger.Debug(Pooler.RunForDuration.HasValue
                 // ReSharper disable once PossibleInvalidOperationException
-                ? $"Starting runner for pooler {Pooler.GetType().FullName} for duration {Pooler.RunForDuration.Value.TotalMinutes} minute(s)..."
-                : $"Starting runner for pooler {Pooler.GetType().FullName}...");
+                ? $"Runner for pooler {Pooler.GetType().FullName} for duration {Pooler.RunForDuration.Value.TotalMinutes} minute(s) started."
+                : $"Runner for pooler {Pooler.GetType().FullName} started.");
             _runnerTimer.Start();
             _isRunning = true;
         }

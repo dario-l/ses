@@ -93,7 +93,7 @@ namespace Ses
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             if (expectedVersion < ExpectedVersion.Any) throw new InvalidOperationException($"Expected version {expectedVersion} for stream {streamId} is invalid.");
             if (!stream.Events.Any()) return;
-            _settings.Logger.Debug("Saving changes for stream '{0}' with commit '{1}'...", streamId, stream.CommitId);
+            _settings.Logger.Trace("Saving changes for stream '{0}' with commit '{1}'...", streamId, stream.CommitId);
             await TrySaveChanges(streamId, expectedVersion, stream, cancellationToken);
         }
 
