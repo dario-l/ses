@@ -39,7 +39,7 @@ namespace Ses.Subscriptions.MsSql
             }
         }
 
-        public async Task<IList<ExtractedEvent>> Fetch(IContractsRegistry registry, long lastVersion, int? subscriptionId)
+        public async Task<IList<ExtractedEvent>> FetchAsync(IContractsRegistry registry, long lastVersion, int? subscriptionId)
         {
             var extractedEvents = new List<ExtractedEvent>(100);
             using (var cnn = new SqlConnection(_connectionString))
@@ -75,7 +75,7 @@ namespace Ses.Subscriptions.MsSql
             return extractedEvents;
         }
 
-        public virtual async Task<int> CreateSubscriptionForContracts(string name, params string[] contractNames)
+        public virtual async Task<int> CreateSubscriptionForContractsAsync(string name, params string[] contractNames)
         {
             using (var cnn = new SqlConnection(_connectionString))
             using (var cmd = cnn.CreateCommand())
@@ -95,6 +95,42 @@ namespace Ses.Subscriptions.MsSql
                     {
                         cmd.Parameters[1].Value = contractName;
                         await cmd.ExecuteNonQueryAsync().NotOnCapturedContext();
+                    }
+                    cmd.Transaction.Commit();
+                    return subscriptionId;
+                }
+                catch
+                {
+                    cmd.Transaction?.Rollback();
+                    throw;
+                }
+                finally
+                {
+                    cnn.Close();
+                }
+            }
+        }
+
+        public int CreateSubscriptionForContracts(string name, params string[] contractNames)
+        {
+            using (var cnn = new SqlConnection(_connectionString))
+            using (var cmd = cnn.CreateCommand())
+            {
+                try
+                {
+                    cnn.Open();
+                    cmd.Transaction = cnn.BeginTransaction();
+                    cmd.CommandText = "IF(SELECT Count(1) FROM StreamsSubscriptions WHERE Name = @Name) = 0 BEGIN INSERT INTO StreamsSubscriptions(Name) OUTPUT Inserted.ID VALUES(@Name); END;";
+                    cmd.AddInputParam("@Name", DbType.String, name);
+                    var subscriptionId = (int)cmd.ExecuteScalar();
+                    cmd.Parameters.Clear();
+                    cmd.CommandText = "INSERT INTO StreamsSubscriptionContracts(StreamsSubscriptionId,EventContractName)VALUES(@SubscriptionId,@ContractName)";
+                    cmd.AddInputParam("@SubscriptionId", DbType.Int32, subscriptionId);
+                    cmd.AddInputParam("@ContractName", DbType.String, null);
+                    foreach (var contractName in contractNames)
+                    {
+                        cmd.Parameters[1].Value = contractName;
+                        cmd.ExecuteNonQuery();
                     }
                     cmd.Transaction.Commit();
                     return subscriptionId;

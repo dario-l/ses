@@ -6,7 +6,8 @@ namespace Ses.Abstracts.Subscriptions
 {
     public interface ISubscriptionEventSource
     {
-        Task<IList<ExtractedEvent>> Fetch(IContractsRegistry registry, long lastVersion, int? subscriptionId);
-        Task<int> CreateSubscriptionForContracts(string name, params string[] contractNames);
+        Task<IList<ExtractedEvent>> FetchAsync(IContractsRegistry registry, long lastVersion, int? subscriptionId);
+        Task<int> CreateSubscriptionForContractsAsync(string name, params string[] contractNames);
+        int CreateSubscriptionForContracts(string name, params string[] contractNames);
     }
 }

@@ -49,14 +49,14 @@ namespace Ses.Subscriptions
             return this;
         }
 
-        public async Task<EventStoreSubscriptions> Start()
+        public EventStoreSubscriptions Start()
         {
             if (_contractRegistry == null) throw new InvalidOperationException("Contract registry is not set. Use own IContractRegistry implementation or DefaultContractsRegistry.");
 
             foreach (var pooler in _poolers)
             {
-                await ClearUnusedStates(pooler);
-                await pooler.OnStart(_contractRegistry);
+                ClearUnusedStates(pooler);
+                pooler.OnStart(_contractRegistry);
 
                 var runner = new Runner(_contractRegistry, _logger, _poolerStateRepository, pooler);
                 _runners.Add(pooler.GetType(), runner);
@@ -65,13 +65,41 @@ namespace Ses.Subscriptions
             return this;
         }
 
-        private async Task ClearUnusedStates(SubscriptionPooler pooler)
+        public async Task<EventStoreSubscriptions> StartAsync()
+        {
+            if (_contractRegistry == null) throw new InvalidOperationException("Contract registry is not set. Use own IContractRegistry implementation or DefaultContractsRegistry.");
+
+            foreach (var pooler in _poolers)
+            {
+                await ClearUnusedStatesAsync(pooler);
+                await pooler.OnStartAsync(_contractRegistry);
+
+                var runner = new Runner(_contractRegistry, _logger, _poolerStateRepository, pooler);
+                _runners.Add(pooler.GetType(), runner);
+                runner.Start();
+            }
+            return this;
+        }
+
+        private void ClearUnusedStates(SubscriptionPooler pooler)
         {
             var poolerContractName = _contractRegistry.GetContractName(pooler.GetType());
             var handlerTypes = pooler.GetRegisteredHandlers();
             var sourceTypes = pooler.Sources.Select(x => x.GetType()).ToList();
 
-            await _poolerStateRepository.RemoveNotUsedStates(
+            _poolerStateRepository.RemoveNotUsedStates(
+                poolerContractName,
+                handlerTypes.Select(x => _contractRegistry.GetContractName(x)).ToArray(),
+                sourceTypes.Select(x => _contractRegistry.GetContractName(x)).ToArray());
+        }
+
+        private async Task ClearUnusedStatesAsync(SubscriptionPooler pooler)
+        {
+            var poolerContractName = _contractRegistry.GetContractName(pooler.GetType());
+            var handlerTypes = pooler.GetRegisteredHandlers();
+            var sourceTypes = pooler.Sources.Select(x => x.GetType()).ToList();
+
+            await _poolerStateRepository.RemoveNotUsedStatesAsync(
                 poolerContractName,
                 handlerTypes.Select(x => _contractRegistry.GetContractName(x)).ToArray(),
                 sourceTypes.Select(x => _contractRegistry.GetContractName(x)).ToArray());

@@ -52,7 +52,7 @@ namespace Ses.Subscriptions.MsSql
             return this;
         }
 
-        public async Task<IReadOnlyCollection<PoolerState>> Load(string poolerContractName, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<IReadOnlyCollection<PoolerState>> LoadAsync(string poolerContractName, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (!_states.IsEmpty) return _states.Where(x => x.PoolerContractName == poolerContractName).ToList(); // TODO: this is so stupid, pooler should cache own collection of states -> locking no needed
 
@@ -85,7 +85,7 @@ namespace Ses.Subscriptions.MsSql
             }
         }
 
-        public async Task InsertOrUpdate(PoolerState state, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task InsertOrUpdateAsync(PoolerState state, CancellationToken cancellationToken = default(CancellationToken))
         {
             using (var cnn = new SqlConnection(_connectionString))
             using (var cmd = cnn.CreateCommand())
@@ -106,7 +106,7 @@ namespace Ses.Subscriptions.MsSql
             }
         }
 
-        public async Task RemoveNotUsedStates(string poolerContractName, string[] handlerContractNames, string[] sourceContractNames, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task RemoveNotUsedStatesAsync(string poolerContractName, string[] handlerContractNames, string[] sourceContractNames, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (handlerContractNames.Length == 0 || sourceContractNames.Length == 0) return;
 
@@ -128,6 +128,36 @@ namespace Ses.Subscriptions.MsSql
                     cmd.AddArrayParameters(SqlClientScripts.ParamSourceContractNames, DbType.String, sourceContractNames);
                     await cnn.OpenAsync(cancellationToken).NotOnCapturedContext();
                     await cmd.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();
+                }
+            }
+            finally
+            {
+                _mySemaphoreSlim.Release();
+            }
+        }
+
+        public void RemoveNotUsedStates(string poolerContractName, string[] handlerContractNames, string[] sourceContractNames)
+        {
+            if (handlerContractNames.Length == 0 || sourceContractNames.Length == 0) return;
+
+            _mySemaphoreSlim.Wait();
+            try
+            {
+                while (!_states.IsEmpty)
+                {
+                    PoolerState someItem;
+                    _states.TryTake(out someItem);
+                }
+
+                using (var cnn = new SqlConnection(_connectionString))
+                using (var cmd = cnn.CreateCommand())
+                {
+                    cmd.CommandText = SqlClientScripts.DeleteNotUsedStates;
+                    cmd.AddInputParam(SqlClientScripts.ParamPoolerContractName, DbType.String, poolerContractName);
+                    cmd.AddArrayParameters(SqlClientScripts.ParamHandlerContractNames, DbType.String, handlerContractNames);
+                    cmd.AddArrayParameters(SqlClientScripts.ParamSourceContractNames, DbType.String, sourceContractNames);
+                    cnn.Open();
+                    cmd.ExecuteNonQuery();
                 }
             }
             finally

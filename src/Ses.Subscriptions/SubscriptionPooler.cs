@@ -32,7 +32,7 @@ namespace Ses.Subscriptions
 
         internal IEnumerable<Type> GetRegisteredHandlers() => _handlerRegistrar.RegisteredHandlerTypes;
 
-        internal async Task OnStart(IContractsRegistry contractsRegistry)
+        internal void OnStart(IContractsRegistry contractsRegistry)
         {
             _poolerContractName = contractsRegistry.GetContractName(GetType());
             var eventTypes = GetConcreteSubscriptionEventTypes();
@@ -42,7 +42,22 @@ namespace Ses.Subscriptions
 
             foreach (var source in Sources)
             {
-                var id = await source.CreateSubscriptionForContracts(_poolerContractName, contractNames);
+                var id = source.CreateSubscriptionForContracts(_poolerContractName, contractNames);
+                _contractSubscriptions.Add(source, id);
+            }
+        }
+
+        internal async Task OnStartAsync(IContractsRegistry contractsRegistry)
+        {
+            _poolerContractName = contractsRegistry.GetContractName(GetType());
+            var eventTypes = GetConcreteSubscriptionEventTypes();
+            if (eventTypes == null) return;
+
+            var contractNames = eventTypes.Select(contractsRegistry.GetContractName).ToArray();
+
+            foreach (var source in Sources)
+            {
+                var id = await source.CreateSubscriptionForContractsAsync(_poolerContractName, contractNames);
                 _contractSubscriptions.Add(source, id);
             }
         }
@@ -52,7 +67,7 @@ namespace Ses.Subscriptions
             var anyDispatched = false;
             try
             {
-                var poolerStates = await ctx.StateRepository.Load(_poolerContractName, cancellationToken);
+                var poolerStates = await ctx.StateRepository.LoadAsync(_poolerContractName, cancellationToken);
                 var timeline = await FetchEventTimeline(ctx, poolerStates);
 
                 foreach (var item in timeline)
@@ -105,7 +120,7 @@ namespace Ses.Subscriptions
                     }
                 }
                 state.EventSequenceId = envelope.SequenceId;
-                await ctx.StateRepository.InsertOrUpdate(state);
+                await ctx.StateRepository.InsertOrUpdateAsync(state);
                 scope.Complete();
             }
             if (shouldDispatch) PostHandleEvent(envelope, handlerInfo.HandlerType);
@@ -143,7 +158,7 @@ namespace Ses.Subscriptions
                 var concreteSubscriptionIdentifier = _contractSubscriptions.Count > 0 && _contractSubscriptions.ContainsKey(source)
                     ? _contractSubscriptions[source]
                     : (int?)null;
-                var task = source.Fetch(ctx.ContractsRegistry, minSequenceId, concreteSubscriptionIdentifier);
+                var task = source.FetchAsync(ctx.ContractsRegistry, minSequenceId, concreteSubscriptionIdentifier);
                 tasks.Add(task);
             }
 

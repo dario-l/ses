@@ -6,8 +6,10 @@ namespace Ses.Subscriptions
 {
     public interface IPoolerStateRepository
     {
-        Task<IReadOnlyCollection<PoolerState>> Load(string poolerContractName, CancellationToken cancellationToken = default(CancellationToken));
-        Task InsertOrUpdate(PoolerState state, CancellationToken cancellationToken = default(CancellationToken));
-        Task RemoveNotUsedStates(string poolerContractName, string[] handlerContractNames, string[] sourceContractNames, CancellationToken cancellationToken = default(CancellationToken));
+        Task<IReadOnlyCollection<PoolerState>> LoadAsync(string poolerContractName, CancellationToken cancellationToken = default(CancellationToken));
+        Task InsertOrUpdateAsync(PoolerState state, CancellationToken cancellationToken = default(CancellationToken));
+        Task RemoveNotUsedStatesAsync(string poolerContractName, string[] handlerContractNames, string[] sourceContractNames, CancellationToken cancellationToken = default(CancellationToken));
+
+        void RemoveNotUsedStates(string poolerContractName, string[] handlerContractNames, string[] sourceContractNames);
     }
 }

@@ -11,7 +11,7 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
 
             var sut = new MsSqlPoolerStateRepository(ConnectionString).Initialize();
 
-            var x = await Record.ExceptionAsync(async () => await sut.RemoveNotUsedStates("fakePooler", new[] { "fakeHandler" }, new[] { "fakeSource" }));
+            var x = await Record.ExceptionAsync(async () => await sut.RemoveNotUsedStatesAsync("fakePooler", new[] { "fakeHandler" }, new[] { "fakeSource" }));
 
             Assert.Null(x);
         }
@@ -25,9 +25,9 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
 
             var state = new PoolerState("fakePooler", "fakeSource", "fakeHandler");
 
-            await sut.RemoveNotUsedStates(state.PoolerContractName, new[] { state.HandlerContractName }, new[] { state.SourceContractName });
+            await sut.RemoveNotUsedStatesAsync(state.PoolerContractName, new[] { state.HandlerContractName }, new[] { state.SourceContractName });
 
-            var result = await sut.Load("fakePooler");
+            var result = await sut.LoadAsync("fakePooler");
 
             Assert.Empty(result);
         }

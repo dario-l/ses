@@ -161,7 +161,7 @@ namespace Ses.Samples
                 .Add(new ProjectionsSubscriptionPooler(sources))
                 .Add(new ProcessManagersSubscriptionPooler(sources))
                 .Add(new EmailSenderSubscriptionPooler(sources))
-                .Start();
+                .StartAsync();
         }
     }
 }
