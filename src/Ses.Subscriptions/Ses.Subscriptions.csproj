@@ -40,7 +40,6 @@
     <Compile Include="EventStoreSubscriptions.cs" />
     <Compile Include="HandlerRegistrar.cs" />
     <Compile Include="IEventStoreSubscriptions.cs" />
-    <Compile Include="InterlockedBoolean.cs" />
     <Compile Include="IPoolerStateRepository.cs" />
     <Compile Include="PoolerContext.cs" />
     <Compile Include="PoolerState.cs" />

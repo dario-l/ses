@@ -54,6 +54,7 @@
   <ItemGroup>
     <Compile Include="Contracts\DefaultContractsRegistry.cs" />
     <Compile Include="Extensions\TaskExtensions.cs" />
+    <Compile Include="InterlockedDateTime.cs" />
     <Compile Include="Subscriptions\ISubscriptionPooler.cs" />
     <Compile Include="Converters\DefaultEventConverterFactory.cs" />
     <Compile Include="Converters\IUpConverterFactory.cs" />

@@ -13,8 +13,8 @@ namespace Ses.MsSql
         private readonly string _connectionString;
         private readonly System.Timers.Timer _timer;
         private readonly TimeSpan _durationWork;
-        private DateTime? _startedAt;
-        private bool _isRunning;
+        private volatile bool _isRunning;
+        private readonly InterlockedDateTime _startedAt;
 
         public Linearizer(ILogger logger, TimeSpan timeout, TimeSpan durationWork, string connectionString)
         {
@@ -23,34 +23,41 @@ namespace Ses.MsSql
             _timer = new System.Timers.Timer(timeout.TotalMilliseconds) { AutoReset = false };
             _timer.Elapsed += (_, __) => Run().SwallowException();
             _durationWork = durationWork;
+            _startedAt = new InterlockedDateTime(DateTime.MaxValue);
         }
 
         public void Start()
         {
-            if (_startedAt.HasValue) return;
-            _startedAt = DateTime.UtcNow;
+            _startedAt.Set(DateTime.UtcNow);
+            if (_isRunning) return;
             _timer.Start();
+        }
+
+        public void Stop()
+        {
+            if (_timer == null) return;
+            _timer.Stop();
+            _isRunning = false;
+            _startedAt.Set(DateTime.MaxValue);
+            _logger.Trace("Linealizer stopped.");
         }
 
         private async Task Run()
         {
-            if (_isRunning) return;
-            _isRunning = true;
             if (ShouldStop())
             {
-                _startedAt = null;
-                _logger.Trace("Linealizer stopped.");
-                return;
+                Stop();
             }
-
-            await Linearize();
-            _isRunning = false;
-            _timer.Start();
+            else
+            {
+                await Linearize();
+                _timer.Start();
+            }
         }
 
         private bool ShouldStop()
         {
-            return _startedAt.HasValue && ((DateTime.UtcNow - _startedAt.Value) > _durationWork);
+            return ((DateTime.UtcNow - _startedAt.Value) > _durationWork);
         }
 
         private async Task Linearize()

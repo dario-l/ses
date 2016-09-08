@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 
-namespace Ses.Subscriptions
+namespace Ses.Abstracts
 {
     public class InterlockedDateTime
     {
