@@ -142,7 +142,7 @@ namespace Ses.MsSql
             _linearizer?.Start();
         }
 
-        private void SaveChangesExpectedVersion(SqlConnection cnn, IEnumerable<EventRecord> events, Guid streamId, Guid commitId, int expectedVersion, byte[] metadata)
+        private static void SaveChangesExpectedVersion(SqlConnection cnn, IEnumerable<EventRecord> events, Guid streamId, Guid commitId, int expectedVersion, byte[] metadata)
         {
             try
             {
@@ -172,7 +172,6 @@ namespace Ses.MsSql
             }
             catch (SqlException e)
             {
-                // TODO: check concurrency violation
                 if (e.IsUniqueConstraintViolation() || e.IsWrongExpectedVersionRised())
                 {
                     throw new WrongExpectedVersionException($"Saving new or existing stream {streamId} error. Stream exists.", e);
@@ -211,7 +210,6 @@ namespace Ses.MsSql
             }
             catch (SqlException e)
             {
-                // TODO: check concurrency violation
                 if (e.IsUniqueConstraintViolation() || e.IsWrongExpectedVersionRised())
                 {
                     throw new WrongExpectedVersionException($"Saving new or existing stream {streamId} error. Stream exists.", e);
