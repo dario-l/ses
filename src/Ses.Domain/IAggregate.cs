@@ -28,7 +28,7 @@ namespace Ses.Domain
         /// Returns new events registered during one scope of changes and clears internal collection.
         /// </summary>
         /// <returns>Collection of events</returns>
-        IEnumerable<IEvent> TakeUncommittedEvents();
+        IEvent[] TakeUncommittedEvents();
 
         /// <summary>
         /// 

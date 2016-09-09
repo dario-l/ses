@@ -60,7 +60,7 @@ namespace Ses.Domain
         /// Returns new events registered during one scope of changes.
         /// </summary>
         /// <returns>Collection of events</returns>
-        public IEnumerable<IEvent> TakeUncommittedEvents()
+        public IEvent[] TakeUncommittedEvents()
         {
             var events = _uncommittedEvents.ToArray();
             _uncommittedEvents.Clear();

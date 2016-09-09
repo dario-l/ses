@@ -61,7 +61,7 @@ namespace Ses.Domain
 
         protected virtual void OnBeforeSaveChanges(Guid id, int committedVersion, IEventStream stream) { }
 
-        private IEventStream PrepareEventStreamToSave(Guid? commitId, IEnumerable<IEvent> events)
+        private IEventStream PrepareEventStreamToSave(Guid? commitId, IEvent[] events)
         {
             var stream = new EventStream(commitId ?? SequentialGuid.NewGuid(), events, IsAggregateLockable());
             CreateDefaultMetadata(stream);

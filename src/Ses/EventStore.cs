@@ -79,7 +79,7 @@ namespace Ses
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             if (expectedVersion < ExpectedVersion.Any) throw new InvalidOperationException($"Expected version {expectedVersion} for stream {streamId} is invalid.");
-            if (!stream.Events.Any()) return;
+            if (stream.Events.Length == 0) return;
             _settings.Logger.Debug("Saving changes for stream '{0}' with commit '{1}'...", streamId, stream.CommitId);
 
             var metadata = stream.Metadata != null ? _settings.Serializer.Serialize(stream.Metadata, stream.Metadata.GetType()) : null;
@@ -92,7 +92,7 @@ namespace Ses
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             if (expectedVersion < ExpectedVersion.Any) throw new InvalidOperationException($"Expected version {expectedVersion} for stream {streamId} is invalid.");
-            if (!stream.Events.Any()) return;
+            if (stream.Events.Length == 0) return;
             _settings.Logger.Trace("Saving changes for stream '{0}' with commit '{1}'...", streamId, stream.CommitId);
             await TrySaveChanges(streamId, expectedVersion, stream, cancellationToken);
         }
@@ -122,7 +122,7 @@ namespace Ses
         private IEnumerable<EventRecord> CreateEventRecords(int expectedVersion, IEventStream stream)
         {
             if (expectedVersion < 0) expectedVersion = 0;
-            var records = new List<EventRecord>();
+            var records = new List<EventRecord>(stream.Events.Length);
             foreach (var @event in stream.Events)
             {
                 var version = ++expectedVersion;

@@ -25,25 +25,25 @@ namespace Ses.Samples
         {
             try
             {
-                using (var store = new EventStoreBuilder()
-                    .WithLogger(new NLogLogger())
-                    .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly)
-                    .WithMsSqlPersistor(connectionString, x =>
-                    {
-                        x.Destroy(true);
-                        x.Initialize();
-                        x.RunLinearizer(TimeSpan.FromMilliseconds(20));
-                    })
-                    .WithSerializer(new JilSerializer())
-                    .Build())
-                {
-                    await Sample1(store);
-                    await Sample2(store);
-                }
+                //using (var store = new EventStoreBuilder()
+                //    .WithLogger(new NLogLogger())
+                //    .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly)
+                //    .WithMsSqlPersistor(connectionString, x =>
+                //    {
+                //        x.Destroy(true);
+                //        x.Initialize();
+                //        x.RunLinearizer(TimeSpan.FromMilliseconds(20));
+                //    })
+                //    .WithSerializer(new JilSerializer())
+                //    .Build())
+                //{
+                //    await Sample1(store);
+                //    await Sample2(store);
+                //}
 
                 await SamplePerfTest();
 
-                await SampleSubscriptions();
+                //await SampleSubscriptions();
             }
             catch (Exception e)
             {
