@@ -20,7 +20,7 @@ namespace Ses.Subscriptions.MsSql
         private const string selectSubscriptionEventsProcedure = "SesSelectTimelineSubscriptionEvents";
         private const string sequenceIdParamName = "@SequenceId";
         private const string subscriptionIdParamName = "@SubscriptionId";
-        private static readonly Type metadataType = typeof(Dictionary<string, string>);
+        private static readonly Type metadataType = typeof(Dictionary<string, object>);
 
         public MsSqlEventSource(ISerializer serializer, string connectionString)
         {
