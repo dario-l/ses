@@ -4,7 +4,7 @@ namespace Ses.Subscriptions.MsSql
     {
         public const string InsertState = @"INSERT INTO [StreamsSubscriptionStates]([PoolerContractName],[SourceContractName],[HandlerContractName],[EventSequence])VALUES(@PoolerContractName,@SourceContractName,@HandlerContractName,@EventSequence)";
         public const string UpdateState = @"UPDATE [StreamsSubscriptionStates] SET [EventSequence]=@EventSequence WHERE [PoolerContractName]=@PoolerContractName AND [SourceContractName]=@SourceContractName AND [HandlerContractName]=@HandlerContractName";
-        public const string SelectStates = @"SELECT [PoolerContractName], [SourceContractName],[HandlerContractName],[EventSequence] FROM [StreamsSubscriptionStates]";
+        public const string SelectStates = @"SELECT [PoolerContractName], [SourceContractName],[HandlerContractName],[EventSequence] FROM [StreamsSubscriptionStates] WHERE [PoolerContractName] = @PoolerContractName";
         public const string DeleteNotUsedStates = @"DELETE FROM StreamsSubscriptionStates WHERE (([HandlerContractName] NOT IN (@HandlerContractNames)) OR ([SourceContractName] NOT IN (@SourceContractNames))) AND [PoolerContractName] = @PoolerContractName";
 
 

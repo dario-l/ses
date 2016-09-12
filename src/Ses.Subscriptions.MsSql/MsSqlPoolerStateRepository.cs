@@ -54,6 +54,7 @@ namespace Ses.Subscriptions.MsSql
             using (var cmd = cnn.CreateCommand())
             {
                 cmd.CommandText = SqlClientScripts.SelectStates;
+                cmd.AddInputParam(SqlClientScripts.ParamPoolerContractName, DbType.String, poolerContractName);
                 await cmd.Connection.OpenAsync(cancellationToken).NotOnCapturedContext();
                 using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult | CommandBehavior.SequentialAccess, cancellationToken).NotOnCapturedContext())
                 {
