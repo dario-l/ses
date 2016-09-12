@@ -118,10 +118,10 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="Ses_Destroy" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>sqlscripts\ses.destroy.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  <data name="Ses_Subscriptions_Destroy" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>sqlscripts\ses.subscriptions.destroy.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
-  <data name="Ses_Initialize" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>sqlscripts\ses.initialize.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  <data name="Ses_Subscriptions_Initialize" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>sqlscripts\ses.subscriptions.initialize.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
 </root>

@@ -23,7 +23,7 @@ namespace Ses.MsSql
                 using (var cnn = new SqlConnection(_connectionString))
                 using (var cmd = cnn.CreateCommand())
                 {
-                    cmd.CommandText = Scripts.Destroy;
+                    cmd.CommandText = Scripts.Ses_Destroy;
                     cnn.Open();
 
                     try
@@ -49,7 +49,7 @@ namespace Ses.MsSql
                 using (var cnn = new SqlConnection(_connectionString))
                 {
                     cnn.Open();
-                    var scripts = Scripts.Initialize.Split(new[] { "GO" }, StringSplitOptions.RemoveEmptyEntries);
+                    var scripts = Scripts.Ses_Initialize.Split(new[] { "GO" }, StringSplitOptions.RemoveEmptyEntries);
                     foreach (var script in scripts)
                     {
                         using (var cmd = cnn.CreateCommand())

@@ -41,6 +41,11 @@
     <Compile Include="MsSqlEventSource.cs" />
     <Compile Include="MsSqlPoolerStateRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Scripts.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Scripts.resx</DependentUpon>
+    </Compile>
     <Compile Include="SqlClientScripts.cs" />
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
@@ -58,6 +63,17 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Project.nuspec" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="Scripts.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Scripts.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="SqlScripts\Ses.Subscriptions.Initialize.txt" />
+    <Content Include="SqlScripts\Ses.Subscriptions.Destroy.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -41,6 +41,11 @@
     </Compile>
     <Compile Include="Linearizer.cs" />
     <Compile Include="MsSqlPersistor.Async.cs" />
+    <Compile Include="Scripts.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Scripts.resx</DependentUpon>
+    </Compile>
     <Compile Include="SqlClientExtensions.cs" />
     <Compile Include="EventStoreBuilderExtensions.cs" />
     <Compile Include="IMsSqlPersistorBuilder.cs" />
@@ -48,11 +53,6 @@
     <Compile Include="MsSqlPersistorBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SqlQueries.cs" />
-    <Compile Include="Scripts.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Scripts.resx</DependentUpon>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ses.Abstracts\Ses.Abstracts.csproj">
@@ -65,18 +65,17 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="SqlScripts\Destroy.txt" />
-    <Content Include="SqlScripts\Initialize.txt" />
+    <Content Include="SqlScripts\Ses.Destroy.txt" />
+    <Content Include="SqlScripts\Ses.Initialize.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Project.nuspec" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Scripts.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Scripts.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
     </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Project.nuspec" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Ses.MsSql {
+namespace Ses.Subscriptions.MsSql {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace Ses.MsSql {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Ses.MsSql.Scripts", typeof(Scripts).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Ses.Subscriptions.MsSql.Scripts", typeof(Scripts).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -61,45 +61,20 @@ namespace Ses.MsSql {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to DROP PROCEDURE [SesSelectEvents];
-        ///DROP PROCEDURE [SesInsertEventsNoStream];
-        ///DROP PROCEDURE [SesInsertEventsAny];
-        ///DROP PROCEDURE [SesInsertEventsExpectedVersion];
-        ///DROP PROCEDURE [SesSelectTimelineEvents];
-        ///DROP PROCEDURE [SesSelectTimelineSubscriptionEvents];
-        ///DROP PROCEDURE [SesDeleteStreamAny];
-        ///DROP PROCEDURE [SesDeleteStreamExpectedVersion];
-        ///DROP PROCEDURE [SesUpdateSnapshot];
-        ///DROP PROCEDURE [SesLinearize];
-        ///
-        ///DROP INDEX [IX_Streams_EventId] ON [Streams];
-        ///DROP INDEX [IX_Streams_InternalId] ON [Str [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string similar to .
         /// </summary>
-        internal static string Ses_Destroy {
+        internal static string Ses_Subscriptions_Destroy {
             get {
-                return ResourceManager.GetString("Ses_Destroy", resourceCulture);
+                return ResourceManager.GetString("Ses_Subscriptions_Destroy", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to CREATE TABLE [Streams] (
-        ///    [InternalId] BIGINT NOT NULL IDENTITY(1,1),
-        ///    [StreamId] uniqueidentifier NOT NULL,
-        ///    [Version] int NOT NULL,
-        ///    [CommitId] uniqueidentifier NOT NULL,
-        ///    [ContractName] nvarchar(225) NOT NULL,
-        ///    [CreatedAtUtc] datetime NOT NULL,
-        ///    [Payload] varbinary(max) NOT NULL,
-        ///    [EventId] BIGINT NULL
-        ///    CONSTRAINT [PK_Streams] PRIMARY KEY CLUSTERED ([StreamId],[Version],[CommitId])
-        ///);
-        ///
-        ///CREATE NONCLUSTERED INDEX [IX_Streams_EventId_InternalId] ON [dbo].[Streams] (
-        ///  [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string similar to .
         /// </summary>
-        internal static string Ses_Initialize {
+        internal static string Ses_Subscriptions_Initialize {
             get {
-                return ResourceManager.GetString("Ses_Initialize", resourceCulture);
+                return ResourceManager.GetString("Ses_Subscriptions_Initialize", resourceCulture);
             }
         }
     }

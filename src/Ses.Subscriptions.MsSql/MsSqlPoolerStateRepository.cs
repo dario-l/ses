@@ -26,7 +26,7 @@ namespace Ses.Subscriptions.MsSql
             using (var cnn = new SqlConnection(_connectionString))
             using (var cmd = cnn.CreateCommand())
             {
-                cmd.CommandText = SqlClientScripts.Initialize;
+                cmd.CommandText = Scripts.Ses_Subscriptions_Initialize;
                 cnn.Open();
                 cmd.ExecuteNonQuery();
             }
@@ -40,7 +40,7 @@ namespace Ses.Subscriptions.MsSql
             {
                 try
                 {
-                    cmd.CommandText = SqlClientScripts.Destroy;
+                    cmd.CommandText = Scripts.Ses_Subscriptions_Destroy;
                     cnn.Open();
                     cmd.ExecuteNonQuery();
                 }

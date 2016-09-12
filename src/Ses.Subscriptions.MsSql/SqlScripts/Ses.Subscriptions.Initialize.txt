@@ -1,0 +1,9 @@
+﻿IF (NOT EXISTS (SELECT TOP 1 TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'StreamsSubscriptionStates')) BEGIN
+    CREATE TABLE [StreamsSubscriptionStates] (
+        [PoolerContractName] NVARCHAR(225) NOT NULL,
+        [SourceContractName] NVARCHAR(225) NOT NULL,
+        [HandlerContractName] NVARCHAR(225) NOT NULL,
+        [EventSequence] BIGINT NOT NULL,
+        CONSTRAINT [PK_StreamsSubscriptionStates] PRIMARY KEY CLUSTERED ([PoolerContractName],[SourceContractName],[HandlerContractName])
+    )
+END
