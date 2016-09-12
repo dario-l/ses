@@ -20,8 +20,8 @@ namespace Ses.MsSql
         {
             _logger = logger;
             _connectionString = PrepareConnectionString(connectionString);
-            _timer = new System.Timers.Timer(timeout.TotalMilliseconds) { AutoReset = false };
-            _timer.Elapsed += (_, __) => Run().SwallowException();
+            _timer = new System.Timers.Timer(timeout.TotalMilliseconds) { AutoReset = false, SynchronizingObject = null,  Site = null };
+            _timer.Elapsed += (_, __) => Execute().SwallowException();
             _durationWork = durationWork;
             _startedAt = new InterlockedDateTime(DateTime.MaxValue);
         }
@@ -32,13 +32,14 @@ namespace Ses.MsSql
             return connectionString.TrimEnd(';') + "; Enlist = false;";
         }
 
+
         public void Start()
         {
             _logger.Debug($"Starting linearizer for duration {_durationWork.TotalMinutes} minute(s)...");
             _startedAt.Set(DateTime.UtcNow);
             if (_isRunning) return;
-            _timer.Start();
             _isRunning = true;
+            _timer.Start();
             _logger.Debug($"Linearizer for duration {_durationWork.TotalMinutes} minute(s) started.");
         }
 
@@ -48,10 +49,10 @@ namespace Ses.MsSql
             _timer.Stop();
             _isRunning = false;
             _startedAt.Set(DateTime.MaxValue);
-            _logger.Debug("Linealizer stopped.");
+            _logger.Debug("Linearizer stopped.");
         }
 
-        private async Task Run()
+        private async Task Execute()
         {
             if (ShouldStop())
             {
@@ -77,12 +78,12 @@ namespace Ses.MsSql
                 using (var cnn = new SqlConnection(_connectionString))
                 using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.Linearize.Query, cancellationToken).NotOnCapturedContext())
                 {
-                    cmd.CommandTimeout = 240;
                     await cmd
                         .ExecuteNonQueryAsync(cancellationToken)
                         .NotOnCapturedContext();
-                }
 
+                    cnn.Close();
+                }
             }
             catch (Exception e)
             {
@@ -96,6 +97,7 @@ namespace Ses.MsSql
 
         public void Dispose()
         {
+            Stop();
             _timer.Dispose();
         }
 
