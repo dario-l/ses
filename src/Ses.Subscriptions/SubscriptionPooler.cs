@@ -131,12 +131,6 @@ namespace Ses.Subscriptions
         protected virtual void PostHandleEvent(EventEnvelope envelope, Type handlerType) { }
         protected virtual void PostHandleEventException(EventEnvelope envelope, Type handlerType, Exception e) { }
 
-        private bool IsHandlerFor(Type handlerType, Type eventType)
-        {
-            var info = _handlerRegistrar.GetHandlerInfoFor(handlerType);
-            return info?.Events.Contains(eventType) ?? false;
-        }
-
         private PoolerState FindOrCreateState(IContractsRegistry contractsRegistry, IEnumerable<PoolerState> poolerStates, Type sourceType, Type handlerType)
         {
             var sourceContractName = contractsRegistry.GetContractName(sourceType);
