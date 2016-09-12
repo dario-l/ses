@@ -25,25 +25,26 @@ namespace Ses.Samples
         {
             try
             {
-                //using (var store = new EventStoreBuilder()
-                //    .WithLogger(new NLogLogger())
-                //    .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly)
-                //    .WithMsSqlPersistor(connectionString, x =>
-                //    {
-                //        x.Destroy(true);
-                //        x.Initialize();
-                //        x.RunLinearizer(TimeSpan.FromMilliseconds(20));
-                //    })
-                //    .WithSerializer(new JilSerializer())
-                //    .Build())
-                //{
-                //    await Sample1(store);
-                //    await Sample2(store);
-                //}
+                var store = new EventStoreBuilder()
+                    .WithLogger(new NLogLogger())
+                    .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly)
+                    .WithMsSqlPersistor(connectionString, x =>
+                    {
+                        x.Destroy(true);
+                        x.Initialize();
+                        x.RunLinearizer(TimeSpan.FromMilliseconds(20), TimeSpan.FromSeconds(10));
+                    })
+                    .WithSerializer(new JilSerializer())
+                    .Build();
+
+                await Sample1(store);
+                await Sample2(store);
+
+                await SampleSubscriptions();
+
+                await Task.Delay(5000);
 
                 await SamplePerfTest();
-
-                //await SampleSubscriptions();
             }
             catch (Exception e)
             {
@@ -112,11 +113,7 @@ namespace Ses.Samples
         {
             using (var store = new EventStoreBuilder()
                 .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly)
-                .WithMsSqlPersistor(connectionString, x =>
-                {
-                    x.Destroy(true);
-                    x.Initialize();
-                })
+                .WithMsSqlPersistor(connectionString)
                 .WithSerializer(new JilSerializer())
                 .Build())
             {

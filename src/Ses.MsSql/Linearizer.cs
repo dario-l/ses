@@ -19,11 +19,17 @@ namespace Ses.MsSql
         public Linearizer(ILogger logger, TimeSpan timeout, TimeSpan durationWork, string connectionString)
         {
             _logger = logger;
-            _connectionString = connectionString;
+            _connectionString = PrepareConnectionString(connectionString);
             _timer = new System.Timers.Timer(timeout.TotalMilliseconds) { AutoReset = false };
             _timer.Elapsed += (_, __) => Run().SwallowException();
             _durationWork = durationWork;
             _startedAt = new InterlockedDateTime(DateTime.MaxValue);
+        }
+
+        private static string PrepareConnectionString(string connectionString)
+        {
+            if (connectionString.ToLowerInvariant().Contains("enlist")) return connectionString;
+            return connectionString.TrimEnd(';') + "; Enlist = false;";
         }
 
         public void Start()
@@ -54,7 +60,6 @@ namespace Ses.MsSql
             else
             {
                 await Linearize();
-                _timer.Start();
             }
         }
 
@@ -70,18 +75,22 @@ namespace Ses.MsSql
                 if (_connectionString == null) return;
                 var cancellationToken = new CancellationToken();
                 using (var cnn = new SqlConnection(_connectionString))
+                using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.Linearize.Query, cancellationToken).NotOnCapturedContext())
                 {
-                    using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.Linearize.Query, cancellationToken).NotOnCapturedContext())
-                    {
-                        await cmd
-                            .ExecuteNonQueryAsync(cancellationToken)
-                            .NotOnCapturedContext();
-                    }
+                    cmd.CommandTimeout = 240;
+                    await cmd
+                        .ExecuteNonQueryAsync(cancellationToken)
+                        .NotOnCapturedContext();
                 }
+
             }
             catch (Exception e)
             {
                 _logger.Error(e.ToString());
+            }
+            finally
+            {
+                _timer.Start();
             }
         }
 
