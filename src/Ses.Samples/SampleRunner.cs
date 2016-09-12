@@ -26,6 +26,7 @@ namespace Ses.Samples
             try
             {
                 var store = new EventStoreBuilder()
+                    .WithSerializer(new JilSerializer())
                     .WithLogger(new NLogLogger())
                     .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly)
                     .WithMsSqlPersistor(connectionString, x =>
@@ -34,15 +35,19 @@ namespace Ses.Samples
                         x.Initialize();
                         x.RunLinearizer(TimeSpan.FromMilliseconds(20), TimeSpan.FromSeconds(10));
                     })
-                    .WithSerializer(new JilSerializer())
                     .Build();
+
+                await Task.Delay(1000);
 
                 await Sample1(store);
                 await Sample2(store);
 
-                await SampleSubscriptions();
+                var subs = await SampleSubscriptions();
 
                 await Task.Delay(5000);
+
+                subs.Dispose();
+                store.Dispose();
 
                 await SamplePerfTest();
             }
@@ -145,7 +150,7 @@ namespace Ses.Samples
             }
         }
 
-        private static async Task SampleSubscriptions()
+        private static async Task<IEventStoreSubscriptions> SampleSubscriptions()
         {
             var sources = new ISubscriptionEventSource[]
             {
@@ -153,7 +158,7 @@ namespace Ses.Samples
                 // new SomeApiEventSource()
             };
 
-            await new EventStoreSubscriptions(new MsSqlPoolerStateRepository(connectionString).Destroy(true).Initialize())
+            return await new EventStoreSubscriptions(new MsSqlPoolerStateRepository(connectionString).Destroy(true).Initialize())
                 .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly, typeof(MsSqlEventSource).Assembly)
                 .WithLogger(new NLogLogger())
                 .Add(new ProjectionsSubscriptionPooler(sources))
