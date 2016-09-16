@@ -13,7 +13,7 @@ SimpleEventStore is a simple event store library for .NET based on rdbms persist
  - Support any kind of serialization through ISerializer interface
  - Support any kind of loggers through ILogger interface
  - Support up-conversion of events/snapshots to the newest version
- - Subscriptions to one or many event stream sources for processmanagers/projections/others with pluggable stream readers
+ - Subscriptions to one or many event stream sources for processmanagers/projections/others with pluggable stream poolers
  - Built-in implementation for: MS SQL Server, InMemory
  - Built-in single-writer pattern for MS SQL Server implementation
 
@@ -38,7 +38,7 @@ using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, opti
     };
 
     var expectedVersion = aggregate.CommittedVersion + stream.Events.Count;
-    await _store.SaveChanges(aggregate.Id, expectedVersion, stream);
+    await _store.SaveChangesAsync(aggregate.Id, expectedVersion, stream);
 
     scope.Complete();
 }
@@ -52,11 +52,11 @@ using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, opti
     using (var repo = new SourcedRepo<ShoppingCart>(store))
     {
         // Open stream and restore aggregate from history
-        var aggregate = await repo.Load(id);
+        var aggregate = await repo.LoadAsync(id);
 
         aggregate.AddItem(Guid.NewGuid(), "Product 1", 3);
 
-        await repo.SaveChanges(aggregate);
+        await repo.SaveChangesAsync(aggregate);
     }
     scope.Complete();
 }
