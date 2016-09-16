@@ -131,17 +131,21 @@ namespace Ses.Subscriptions
         protected virtual void PostHandleEvent(EventEnvelope envelope, Type handlerType) { }
         protected virtual void PostHandleEventException(EventEnvelope envelope, Type handlerType, Exception e) { }
 
-        private PoolerState FindOrCreateState(IContractsRegistry contractsRegistry, IEnumerable<PoolerState> poolerStates, Type sourceType, Type handlerType)
+        private PoolerState FindOrCreateState(IContractsRegistry contractsRegistry, ICollection<PoolerState> poolerStates, Type sourceType, Type handlerType)
         {
             var sourceContractName = contractsRegistry.GetContractName(sourceType);
             var handlerContractName = contractsRegistry.GetContractName(handlerType);
 
-            var state = poolerStates.FirstOrDefault(x => x.HandlerContractName == handlerContractName && x.SourceContractName == sourceContractName)
-                ?? new PoolerState(_poolerContractName, sourceContractName, handlerContractName);
+            var state = poolerStates.FirstOrDefault(x => x.HandlerContractName == handlerContractName && x.SourceContractName == sourceContractName);
+            if (state == null)
+            {
+                state = new PoolerState(_poolerContractName, sourceContractName, handlerContractName);
+                poolerStates.Add(state);
+            }
             return state;
         }
 
-        private async Task<IList<ExtractedEvent>> FetchEventTimeline(PoolerContext ctx, IReadOnlyCollection<PoolerState> poolerStates)
+        private async Task<IList<ExtractedEvent>> FetchEventTimeline(PoolerContext ctx, ICollection<PoolerState> poolerStates)
         {
             var tasks = new List<Task<IList<ExtractedEvent>>>(Sources.Length);
             foreach (var source in Sources)

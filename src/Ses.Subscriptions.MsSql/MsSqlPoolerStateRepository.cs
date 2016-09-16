@@ -47,7 +47,7 @@ namespace Ses.Subscriptions.MsSql
             return this;
         }
 
-        public async Task<IReadOnlyCollection<PoolerState>> LoadAsync(string poolerContractName, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<IList<PoolerState>> LoadAsync(string poolerContractName, CancellationToken cancellationToken = default(CancellationToken))
         {
             var states = new List<PoolerState>(100);
             using (var cnn = new SqlConnection(_connectionString))
