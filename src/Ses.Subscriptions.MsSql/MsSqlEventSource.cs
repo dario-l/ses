@@ -20,7 +20,7 @@ namespace Ses.Subscriptions.MsSql
         private const string selectSubscriptionEventsProcedure = "SesSelectTimelineSubscriptionEvents";
         private const string sequenceIdParamName = "@SequenceId";
         private const string subscriptionIdParamName = "@SubscriptionId";
-        private static readonly Type metadataType = typeof(Dictionary<string, string>);
+        private static readonly Type metadataType = typeof(Dictionary<string, object>);
 
         public MsSqlEventSource(ISerializer serializer, string connectionString)
         {
@@ -55,7 +55,7 @@ namespace Ses.Subscriptions.MsSql
                         var @event = _serializer.Deserialize<IEvent>((byte[])reader[4], eventType);
                         var metadata = reader[7] == DBNull.Value
                             ? null
-                            : _serializer.Deserialize<IDictionary<string, string>>((byte[])reader[7], metadataType);
+                            : _serializer.Deserialize<IDictionary<string, object>>((byte[])reader[7], metadataType);
 
                         var envelope = new EventEnvelope(
                             reader.GetGuid(0), // StreamId 0

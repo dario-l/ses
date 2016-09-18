@@ -28,7 +28,7 @@ namespace Ses.MsSql
 
         private static string PrepareConnectionString(string connectionString)
         {
-            if (connectionString.ToLowerInvariant().Contains("enlist")) return connectionString;
+            if (connectionString == null || connectionString.ToLowerInvariant().Contains("enlist")) return connectionString;
             return connectionString.TrimEnd(';') + "; Enlist = false;";
         }
 
