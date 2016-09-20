@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Ses.Abstracts;
 using Ses.Abstracts.Contracts;
+using Ses.Abstracts.Converters;
 using Ses.Abstracts.Logging;
 
 namespace Ses.Subscriptions
@@ -16,6 +17,7 @@ namespace Ses.Subscriptions
         private readonly IPoolerStateRepository _poolerStateRepository;
         private IContractsRegistry _contractRegistry;
         private ILogger _logger;
+        private IUpConverterFactory _upConverterFactory;
 
         public EventStoreSubscriptions(IPoolerStateRepository poolerStateRepository)
         {
@@ -49,6 +51,12 @@ namespace Ses.Subscriptions
             return this;
         }
 
+        public EventStoreSubscriptions WithUpConverterFactory(IUpConverterFactory factory)
+        {
+            _upConverterFactory = factory;
+            return this;
+        }
+
         public EventStoreSubscriptions Start()
         {
             if (_contractRegistry == null) throw new InvalidOperationException("Contract registry is not set. Use own IContractRegistry implementation or DefaultContractsRegistry.");
@@ -58,7 +66,7 @@ namespace Ses.Subscriptions
                 ClearUnusedStates(pooler);
                 pooler.OnStart(_contractRegistry);
 
-                var runner = new Runner(_contractRegistry, _logger, _poolerStateRepository, pooler);
+                var runner = new Runner(_contractRegistry, _logger, _poolerStateRepository, pooler, _upConverterFactory);
                 _runners.Add(pooler.GetType(), runner);
                 runner.Start();
             }
@@ -74,7 +82,7 @@ namespace Ses.Subscriptions
                 await ClearUnusedStatesAsync(pooler);
                 await pooler.OnStartAsync(_contractRegistry);
 
-                var runner = new Runner(_contractRegistry, _logger, _poolerStateRepository, pooler);
+                var runner = new Runner(_contractRegistry, _logger, _poolerStateRepository, pooler, _upConverterFactory);
                 _runners.Add(pooler.GetType(), runner);
                 runner.Start();
             }

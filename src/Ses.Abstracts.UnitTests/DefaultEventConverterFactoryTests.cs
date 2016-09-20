@@ -1,5 +1,4 @@
-﻿using System;
-using Ses.Abstracts.Converters;
+﻿using Ses.Abstracts.Converters;
 using Ses.Abstracts.UnitTests.Fakes;
 using Xunit;
 
@@ -15,6 +14,18 @@ namespace Ses.Abstracts.UnitTests
 
             var converter = sut.CreateInstance(fakeContractType);
             Assert.NotNull(converter);
+        }
+
+        [Fact]
+        public void Converting_from_FakeContract1_to_FakeContract2_succeded()
+        {
+            var fakeContractType = typeof(FakeContract1);
+            IEvent event1 = new FakeContract1();
+            var sut = new DefaultUpConverterFactory(fakeContractType.Assembly);
+
+            var converter = sut.CreateInstance(fakeContractType);
+            IEvent event2 = ((dynamic)converter).Convert((dynamic)event1);
+            Assert.NotNull(event2 as FakeContract2);
         }
 
         [Fact]

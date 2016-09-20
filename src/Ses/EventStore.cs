@@ -32,7 +32,7 @@ namespace Ses
                 var upConverter = _settings.UpConverterFactory.CreateInstance(eventType);
                 while (upConverter != null)
                 {
-                    @event = ((dynamic)upConverter).Convert(@event);
+                    @event = ((dynamic)upConverter).Convert((dynamic)@event);
                     upConverter = _settings.UpConverterFactory.CreateInstance(@event.GetType());
                 }
             }
@@ -50,7 +50,7 @@ namespace Ses
                 var upConverter = _settings.UpConverterFactory.CreateInstance(snapshotType);
                 while (upConverter != null)
                 {
-                    memento = ((dynamic)upConverter).Convert(memento);
+                    memento = ((dynamic)upConverter).Convert((dynamic)memento);
                     upConverter = _settings.UpConverterFactory.CreateInstance(memento.GetType());
                 }
             }

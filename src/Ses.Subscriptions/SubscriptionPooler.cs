@@ -156,7 +156,7 @@ namespace Ses.Subscriptions
                 var concreteSubscriptionIdentifier = _contractSubscriptions.Count > 0 && _contractSubscriptions.ContainsKey(source)
                     ? _contractSubscriptions[source]
                     : (int?)null;
-                var task = source.FetchAsync(ctx.ContractsRegistry, minSequenceId, concreteSubscriptionIdentifier);
+                var task = source.FetchAsync(ctx.ContractsRegistry, ctx.UpConverterFactory, minSequenceId, concreteSubscriptionIdentifier);
                 tasks.Add(task);
             }
 

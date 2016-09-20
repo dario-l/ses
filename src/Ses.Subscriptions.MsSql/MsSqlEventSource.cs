@@ -6,6 +6,7 @@ using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Ses.Abstracts;
 using Ses.Abstracts.Contracts;
+using Ses.Abstracts.Converters;
 using Ses.Abstracts.Extensions;
 using Ses.Abstracts.Subscriptions;
 
@@ -39,7 +40,7 @@ namespace Ses.Subscriptions.MsSql
             }
         }
 
-        public async Task<IList<ExtractedEvent>> FetchAsync(IContractsRegistry registry, long lastVersion, int? subscriptionId)
+        public async Task<IList<ExtractedEvent>> FetchAsync(IContractsRegistry registry, IUpConverterFactory upConverterFactory, long lastVersion, int? subscriptionId)
         {
             var extractedEvents = new List<ExtractedEvent>(100);
             using (var cnn = new SqlConnection(_connectionString))
@@ -52,7 +53,7 @@ namespace Ses.Subscriptions.MsSql
                     while (await reader.ReadAsync().NotOnCapturedContext())
                     {
                         var eventType = registry.GetType(reader.GetString(3));
-                        var @event = _serializer.Deserialize<IEvent>((byte[])reader[4], eventType);
+                        var @event = UpConvert(upConverterFactory, eventType, _serializer.Deserialize<IEvent>((byte[])reader[4], eventType));
                         var metadata = reader[7] == DBNull.Value
                             ? null
                             : _serializer.Deserialize<IDictionary<string, object>>((byte[])reader[7], metadataType);
@@ -73,6 +74,19 @@ namespace Ses.Subscriptions.MsSql
                 }
             }
             return extractedEvents;
+        }
+
+        private static IEvent UpConvert(IUpConverterFactory upConverterFactory, Type eventType, IEvent @event)
+        {
+            if (upConverterFactory == null) return @event;
+
+            var upConverter = upConverterFactory.CreateInstance(eventType);
+            while (upConverter != null)
+            {
+                @event = ((dynamic)upConverter).Convert((dynamic)@event);
+                upConverter = upConverterFactory.CreateInstance(@event.GetType());
+            }
+            return @event;
         }
 
         public virtual async Task<int> CreateSubscriptionForContractsAsync(string name, params string[] contractNames)

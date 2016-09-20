@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ses.Abstracts;
 using Ses.Abstracts.Contracts;
+using Ses.Abstracts.Converters;
 using Ses.Abstracts.Extensions;
 
 namespace Ses.Subscriptions
@@ -19,12 +20,12 @@ namespace Ses.Subscriptions
         private readonly PoolerTimeoutCalculator _timeoutCalc;
         private readonly PoolerContext _poolerContext;
 
-        public Runner(IContractsRegistry contractsRegistry, ILogger logger, IPoolerStateRepository stateRepository, SubscriptionPooler pooler)
+        public Runner(IContractsRegistry contractsRegistry, ILogger logger, IPoolerStateRepository stateRepository, SubscriptionPooler pooler, IUpConverterFactory upConverterFactory)
         {
             if (pooler == null) throw new ArgumentNullException(nameof(pooler));
             Pooler = pooler;
 
-            _poolerContext = new PoolerContext(contractsRegistry, logger, stateRepository);
+            _poolerContext = new PoolerContext(contractsRegistry, logger, stateRepository, upConverterFactory);
             _startedAt = new InterlockedDateTime(DateTime.MaxValue);
             _timeoutCalc = new PoolerTimeoutCalculator(Pooler.GetFetchTimeout());
             _runnerTimer = CreateTimer(_timeoutCalc);

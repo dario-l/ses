@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Transactions;
 using Ses.Abstracts;
+using Ses.Abstracts.Converters;
 using Ses.Abstracts.Subscriptions;
 using Ses.Domain;
 using Ses.MsSql;
@@ -161,6 +162,7 @@ namespace Ses.Samples
             return await new EventStoreSubscriptions(new MsSqlPoolerStateRepository(connectionString).Destroy(true).Initialize())
                 .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly, typeof(MsSqlEventSource).Assembly)
                 .WithLogger(new NLogLogger())
+                .WithUpConverterFactory(new DefaultUpConverterFactory(typeof(SampleRunner).Assembly))
                 .Add(new ProjectionsSubscriptionPooler(sources))
                 .Add(new ProcessManagersSubscriptionPooler(sources))
                 .Add(new EmailSenderSubscriptionPooler(sources))
