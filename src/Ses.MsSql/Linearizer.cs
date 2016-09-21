@@ -16,7 +16,7 @@ namespace Ses.MsSql
         private volatile bool _isRunning;
         private readonly InterlockedDateTime _startedAt;
 
-        public Linearizer(ILogger logger, TimeSpan timeout, TimeSpan durationWork, string connectionString)
+        public Linearizer(string connectionString, ILogger logger, TimeSpan timeout, TimeSpan durationWork)
         {
             _logger = logger;
             _connectionString = PrepareConnectionString(connectionString);
@@ -32,15 +32,13 @@ namespace Ses.MsSql
             return connectionString.TrimEnd(';') + "; Enlist = false;";
         }
 
-
         public void Start()
         {
-            _logger.Debug($"Starting linearizer for duration {_durationWork.TotalMinutes} minute(s)...");
             _startedAt.Set(DateTime.UtcNow);
             if (_isRunning) return;
             _isRunning = true;
             _timer.Start();
-            _logger.Debug($"Linearizer for duration {_durationWork.TotalMinutes} minute(s) started.");
+            _logger.Debug("Linearizer for duration {0} minute(s) started.", _durationWork.TotalMinutes);
         }
 
         public void Stop()
@@ -81,7 +79,6 @@ namespace Ses.MsSql
                     await cmd
                         .ExecuteNonQueryAsync(cancellationToken)
                         .NotOnCapturedContext();
-
                     cnn.Close();
                 }
             }

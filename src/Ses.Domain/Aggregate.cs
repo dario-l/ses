@@ -10,7 +10,7 @@ namespace Ses.Domain
     /// </summary>
     public abstract class Aggregate : IAggregate
     {
-        private readonly IList<IEvent> _uncommittedEvents = new List<IEvent>();
+        private readonly List<IEvent> _uncommittedEvents = new List<IEvent>(3);
 
         /// <summary>
         /// Replay existing events to get current state
@@ -33,10 +33,10 @@ namespace Ses.Domain
             }
         }
 
-        public virtual void Restore(Guid id, IEnumerable<IEvent> history)
+        public virtual void Restore(Guid id, IEvent[] history)
         {
             Id = id;
-            RestoreFrom(history.ToArray());
+            RestoreFrom(history);
         }
 
         protected virtual void RestoreFromSnapshot(IMemento memento) { }

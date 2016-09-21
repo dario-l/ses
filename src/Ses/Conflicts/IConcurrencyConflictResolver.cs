@@ -1,11 +1,10 @@
 using System;
-using System.Collections.Generic;
 
 namespace Ses.Conflicts
 {
     public interface IConcurrencyConflictResolver : IConcurrencyConflictResolverRegister
     {
-        bool ConflictsWith(Type eventToCheck, IEnumerable<Type> previousEvents);
+        bool ConflictsWith(Type eventToCheck, Type[] previousEventTypes);
     }
 
     public interface IConcurrencyConflictResolverRegister

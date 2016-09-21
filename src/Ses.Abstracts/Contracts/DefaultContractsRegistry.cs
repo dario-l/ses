@@ -9,8 +9,8 @@ namespace Ses.Abstracts.Contracts
 {
     public class DefaultContractsRegistry : IContractsRegistry
     {
-        readonly IDictionary<string, Type> _contract2Type = new Dictionary<string, Type>();
-        readonly IDictionary<Type, string> _type2Contract = new Dictionary<Type, string>();
+        readonly Dictionary<string, Type> _contract2Type = new Dictionary<string, Type>();
+        readonly Dictionary<Type, string> _type2Contract = new Dictionary<Type, string>();
 
         public DefaultContractsRegistry(params Assembly[] assemblies)
         {
@@ -36,7 +36,7 @@ namespace Ses.Abstracts.Contracts
         private static string CreateContractName(Type type)
         {
             var attr = type.GetCustomAttribute<DataContractAttribute>(false);
-            var name = (attr == null ? type.FullName : attr.Namespace + "." + attr.Name).Trim('.');
+            var name = attr == null ? type.FullName : string.Concat(attr.Namespace, ".", attr.Name).Trim('.');
             if (name.Length > 225)
                 throw new InvalidDataContractException($"The length of contract name for type {type.FullName} must be shorten than 225. Current '{name}' is {name.Length}.");
 

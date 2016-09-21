@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Ses.Abstracts;
@@ -57,18 +56,18 @@ namespace Ses
         public async Task<IReadOnlyEventStream> LoadAsync(Guid streamId, bool pessimisticLock, CancellationToken cancellationToken = default(CancellationToken))
         {
             var events = await _settings.Persistor.LoadAsync(streamId, 1, pessimisticLock, cancellationToken);
-            if (events == null || events.Count == 0) return null;
+            if (events == null || events.Length == 0) return null;
             var snapshot = events[0] as IRestoredMemento;
-            var currentVersion = snapshot?.Version + (events.Count - 1) ?? events.Count;
+            var currentVersion = snapshot?.Version + (events.Length - 1) ?? events.Length;
             return new ReadOnlyEventStream(events, currentVersion);
         }
 
         public IReadOnlyEventStream Load(Guid streamId, bool pessimisticLock)
         {
             var events = _settings.Persistor.Load(streamId, 1, pessimisticLock);
-            if (events == null || events.Count == 0) return null;
+            if (events == null || events.Length == 0) return null;
             var snapshot = events[0] as IRestoredMemento;
-            var currentVersion = snapshot?.Version + (events.Count - 1) ?? events.Count;
+            var currentVersion = snapshot?.Version + (events.Length - 1) ?? events.Length;
             return new ReadOnlyEventStream(events, currentVersion);
         }
 
@@ -108,7 +107,7 @@ namespace Ses
         }
 
 #if DEBUG
-        private void LogSavedStream(Guid streamId, int expectedVersion, Guid commitId, IEnumerable<EventRecord> events)
+        private void LogSavedStream(Guid streamId, int expectedVersion, Guid commitId, EventRecord[] events)
         {
             _settings.Logger.Trace($"Stream {streamId} v.{ExpectedVersion.Parse(expectedVersion)} commit {commitId}");
             foreach (var e in events)
@@ -118,16 +117,17 @@ namespace Ses
         }
 #endif
 
-        private IEnumerable<EventRecord> CreateEventRecords(int expectedVersion, IEventStream stream)
+        private EventRecord[] CreateEventRecords(int expectedVersion, IEventStream stream)
         {
             if (expectedVersion < 0) expectedVersion = 0;
-            var records = new List<EventRecord>(stream.Events.Length);
-            foreach (var @event in stream.Events)
+            var records = new EventRecord[stream.Events.Length];
+            for(var i = 0; i < stream.Events.Length; i++)
             {
+                var @event = stream.Events[i];
                 var version = ++expectedVersion;
                 var contractName = _settings.ContractsRegistry.GetContractName(@event.GetType());
                 var payload = _settings.Serializer.Serialize(@event, @event.GetType());
-                records.Add(new EventRecord(version, contractName, payload));
+                records[i] = new EventRecord(version, contractName, payload);
             }
             return records;
         }

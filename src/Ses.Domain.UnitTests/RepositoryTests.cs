@@ -30,8 +30,8 @@ namespace Ses.Domain.UnitTests
         public async void Loaded_aggregate_from_eventstore_with_one_event_return_committed_version_equals_1()
         {
             var streamId = Guid.Empty;
-            var events = new List<FakeEvent> { new FakeEvent() };
-            var committedVersion = events.Count;
+            var events = new List<IEvent> { new FakeEvent() }.ToArray();
+            var committedVersion = events.Length;
 
             var store = A.Fake<IEventStore>();
             A.CallTo(() => store.LoadAsync(streamId, false, CancellationToken.None))

@@ -15,6 +15,6 @@ namespace Ses.Abstracts
         public bool IsLockable { get; }
         public Guid CommitId { get; }
         public IEvent[] Events { get; }
-        public IDictionary<string, object> Metadata { get; set; }
+        public Dictionary<string, object> Metadata { get; set; }
     }
 }

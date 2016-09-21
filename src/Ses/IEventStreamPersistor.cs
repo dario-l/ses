@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Ses.Abstracts;
@@ -16,9 +15,16 @@ namespace Ses
         /// <param name="pessimisticLock">If <c>true</c> then acquires pessimistic lock.</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<IList<IEvent>> LoadAsync(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = default(CancellationToken));
+        Task<IEvent[]> LoadAsync(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = default(CancellationToken));
 
-        IList<IEvent> Load(Guid streamId, int fromVersion, bool pessimisticLock);
+        /// <summary>
+        /// Loads events from data source.
+        /// </summary>
+        /// <param name="streamId">Stream identifier</param>
+        /// <param name="fromVersion"></param>
+        /// <param name="pessimisticLock">If <c>true</c> then acquires pessimistic lock.</param>
+        /// <returns></returns>
+        IEvent[] Load(Guid streamId, int fromVersion, bool pessimisticLock);
 
         /// <summary>
         /// Deletes stream for a given id.
@@ -65,9 +71,9 @@ namespace Ses
         /// <param name="isLockable"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task SaveChangesAsync(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, bool isLockable, CancellationToken cancellationToken = default(CancellationToken));
+        Task SaveChangesAsync(Guid streamId, Guid commitId, int expectedVersion, EventRecord[] events, byte[] metadata, bool isLockable, CancellationToken cancellationToken = default(CancellationToken));
 
-        void SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, bool isLockable);
+        void SaveChanges(Guid streamId, Guid commitId, int expectedVersion, EventRecord[] events, byte[] metadata, bool isLockable);
     }
 
     public delegate IEvent OnReadEventHandler(Guid streamId, string contractName, int version, byte[] payload);

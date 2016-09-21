@@ -125,7 +125,7 @@ namespace Ses.Subscriptions
             }
         }
 
-        public void RunPooler(Type type)
+        public void RunStoppedPooler(Type type)
         {
             if (!_runners.ContainsKey(type)) throw new InvalidOperationException($"Pooler {type.FullName} is not registered.");
             _runners[type].Start();

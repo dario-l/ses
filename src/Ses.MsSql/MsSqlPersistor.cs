@@ -20,9 +20,9 @@ namespace Ses.MsSql
         public event OnReadEventHandler OnReadEvent;
         public event OnReadSnapshotHandler OnReadSnapshot;
 
-        public IList<IEvent> Load(Guid streamId, int fromVersion, bool pessimisticLock)
+        public IEvent[] Load(Guid streamId, int fromVersion, bool pessimisticLock)
         {
-            var list = new List<IEvent>(30);
+            List<IEvent> list = null;
             using (var cnn = new SqlConnection(_connectionString))
             {
                 using (var cmd = cnn.OpenAndCreateCommand(SqlQueries.SelectEvents.Query))
@@ -34,6 +34,8 @@ namespace Ses.MsSql
 
                     using (var reader = cmd.ExecuteReader())
                     {
+                        if (reader.HasRows) list = new List<IEvent>(100);
+
                         while (reader.Read()) // read snapshot
                         {
                             if (reader[0] == DBNull.Value) break;
@@ -48,6 +50,8 @@ namespace Ses.MsSql
 
                         reader.NextResult();
 
+                        if (list == null && reader.HasRows) list = new List<IEvent>(30);
+
                         while (reader.Read()) // read events
                         {
                             // ReSharper disable once PossibleNullReferenceException
@@ -60,7 +64,7 @@ namespace Ses.MsSql
                     }
                 }
             }
-            return list;
+            return list?.ToArray() ?? new IEvent[0];
         }
 
         public void DeleteStream(Guid streamId, int expectedVersion)
@@ -121,7 +125,7 @@ namespace Ses.MsSql
             }
         }
 
-        public void SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, bool isLockable)
+        public void SaveChanges(Guid streamId, Guid commitId, int expectedVersion, EventRecord[] events, byte[] metadata, bool isLockable)
         {
             using (var cnn = new SqlConnection(_connectionString))
             {
@@ -142,7 +146,7 @@ namespace Ses.MsSql
             _linearizer?.Start();
         }
 
-        private static void SaveChangesExpectedVersion(SqlConnection cnn, IEnumerable<EventRecord> events, Guid streamId, Guid commitId, int expectedVersion, byte[] metadata)
+        private static void SaveChangesExpectedVersion(SqlConnection cnn, EventRecord[] events, Guid streamId, Guid commitId, int expectedVersion, byte[] metadata)
         {
             try
             {
@@ -180,7 +184,7 @@ namespace Ses.MsSql
             }
         }
 
-        private static void SaveChangesAny(SqlConnection cnn, IEnumerable<EventRecord> events, Guid streamId, Guid commitId, byte[] metadata, bool isLockable)
+        private static void SaveChangesAny(SqlConnection cnn, EventRecord[] events, Guid streamId, Guid commitId, byte[] metadata, bool isLockable)
         {
             try
             {
@@ -218,7 +222,7 @@ namespace Ses.MsSql
             }
         }
 
-        private static void SaveChangesNoStream(SqlConnection cnn, IEnumerable<EventRecord> events, Guid streamId, Guid commitId, byte[] metadata, bool isLockable)
+        private static void SaveChangesNoStream(SqlConnection cnn, EventRecord[] events, Guid streamId, Guid commitId, byte[] metadata, bool isLockable)
         {
             try
             {

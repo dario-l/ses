@@ -20,11 +20,11 @@ namespace Ses.Domain.UnitTests
         public void Taking_uncommitted_events_without_adding_any_from_restored_aggregate_returns_empty_list()
         {
             var sut = new FakeAggregate();
-            IEnumerable<IEvent> events = new List<FakeEvent>
+            var events = new List<IEvent>
             {
                 new FakeEvent()
-            };
-            sut.Restore(SequentialGuid.NewGuid(), events);
+            }.ToArray();
+            sut.Restore(SequentialGuid.NewGuid(), events.ToArray());
             events = sut.TakeUncommittedEvents();
             Assert.Equal(0, events.Count());
         }
@@ -33,11 +33,11 @@ namespace Ses.Domain.UnitTests
         public void After_taking_uncommitted_events_from_restored_aggregate_with_2_events_returns_committed_version_equals_2()
         {
             var sut = new FakeAggregate();
-            IEnumerable<IEvent> events = new List<FakeEvent>
+            var events = new List<IEvent>
             {
                 new FakeEvent(),
                 new FakeEvent()
-            };
+            }.ToArray();
             sut.Restore(SequentialGuid.NewGuid(), events);
             sut.TakeUncommittedEvents();
             Assert.Equal(2, sut.CommittedVersion);
@@ -47,12 +47,12 @@ namespace Ses.Domain.UnitTests
         public void Restored_aggregate_with_snapshot_version_5_and_2_events_returns_committed_version_equals_7()
         {
             var sut = new FakeAggregate();
-            IEnumerable<IEvent> events = new List<IEvent>
+            var events = new List<IEvent>
             {
                 new RestoredMemento(5, new FakeAggregateState()),
                 new FakeEvent(),
                 new FakeEvent()
-            };
+            }.ToArray();
             sut.Restore(SequentialGuid.NewGuid(), events);
             Assert.Equal(7, sut.CommittedVersion);
         }
@@ -61,12 +61,12 @@ namespace Ses.Domain.UnitTests
         public void Restored_aggregate_with_snapshot_version_5_and_2_events_and_applied_one_uncommitted_event_returns_committed_version_equals_7()
         {
             var sut = new FakeAggregate();
-            IEnumerable<IEvent> events = new List<IEvent>
+            var events = new List<IEvent>
             {
                 new RestoredMemento(5, new FakeAggregateState()),
                 new FakeEvent(),
                 new FakeEvent()
-            };
+            }.ToArray();
             sut.Restore(SequentialGuid.NewGuid(), events);
             sut.BussinesOperation();
             Assert.Equal(7, sut.CommittedVersion);

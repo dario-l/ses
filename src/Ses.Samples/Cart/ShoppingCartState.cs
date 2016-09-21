@@ -6,11 +6,11 @@ namespace Ses.Samples.Cart
 {
     public class ShoppingCartState : IMemento
     {
-        public IList<CartItem> Items { get; private set; }
+        public List<CartItem> Items { get; private set; }
 
-        private void On(ShoppingCartCreated obj)
+        public ShoppingCartState()
         {
-            Items = new List<CartItem>();
+            Items = new List<CartItem>(2);
         }
 
         private void On(ItemAddedToShoppingCart obj)

@@ -35,7 +35,7 @@ namespace Ses.Domain
         /// </summary>
         /// <param name="id"></param>
         /// <param name="history"></param>
-        void Restore(Guid id, IEnumerable<IEvent> history);
+        void Restore(Guid id, IEvent[] history);
     }
 
     /// <summary>

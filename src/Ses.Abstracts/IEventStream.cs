@@ -8,6 +8,6 @@ namespace Ses.Abstracts
         bool IsLockable { get; }
         Guid CommitId { get; }
         IEvent[] Events { get; }
-        IDictionary<string, object> Metadata { get; set; }
+        Dictionary<string, object> Metadata { get; set; }
     }
 }

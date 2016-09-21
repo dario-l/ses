@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using Ses.Abstracts;
 
 namespace Ses.Domain
 {
@@ -26,7 +27,7 @@ namespace Ses.Domain
         }
 
         [DebuggerNonUserCode]
-        public static void InvokeEventOptional<T>(T instance, object @event)
+        public static void InvokeEventOptional<T>(T instance, IEvent @event)
         {
             MethodInfo info;
             var type = @event.GetType();
@@ -34,7 +35,7 @@ namespace Ses.Domain
 
             try
             {
-                info.Invoke(instance, new[] { @event });
+                info.Invoke(instance, new object[] { @event });
             }
             catch (TargetInvocationException ex)
             {

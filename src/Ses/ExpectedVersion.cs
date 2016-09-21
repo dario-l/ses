@@ -2,6 +2,9 @@
 {
     public static class ExpectedVersion
     {
+        private const string any = "Any";
+        private const string noStream = "NoStream";
+
         /// <summary>
         /// This write should not conflict with anything and should always succeed.
         /// </summary>
@@ -18,9 +21,9 @@
             switch (version)
             {
                 case Any:
-                    return "Any";
+                    return any;
                 case NoStream:
-                    return "NoStream";
+                    return noStream;
                 default:
                     return version.ToString();
             }

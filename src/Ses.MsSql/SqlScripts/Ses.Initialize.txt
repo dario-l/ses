@@ -200,6 +200,7 @@ CREATE PROCEDURE SesSelectTimelineEvents
 )
 AS
 BEGIN
+    SET NOCOUNT ON;
     SELECT TOP 1000
         s.[StreamId],
         s.[Version],
@@ -226,6 +227,7 @@ CREATE PROCEDURE SesSelectTimelineSubscriptionEvents
 )
 AS
 BEGIN
+    SET NOCOUNT ON;
     SELECT TOP 500
         s.[StreamId],
         s.[Version],
@@ -252,6 +254,7 @@ CREATE PROCEDURE SesDeleteStreamAny
     @StreamId UNIQUEIDENTIFIER
 )
 AS BEGIN
+    SET NOCOUNT ON;
     DELETE FROM [StreamsSnapshots] WHERE [StreamId]=@StreamId
     DELETE FROM [StreamsMetadata] WHERE [StreamId]=@StreamId
     DELETE FROM [Streams] WHERE [StreamId]=@StreamId
@@ -264,6 +267,7 @@ CREATE PROCEDURE SesDeleteStreamExpectedVersion
     @ExpectedVersion INT
 )
 AS BEGIN
+    SET NOCOUNT ON;
     DELETE FROM [StreamsSnapshots] WHERE [StreamId]=@StreamId AND (SELECT COUNT([Version]) FROM [Streams] WHERE [Version] >= @ExpectedVersion AND [StreamId] = @StreamId) = 1
     IF @@ROWCOUNT = 0 BEGIN
         RAISERROR('WrongExpectedVersion', 16, 1);
@@ -283,6 +287,7 @@ CREATE PROCEDURE SesUpdateSnapshot
     @Payload VARBINARY(MAX)
 )
 AS BEGIN
+    SET NOCOUNT ON;
     UPDATE [StreamsSnapshots] SET GeneratedAtUtc = @GeneratedAtUtc, Version = @Version, Payload = @Payload, ContractName = @ContractName WHERE [StreamId] = @StreamId
     IF @@ROWCOUNT = 0 BEGIN
         RAISERROR('WrongExpectedVersion', 16, 1);
@@ -293,6 +298,7 @@ GO
 
 CREATE PROCEDURE SesLinearize AS
 BEGIN
+    SET NOCOUNT ON;
     DECLARE @id BIGINT
     DECLARE cur CURSOR FAST_FORWARD FOR
         SELECT TOP 100 InternalId FROM Streams WITH (READPAST,ROWLOCK) WHERE EventId IS NULL ORDER BY InternalId ASC

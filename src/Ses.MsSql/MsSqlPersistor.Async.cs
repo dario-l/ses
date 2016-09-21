@@ -11,7 +11,7 @@ namespace Ses.MsSql
 {
     internal partial class MsSqlPersistor
     {
-        public async Task<IList<IEvent>> LoadAsync(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = new CancellationToken())
+        public async Task<IEvent[]> LoadAsync(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = new CancellationToken())
         {
             var list = new List<IEvent>(30);
             using (var cnn = new SqlConnection(_connectionString))
@@ -51,7 +51,7 @@ namespace Ses.MsSql
                     }
                 }
             }
-            return list;
+            return list.ToArray();
         }
 
         public async Task DeleteStreamAsync(Guid streamId, int expectedVersion, CancellationToken cancellationToken = new CancellationToken())
@@ -114,7 +114,7 @@ namespace Ses.MsSql
             }
         }
 
-        public async Task SaveChangesAsync(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, bool isLockable, CancellationToken cancellationToken = new CancellationToken())
+        public async Task SaveChangesAsync(Guid streamId, Guid commitId, int expectedVersion, EventRecord[] events, byte[] metadata, bool isLockable, CancellationToken cancellationToken = new CancellationToken())
         {
             using (var cnn = new SqlConnection(_connectionString))
             {
@@ -135,7 +135,7 @@ namespace Ses.MsSql
             _linearizer?.Start();
         }
 
-        private static async Task SaveChangesNoStreamAsync(SqlConnection cnn, IEnumerable<EventRecord> events, Guid streamId, Guid commitId, byte[] metadata, bool isLockable, CancellationToken cancellationToken)
+        private static async Task SaveChangesNoStreamAsync(SqlConnection cnn, EventRecord[] events, Guid streamId, Guid commitId, byte[] metadata, bool isLockable, CancellationToken cancellationToken)
         {
             try
             {
@@ -174,7 +174,7 @@ namespace Ses.MsSql
             }
         }
 
-        private static async Task SaveChangesAnyAsync(SqlConnection cnn, IEnumerable<EventRecord> events, Guid streamId, Guid commitId, byte[] metadata, bool isLockable, CancellationToken cancellationToken)
+        private static async Task SaveChangesAnyAsync(SqlConnection cnn, EventRecord[] events, Guid streamId, Guid commitId, byte[] metadata, bool isLockable, CancellationToken cancellationToken)
         {
             try
             {
@@ -214,7 +214,7 @@ namespace Ses.MsSql
             }
         }
 
-        private static async Task SaveChangesExpectedVersionAsync(SqlConnection cnn, IEnumerable<EventRecord> events, Guid streamId, Guid commitId, int expectedVersion, byte[] metadata, CancellationToken cancellationToken)
+        private static async Task SaveChangesExpectedVersionAsync(SqlConnection cnn, EventRecord[] events, Guid streamId, Guid commitId, int expectedVersion, byte[] metadata, CancellationToken cancellationToken)
         {
             try
             {

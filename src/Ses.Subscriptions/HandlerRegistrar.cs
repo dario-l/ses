@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Ses.Abstracts.Subscriptions;
 
 namespace Ses.Subscriptions
@@ -9,11 +10,11 @@ namespace Ses.Subscriptions
     {
         private static readonly Type asyncHandlerType = typeof(IHandleAsync<>);
         private static readonly Type syncHandlerType = typeof(IHandle<>);
-        private readonly IDictionary<Type, HandlerTypeInfo> _types;
+        private readonly Dictionary<Type, HandlerTypeInfo> _types;
 
         public HandlerRegistrar(IEnumerable<Type> handlerTypes)
         {
-            _types = new Dictionary<Type, HandlerTypeInfo>();
+            _types = new Dictionary<Type, HandlerTypeInfo>(100);
 
             foreach (var type in handlerTypes.Where(TypeIsHandler))
             {
@@ -30,19 +31,22 @@ namespace Ses.Subscriptions
             }
         }
 
-        private static IList<Type> GetEventTypes(Type type, Type handlerType)
+        private static Type[] GetEventTypes(Type type, Type handlerType)
         {
             var interfaces = type.GetInterfaces()
-                .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == handlerType);
+                .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == handlerType)
+                .ToArray();
 
-            var list = new List<Type>();
-            foreach (var eventTypes in interfaces.Select(i => i.GetGenericArguments()))
+            var list = new List<Type>(interfaces.Length * 2);
+            foreach (var i in interfaces)
             {
+                var eventTypes = i.GetGenericArguments();
                 list.AddRange(eventTypes);
             }
-            return list;
+            return list.ToArray();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TypeIsHandler(Type type) => type.IsClass && typeof(IHandle).IsAssignableFrom(type);
 
         public IEnumerable<Type> RegisteredHandlerTypes => _types.Keys;
@@ -57,16 +61,26 @@ namespace Ses.Subscriptions
 
         public class HandlerTypeInfo
         {
-            public HandlerTypeInfo(Type handlerType, IList<Type> events, bool isAsync)
+            public HandlerTypeInfo(Type handlerType, Type[] eventTypes, bool isAsync)
             {
                 HandlerType = handlerType;
-                Events = events;
+                EventTypes = eventTypes;
                 IsAsync = isAsync;
             }
 
-            public Type HandlerType { get; private set; }
-            public IList<Type> Events { get; private set; }
             public bool IsAsync { get; private set; }
+            public Type HandlerType { get; private set; }
+            public Type[] EventTypes { get; }
+            
+
+            public bool ContainsEventType(Type eventType)
+            {
+                foreach (var t in EventTypes)
+                {
+                    if (t == eventType) return true;
+                }
+                return false;
+            }
         }
     }
 }

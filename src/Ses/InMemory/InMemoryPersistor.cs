@@ -22,7 +22,7 @@ namespace Ses.InMemory
         public event OnReadEventHandler OnReadEvent;
         public event OnReadSnapshotHandler OnReadSnapshot;
 
-        public IList<IEvent> Load(Guid streamId, int fromVersion, bool pessimisticLock)
+        public IEvent[] Load(Guid streamId, int fromVersion, bool pessimisticLock)
         {
             if (pessimisticLock) throw new NotImplementedException("Pessimistic lock is not implemented.");
             _lock.EnterReadLock();
@@ -59,7 +59,7 @@ namespace Ses.InMemory
                         events.Add(CreateEventObject(streamId, @event));
                     }
                 }
-                return events;
+                return events.ToArray();
             }
             finally
             {
@@ -67,7 +67,7 @@ namespace Ses.InMemory
             }
         }
 
-        public Task<IList<IEvent>> LoadAsync(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = new CancellationToken())
+        public Task<IEvent[]> LoadAsync(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = new CancellationToken())
         {
             return Task.FromResult(Load(streamId, fromVersion, pessimisticLock));
         }
@@ -133,13 +133,13 @@ namespace Ses.InMemory
             }
         }
 
-        public Task SaveChangesAsync(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, bool isLockable, CancellationToken cancellationToken = new CancellationToken())
+        public Task SaveChangesAsync(Guid streamId, Guid commitId, int expectedVersion, EventRecord[] events, byte[] metadata, bool isLockable, CancellationToken cancellationToken = new CancellationToken())
         {
             SaveChanges(streamId, commitId, expectedVersion, events, metadata, isLockable);
             return Task.FromResult(0);
         }
 
-        public void SaveChanges(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata, bool isLockable)
+        public void SaveChanges(Guid streamId, Guid commitId, int expectedVersion, EventRecord[] events, byte[] metadata, bool isLockable)
         {
             if (isLockable) throw new NotImplementedException("Pessimistic lock is not implemented.");
 
@@ -154,7 +154,7 @@ namespace Ses.InMemory
             }
         }
 
-        private void SaveChangesInternal(Guid streamId, Guid commitId, int expectedVersion, IEnumerable<EventRecord> events, byte[] metadata)
+        private void SaveChangesInternal(Guid streamId, Guid commitId, int expectedVersion, EventRecord[] events, byte[] metadata)
         {
             InMemoryStream inMemoryStream;
             if (expectedVersion == ExpectedVersion.NoStream || expectedVersion == ExpectedVersion.Any)

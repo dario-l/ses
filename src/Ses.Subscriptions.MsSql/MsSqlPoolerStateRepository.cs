@@ -47,7 +47,7 @@ namespace Ses.Subscriptions.MsSql
             return this;
         }
 
-        public async Task<List<PoolerState>> LoadAsync(string poolerContractName, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<PoolerState[]> LoadAsync(string poolerContractName, CancellationToken cancellationToken = default(CancellationToken))
         {
             List<PoolerState> states = null;
             using (var cnn = new SqlConnection(_connectionString))
@@ -72,7 +72,7 @@ namespace Ses.Subscriptions.MsSql
                     }
                 }
             }
-            return states;
+            return states?.ToArray() ?? new PoolerState[0];
         }
 
         public async Task InsertOrUpdateAsync(PoolerState state, CancellationToken cancellationToken = default(CancellationToken))

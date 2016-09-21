@@ -14,13 +14,29 @@ namespace Ses.Conflicts
             _conflictRegister = new Dictionary<Type, List<Type>>();
         }
 
-        public virtual bool ConflictsWith(Type eventToCheck, IEnumerable<Type> previousEvents)
+        public virtual bool ConflictsWith(Type eventToCheck, Type[] previousEventTypes)
         {
             if (eventToCheck == null) throw new ArgumentNullException(nameof(eventToCheck));
-            if (previousEvents == null) throw new ArgumentNullException(nameof(previousEvents));
+            if (previousEventTypes == null) throw new ArgumentNullException(nameof(previousEventTypes));
             // If type not registered assume it not conflicts
-            return _conflictRegister.ContainsKey(eventToCheck)
-                && previousEvents.Any(previousEvent => _conflictRegister[eventToCheck].Any(et => et == previousEvent));
+            var any1 = false;
+            foreach (var previousType in previousEventTypes)
+            {
+                if (_conflictRegister.ContainsKey(eventToCheck))
+                {
+                    var any2 = false;
+                    foreach (var registeredType in _conflictRegister[eventToCheck])
+                    {
+                        if (registeredType != previousType) continue;
+                        any2 = true;
+                        break;
+                    }
+                    if (!any2) continue;
+                }
+                any1 = true;
+                break;
+            }
+            return _conflictRegister.ContainsKey(eventToCheck) && any1;
         }
 
         public void RegisterConflictList(Type eventDefinition, params Type[] conflictsWith)

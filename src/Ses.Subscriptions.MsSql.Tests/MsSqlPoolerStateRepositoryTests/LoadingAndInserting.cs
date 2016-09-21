@@ -57,7 +57,7 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
             var result = await sut.LoadAsync("fakePooler");
 
 
-            Assert.True(result.Count == 1);
+            Assert.True(result.Length == 1);
         }
 
         [Fact]
@@ -73,7 +73,7 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
             var result = await sut.LoadAsync("fakePooler");
 
 
-            Assert.True(result.Count == 1);
+            Assert.True(result.Length == 1);
         }
     }
 }

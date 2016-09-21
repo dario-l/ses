@@ -14,7 +14,7 @@ namespace Ses.InMemory
             Events = new List<InMemoryEventRecord>();
         }
 
-        public IList<InMemoryEventRecord> Events { get; }
+        public List<InMemoryEventRecord> Events { get; }
         public Guid StreamId { get; }
 
         public int? GetCurrentVersion()
@@ -22,7 +22,7 @@ namespace Ses.InMemory
             return _isDeleted ? (int?)null : Events.LastOrDefault()?.Version ?? 0;
         }
 
-        public void Append(Guid commitId, int expectedVersion, IList<EventRecord> events, byte[] metadata)
+        public void Append(Guid commitId, int expectedVersion, List<EventRecord> events, byte[] metadata)
         {
             switch (expectedVersion)
             {
@@ -38,7 +38,7 @@ namespace Ses.InMemory
             }
         }
 
-        private void AppendToStreamExpectedVersion(Guid commitId, int expectedVersion, IList<EventRecord> events, byte[] metadata)
+        private void AppendToStreamExpectedVersion(Guid commitId, int expectedVersion, List<EventRecord> events, byte[] metadata)
         {
             var currentVersion = GetCurrentVersion();
             if (expectedVersion > currentVersion)
@@ -71,7 +71,7 @@ namespace Ses.InMemory
             AppendEvents(commitId, events, metadata);
         }
 
-        private void AppendToStreamExpectedVersionNoStream(Guid commitId, int expectedVersion, ICollection<EventRecord> events, byte[] metadata)
+        private void AppendToStreamExpectedVersionNoStream(Guid commitId, int expectedVersion, List<EventRecord> events, byte[] metadata)
         {
             if (Events.Count > 0)
             {
@@ -90,7 +90,7 @@ namespace Ses.InMemory
             AppendEvents(commitId, events, metadata);
         }
 
-        private void AppendWithExpectedVersionAny(Guid commitId, int expectedVersion, ICollection<EventRecord> events, byte[] metadata)
+        private void AppendWithExpectedVersionAny(Guid commitId, int expectedVersion, List<EventRecord> events, byte[] metadata)
         {
             var newEventIds = new HashSet<int>(events.Select(e => e.Version));
             newEventIds.ExceptWith(Events.Select(x => x.Version));
@@ -104,7 +104,7 @@ namespace Ses.InMemory
             AppendEvents(commitId, events, metadata);
         }
 
-        private void AppendEvents(Guid commitId, IEnumerable<EventRecord> events, byte[] metadata)
+        private void AppendEvents(Guid commitId, List<EventRecord> events, byte[] metadata)
         {
             foreach (var record in events)
             {

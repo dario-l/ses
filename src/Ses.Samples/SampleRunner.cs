@@ -34,7 +34,7 @@ namespace Ses.Samples
                     {
                         x.Destroy(true);
                         x.Initialize();
-                        x.RunLinearizer(TimeSpan.FromMilliseconds(20), TimeSpan.FromSeconds(10));
+                        x.RunLinearizer(TimeSpan.FromMilliseconds(20), TimeSpan.FromMinutes(20));
                     })
                     .Build();
 
@@ -43,22 +43,26 @@ namespace Ses.Samples
                 await Sample1(store);
                 await Sample2(store);
 
+                Console.WriteLine(@"Starting subscriptions");
                 var subs = await SampleSubscriptions();
-
                 await Task.Delay(5000);
-
-                subs.Dispose();
-                store.Dispose();
+                Console.WriteLine(@"Starting perf test");
 
                 await SamplePerfTest();
+
+                Console.WriteLine(@"Press any key to exit...");
+                Console.ReadKey();
+                Console.WriteLine(@"Collecting GC and then exit...");
+                store.Dispose();
+                subs.Dispose();
+                GC.Collect(2, GCCollectionMode.Forced);
+                await Task.Delay(5000);
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                Console.ReadKey();
             }
-
-            Console.WriteLine(@"Press any key to exit...");
-            Console.ReadKey();
         }
 
         private static async Task Sample1(IEventStore store)
@@ -124,7 +128,7 @@ namespace Ses.Samples
                 .Build())
             {
 
-                const int count = 10000;
+                const int count = 50000;
                 var tasks = new List<Task>(count);
                 var token = new System.Threading.CancellationToken();
                 var sw = Stopwatch.StartNew();
@@ -133,8 +137,6 @@ namespace Ses.Samples
                     var streamId = SequentialGuid.NewGuid();
                     var aggregate = new ShoppingCart(streamId, Guid.Empty);
                     aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 1", quantity: 3);
-                    //aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 2", quantity: 2);
-                    //aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 1", quantity: 3);
 
                     var commitId = SequentialGuid.NewGuid();
                     var stream = new EventStream(commitId, aggregate.TakeUncommittedEvents());
