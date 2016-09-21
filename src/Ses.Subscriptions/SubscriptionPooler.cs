@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -14,7 +13,7 @@ namespace Ses.Subscriptions
     {
         private readonly TransactionOptions _transactionOptions = new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted };
         private readonly HandlerRegistrar _handlerRegistrar;
-        private readonly IDictionary<ISubscriptionEventSource, int> _contractSubscriptions;
+        private readonly Dictionary<ISubscriptionEventSource, int> _contractSubscriptions;
         private string _poolerContractName;
 
         protected SubscriptionPooler(ISubscriptionEventSource[] sources)
@@ -31,7 +30,7 @@ namespace Ses.Subscriptions
         protected abstract IHandle CreateHandlerInstance(Type handlerType);
         protected virtual IEnumerable<Type> GetConcreteSubscriptionEventTypes() => null;
 
-        internal IEnumerable<Type> GetRegisteredHandlers() => _handlerRegistrar.RegisteredHandlerTypes;
+        internal Type[] GetRegisteredHandlers() => _handlerRegistrar.RegisteredHandlerTypes;
 
         internal void OnStart(IContractsRegistry contractsRegistry)
         {
@@ -70,11 +69,10 @@ namespace Ses.Subscriptions
             {
                 var poolerStates = new List<PoolerState>(await ctx.StateRepository.LoadAsync(_poolerContractName, cancellationToken));
                 var timeline = await FetchEventTimeline(ctx, poolerStates);
-                var handlers = _handlerRegistrar.RegisteredHandlerInfos.ToList();
 
                 foreach (var item in timeline)
                 {
-                    foreach (var handlerInfo in handlers) // all handlers can/should run in parallel
+                    foreach (var handlerInfo in _handlerRegistrar.RegisteredHandlerInfos) // all handlers can/should run in parallel
                     {
                         var state = FindOrCreateState(ctx.ContractsRegistry, poolerStates, item.SourceType, handlerInfo.HandlerType);
                         if (item.Envelope.SequenceId > state.EventSequenceId)
@@ -162,8 +160,12 @@ namespace Ses.Subscriptions
                 var concreteSubscriptionIdentifier = _contractSubscriptions.Count > 0 && _contractSubscriptions.ContainsKey(source)
                     ? _contractSubscriptions[source]
                     : (int?)null;
-                var task = source.FetchAsync(ctx.ContractsRegistry, ctx.UpConverterFactory, minSequenceId, concreteSubscriptionIdentifier);
-                tasks.Add(task);
+
+                tasks.Add(source.FetchAsync(
+                    ctx.ContractsRegistry,
+                    ctx.UpConverterFactory,
+                    minSequenceId,
+                    concreteSubscriptionIdentifier));
             }
 
             var events = await Task.WhenAll(tasks.ToArray());

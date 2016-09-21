@@ -5,12 +5,11 @@ namespace Ses.Subscriptions
 {
     public static class EnumerableExtensions
     {
-        public static IEnumerable<T> MergeSorted<T>(this IEnumerable<T> first, IEnumerable<T> second, Func<T, T, int> comparer)
+        public static IEnumerable<T> MergeSorted<T>(this List<T> first, List<T> second, Func<T, T, int> comparer)
         {
             using (var firstEnumerator = first.GetEnumerator())
             using (var secondEnumerator = second.GetEnumerator())
             {
-
                 var elementsLeftInFirst = firstEnumerator.MoveNext();
                 var elementsLeftInSecond = secondEnumerator.MoveNext();
                 while (elementsLeftInFirst || elementsLeftInSecond)
@@ -20,7 +19,8 @@ namespace Ses.Subscriptions
                         do
                         {
                             yield return secondEnumerator.Current;
-                        } while (secondEnumerator.MoveNext());
+                        }
+                        while (secondEnumerator.MoveNext());
                         yield break;
                     }
 
@@ -29,7 +29,8 @@ namespace Ses.Subscriptions
                         do
                         {
                             yield return firstEnumerator.Current;
-                        } while (firstEnumerator.MoveNext());
+                        }
+                        while (firstEnumerator.MoveNext());
                         yield break;
                     }
 

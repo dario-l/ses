@@ -47,16 +47,14 @@ namespace Ses.Samples
                 var subs = await SampleSubscriptions();
                 await Task.Delay(5000);
                 Console.WriteLine(@"Starting perf test");
+                store.Dispose();
+                subs.Dispose();
 
                 await SamplePerfTest();
 
                 Console.WriteLine(@"Press any key to exit...");
                 Console.ReadKey();
-                Console.WriteLine(@"Collecting GC and then exit...");
-                store.Dispose();
-                subs.Dispose();
                 GC.Collect(2, GCCollectionMode.Forced);
-                await Task.Delay(5000);
             }
             catch (Exception e)
             {

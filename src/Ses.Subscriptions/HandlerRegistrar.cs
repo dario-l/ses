@@ -29,6 +29,9 @@ namespace Ses.Subscriptions
 
                 _types.Add(type, new HandlerTypeInfo(type, GetEventTypes(type, hasAsync ? asyncHandlerType : syncHandlerType), hasAsync));
             }
+
+            RegisteredHandlerTypes = _types.Keys.ToArray();
+            RegisteredHandlerInfos = _types.Values.ToArray();
         }
 
         private static Type[] GetEventTypes(Type type, Type handlerType)
@@ -49,9 +52,11 @@ namespace Ses.Subscriptions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TypeIsHandler(Type type) => type.IsClass && typeof(IHandle).IsAssignableFrom(type);
 
-        public IEnumerable<Type> RegisteredHandlerTypes => _types.Keys;
-        public IEnumerable<HandlerTypeInfo> RegisteredHandlerInfos => _types.Values;
+        public Type[] RegisteredHandlerTypes { get; }
 
+        public HandlerTypeInfo[] RegisteredHandlerInfos { get; }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public HandlerTypeInfo GetHandlerInfoFor(Type handlerType)
         {
             HandlerTypeInfo result;
@@ -71,8 +76,9 @@ namespace Ses.Subscriptions
             public bool IsAsync { get; private set; }
             public Type HandlerType { get; private set; }
             public Type[] EventTypes { get; }
-            
 
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool ContainsEventType(Type eventType)
             {
                 foreach (var t in EventTypes)
