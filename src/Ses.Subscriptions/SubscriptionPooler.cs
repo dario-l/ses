@@ -67,28 +67,28 @@ namespace Ses.Subscriptions
             var anyDispatched = false;
             try
             {
-                var poolerStates = await ctx.StateRepository.LoadAsync(_poolerContractName, cancellationToken);
-                var timeline = await FetchEventTimeline(ctx, poolerStates);
+                    var poolerStates = await ctx.StateRepository.LoadAsync(_poolerContractName, cancellationToken);
+                    var timeline = await FetchEventTimeline(ctx, poolerStates);
 
-                foreach (var item in timeline)
-                {
-                    foreach (var handlerInfo in _handlerRegistrar.RegisteredHandlerInfos) // all handlers can/should run in parallel
+                    foreach (var item in timeline)
                     {
-                        var state = FindOrCreateState(ctx.ContractsRegistry, poolerStates, item.SourceType, handlerInfo.HandlerType);
-                        if (item.Envelope.SequenceId > state.EventSequenceId)
+                        foreach (var handlerInfo in _handlerRegistrar.RegisteredHandlerInfos) // all handlers can/should run in parallel
                         {
-                            try
+                            var state = FindOrCreateState(ctx.ContractsRegistry, poolerStates, item.SourceType, handlerInfo.HandlerType);
+                            if (item.Envelope.SequenceId > state.EventSequenceId)
                             {
-                                anyDispatched = await TryDispatch(ctx, handlerInfo, item.Envelope, state);
-                            }
-                            catch (Exception ex)
-                            {
-                                PostHandleEventException(item.Envelope, handlerInfo.HandlerType, ex);
-                                throw;
+                                try
+                                {
+                                    anyDispatched = await TryDispatch(ctx, handlerInfo, item.Envelope, state);
+                                }
+                                catch (Exception ex)
+                                {
+                                    PostHandleEventException(item.Envelope, handlerInfo.HandlerType, ex);
+                                    throw;
+                                }
                             }
                         }
                     }
-                }
             }
             catch (Exception e)
             {
@@ -129,29 +129,33 @@ namespace Ses.Subscriptions
 
         protected virtual void PreHandleEvent(EventEnvelope envelope, Type handlerType) { }
         protected virtual void PostHandleEvent(EventEnvelope envelope, Type handlerType) { }
-        protected virtual void PostHandleEventException(EventEnvelope envelope, Type handlerType, Exception e) { }
+        protected virtual void PostHandleEventException(EventEnvelope envelope, Type handlerType, Exception exception) { }
 
         private PoolerState FindOrCreateState(IContractsRegistry contractsRegistry, ICollection<PoolerState> poolerStates, Type sourceType, Type handlerType)
         {
             var sourceContractName = contractsRegistry.GetContractName(sourceType);
             var handlerContractName = contractsRegistry.GetContractName(handlerType);
 
-            var state = poolerStates.FirstOrDefault(x => x.HandlerContractName == handlerContractName && x.SourceContractName == sourceContractName);
-            if (state == null)
+            PoolerState state = null;
+            foreach (var x in poolerStates)
             {
-                state = new PoolerState(_poolerContractName, sourceContractName, handlerContractName);
-                poolerStates.Add(state);
+                if (x.HandlerContractName != handlerContractName || x.SourceContractName != sourceContractName) continue;
+                state = x;
+                break;
             }
+            if (state != null) return state;
+            state = new PoolerState(_poolerContractName, sourceContractName, handlerContractName);
+            poolerStates.Add(state);
             return state;
         }
 
-        private async Task<IList<ExtractedEvent>> FetchEventTimeline(PoolerContext ctx, ICollection<PoolerState> poolerStates)
+        private async Task<List<ExtractedEvent>> FetchEventTimeline(PoolerContext ctx, ICollection<PoolerState> poolerStates)
         {
-            var tasks = new List<Task<IList<ExtractedEvent>>>(Sources.Length);
+            var tasks = new List<Task<List<ExtractedEvent>>>(Sources.Length);
             foreach (var source in Sources)
             {
                 var minSequenceId = GetMinSequenceIdFor(ctx.ContractsRegistry, poolerStates, source);
-                ctx.Logger.Trace("Min sequence id for {0} is {1}", _poolerContractName, minSequenceId);
+                ctx.Logger.Trace("Min sequence id for {0} is {1}", _poolerContractName, minSequenceId.ToString());
 
                 var concreteSubscriptionIdentifier = _contractSubscriptions.Count > 0 && _contractSubscriptions.ContainsKey(source)
                     ? _contractSubscriptions[source]
@@ -162,17 +166,17 @@ namespace Ses.Subscriptions
 
             var events = await Task.WhenAll(tasks.ToArray());
             var merged = Merge(events);
-            ctx.Logger.Trace("Fetched {0} events from {1} stream sources.", merged.Count, Sources.Length);
+            ctx.Logger.Trace("Fetched {0} events from {1} stream sources.", merged.Count.ToString(), Sources.Length.ToString());
             return merged;
         }
 
-        private static IList<ExtractedEvent> Merge(IList<IList<ExtractedEvent>> list)
+        private static List<ExtractedEvent> Merge(List<ExtractedEvent>[] list)
         {
-            if (list.Count == 0) return new List<ExtractedEvent>(0);
-            if (list.Count == 1) return list[0];
+            if (list.Length == 0) return new List<ExtractedEvent>(0);
+            if (list.Length == 1) return list[0];
 
             var merged = list[0];
-            for (var i = 1; i < list.Count; i++)
+            for (var i = 1; i < list.Length; i++)
             {
                 merged = merged
                     .MergeSorted(list[i], (l1, l2) => l1.Envelope.CreatedAtUtc > l2.Envelope.CreatedAtUtc ? 1 : -1)
@@ -182,14 +186,14 @@ namespace Ses.Subscriptions
             return merged;
         }
 
-        private static long GetMinSequenceIdFor(IContractsRegistry contractsRegistry, IEnumerable<PoolerState> poolerStates, ISubscriptionEventSource source)
+        private static long GetMinSequenceIdFor(IContractsRegistry contractsRegistry, ICollection<PoolerState> poolerStates, ISubscriptionEventSource source)
         {
             var sourceContractName = contractsRegistry.GetContractName(source.GetType());
             long? min = null;
             foreach (var x in poolerStates)
             {
                 if (x.SourceContractName != sourceContractName) continue;
-                if (!min.HasValue || min.Value > x.EventSequenceId) min = x.EventSequenceId;
+                if (min == null || min > x.EventSequenceId) min = x.EventSequenceId;
             }
             return min ?? 0;
         }

@@ -12,8 +12,8 @@ namespace Ses.Subscriptions
 {
     public class EventStoreSubscriptions : IEventStoreSubscriptions
     {
-        private readonly IDictionary<Type, Runner> _runners;
-        private readonly IList<SubscriptionPooler> _poolers;
+        private readonly Dictionary<Type, Runner> _runners;
+        private readonly List<SubscriptionPooler> _poolers;
         private readonly IPoolerStateRepository _poolerStateRepository;
         private IContractsRegistry _contractRegistry;
         private ILogger _logger;
@@ -59,7 +59,8 @@ namespace Ses.Subscriptions
 
         public EventStoreSubscriptions Start()
         {
-            if (_contractRegistry == null) throw new InvalidOperationException("Contract registry is not set. Use own IContractRegistry implementation or DefaultContractsRegistry.");
+            if (_contractRegistry == null)
+                throw new InvalidOperationException("Contract registry is not set. Use own IContractRegistry implementation or DefaultContractsRegistry.");
 
             foreach (var pooler in _poolers)
             {
@@ -75,7 +76,8 @@ namespace Ses.Subscriptions
 
         public async Task<EventStoreSubscriptions> StartAsync()
         {
-            if (_contractRegistry == null) throw new InvalidOperationException("Contract registry is not set. Use own IContractRegistry implementation or DefaultContractsRegistry.");
+            if (_contractRegistry == null)
+                throw new InvalidOperationException("Contract registry is not set. Use own IContractRegistry implementation or DefaultContractsRegistry.");
 
             foreach (var pooler in _poolers)
             {

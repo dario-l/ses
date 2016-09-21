@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ses.Abstracts;
@@ -25,16 +24,15 @@ namespace Ses
         {
             var eventType = _settings.ContractsRegistry.GetType(contractName);
             var @event = _settings.Serializer.Deserialize<IEvent>(payload, eventType);
-            if (@event == null) throw new InvalidCastException($"Deserialized payload from stream {streamId} is not an IEvent of type {eventType.FullName}.");
+            if (@event == null)
+                throw new InvalidCastException($"Deserialized payload from stream {streamId} is not an IEvent of type {eventType.FullName}.");
 
-            if (_settings.UpConverterFactory != null)
+            if (_settings.UpConverterFactory == null) return @event;
+            var upConverter = _settings.UpConverterFactory.CreateInstance(eventType);
+            while (upConverter != null)
             {
-                var upConverter = _settings.UpConverterFactory.CreateInstance(eventType);
-                while (upConverter != null)
-                {
-                    @event = ((dynamic)upConverter).Convert((dynamic)@event);
-                    upConverter = _settings.UpConverterFactory.CreateInstance(@event.GetType());
-                }
+                @event = ((dynamic)upConverter).Convert((dynamic)@event);
+                upConverter = _settings.UpConverterFactory.CreateInstance(@event.GetType());
             }
             return @event;
         }
@@ -43,16 +41,15 @@ namespace Ses
         {
             var snapshotType = _settings.ContractsRegistry.GetType(contractName);
             var memento = _settings.Serializer.Deserialize<IMemento>(payload, snapshotType);
-            if (memento == null) throw new InvalidCastException($"Deserialized payload from stream {streamId} is not an IMemento of type {snapshotType.FullName}.");
+            if (memento == null)
+                throw new InvalidCastException($"Deserialized payload from stream {streamId} is not an IMemento of type {snapshotType.FullName}.");
 
-            if (_settings.UpConverterFactory != null)
+            if (_settings.UpConverterFactory == null) return new RestoredMemento(version, memento);
+            var upConverter = _settings.UpConverterFactory.CreateInstance(snapshotType);
+            while (upConverter != null)
             {
-                var upConverter = _settings.UpConverterFactory.CreateInstance(snapshotType);
-                while (upConverter != null)
-                {
-                    memento = ((dynamic)upConverter).Convert((dynamic)memento);
-                    upConverter = _settings.UpConverterFactory.CreateInstance(memento.GetType());
-                }
+                memento = ((dynamic)upConverter).Convert((dynamic)memento);
+                upConverter = _settings.UpConverterFactory.CreateInstance(memento.GetType());
             }
             return new RestoredMemento(version, memento);
         }
@@ -78,7 +75,8 @@ namespace Ses
         public void SaveChanges(Guid streamId, int expectedVersion, IEventStream stream)
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
-            if (expectedVersion < ExpectedVersion.Any) throw new InvalidOperationException($"Expected version {expectedVersion} for stream {streamId} is invalid.");
+            if (expectedVersion < ExpectedVersion.Any)
+                throw new InvalidOperationException($"Expected version {expectedVersion} for stream {streamId} is invalid.");
             if (stream.Events.Length == 0) return;
             _settings.Logger.Debug("Saving changes for stream '{0}' with commit '{1}'...", streamId, stream.CommitId);
 
@@ -91,7 +89,8 @@ namespace Ses
         public async Task SaveChangesAsync(Guid streamId, int expectedVersion, IEventStream stream, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
-            if (expectedVersion < ExpectedVersion.Any) throw new InvalidOperationException($"Expected version {expectedVersion} for stream {streamId} is invalid.");
+            if (expectedVersion < ExpectedVersion.Any)
+                throw new InvalidOperationException($"Expected version {expectedVersion} for stream {streamId} is invalid.");
             if (stream.Events.Length == 0) return;
             _settings.Logger.Trace("Saving changes for stream '{0}' with commit '{1}'...", streamId, stream.CommitId);
             await TrySaveChanges(streamId, expectedVersion, stream, cancellationToken);

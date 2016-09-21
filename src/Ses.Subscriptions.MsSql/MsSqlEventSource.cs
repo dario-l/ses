@@ -40,9 +40,9 @@ namespace Ses.Subscriptions.MsSql
             }
         }
 
-        public async Task<IList<ExtractedEvent>> FetchAsync(IContractsRegistry registry, IUpConverterFactory upConverterFactory, long lastVersion, int? subscriptionId)
+        public async Task<List<ExtractedEvent>> FetchAsync(IContractsRegistry registry, IUpConverterFactory upConverterFactory, long lastVersion, int? subscriptionId)
         {
-            var extractedEvents = new List<ExtractedEvent>(100);
+            List<ExtractedEvent> extractedEvents = null;
             using (var cnn = new SqlConnection(_connectionString))
             {
                 await cnn.OpenAsync().NotOnCapturedContext();
@@ -50,30 +50,34 @@ namespace Ses.Subscriptions.MsSql
                 OnSqlCommandCreated(cmd, lastVersion, subscriptionId);
                 using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult).NotOnCapturedContext())
                 {
-                    while (await reader.ReadAsync().NotOnCapturedContext())
+                    if (reader.HasRows)
                     {
-                        var eventType = registry.GetType(reader.GetString(3));
-                        var @event = UpConvert(upConverterFactory, eventType, _serializer.Deserialize<IEvent>((byte[])reader[4], eventType));
-                        var metadata = reader[7] == DBNull.Value
-                            ? null
-                            : _serializer.Deserialize<IDictionary<string, object>>((byte[])reader[7], metadataType);
+                        extractedEvents = new List<ExtractedEvent>(100);
+                        while (await reader.ReadAsync().NotOnCapturedContext())
+                        {
+                            var eventType = registry.GetType(reader.GetString(3));
+                            var @event = UpConvert(upConverterFactory, eventType, _serializer.Deserialize<IEvent>((byte[])reader[4], eventType));
+                            var metadata = reader[7] == DBNull.Value
+                                ? null
+                                : _serializer.Deserialize<IDictionary<string, object>>((byte[])reader[7], metadataType);
 
-                        var envelope = new EventEnvelope(
-                            reader.GetGuid(0), // StreamId 0
-                            reader.GetGuid(2), // CommitId 2
-                            reader.GetDateTime(5), // CreatedAtUtc 5
-                            reader.GetInt64(6), // EventId 6
-                            reader.GetInt32(1), // Version 1
-                            @event, // 6
-                            metadata); // 7
+                            var envelope = new EventEnvelope(
+                                reader.GetGuid(0), // StreamId 0
+                                reader.GetGuid(2), // CommitId 2
+                                reader.GetDateTime(5), // CreatedAtUtc 5
+                                reader.GetInt64(6), // EventId 6
+                                reader.GetInt32(1), // Version 1
+                                @event, // 6
+                                metadata); // 7
 
-                        //Fetched(envelope, GetType());
+                            //Fetched(envelope, GetType());
 
-                        extractedEvents.Add(new ExtractedEvent(envelope, GetType()));
+                            extractedEvents.Add(new ExtractedEvent(envelope, GetType()));
+                        }
                     }
                 }
             }
-            return extractedEvents;
+            return extractedEvents ?? new List<ExtractedEvent>(0);
         }
 
         private static IEvent UpConvert(IUpConverterFactory upConverterFactory, Type eventType, IEvent @event)
@@ -104,7 +108,7 @@ namespace Ses.Subscriptions.MsSql
                     cmd.Parameters.Clear();
                     cmd.CommandText = "INSERT INTO StreamsSubscriptionContracts(StreamsSubscriptionId,EventContractName)VALUES(@SubscriptionId,@ContractName)";
                     cmd.AddInputParam("@SubscriptionId", DbType.Int32, subscriptionId);
-                    cmd.AddInputParam("@ContractName", DbType.String, null);
+                    cmd.AddInputParam("@ContractName", DbType.String, (string)null);
                     foreach (var contractName in contractNames)
                     {
                         cmd.Parameters[1].Value = contractName;
@@ -140,7 +144,7 @@ namespace Ses.Subscriptions.MsSql
                     cmd.Parameters.Clear();
                     cmd.CommandText = "INSERT INTO StreamsSubscriptionContracts(StreamsSubscriptionId,EventContractName)VALUES(@SubscriptionId,@ContractName)";
                     cmd.AddInputParam("@SubscriptionId", DbType.Int32, subscriptionId);
-                    cmd.AddInputParam("@ContractName", DbType.String, null);
+                    cmd.AddInputParam("@ContractName", DbType.String, (string)null);
                     foreach (var contractName in contractNames)
                     {
                         cmd.Parameters[1].Value = contractName;

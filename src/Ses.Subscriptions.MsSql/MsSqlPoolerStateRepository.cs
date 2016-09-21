@@ -47,9 +47,9 @@ namespace Ses.Subscriptions.MsSql
             return this;
         }
 
-        public async Task<IList<PoolerState>> LoadAsync(string poolerContractName, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<List<PoolerState>> LoadAsync(string poolerContractName, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var states = new List<PoolerState>(100);
+            List<PoolerState> states = null;
             using (var cnn = new SqlConnection(_connectionString))
             using (var cmd = cnn.CreateCommand())
             {
@@ -58,13 +58,17 @@ namespace Ses.Subscriptions.MsSql
                 await cmd.Connection.OpenAsync(cancellationToken).NotOnCapturedContext();
                 using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult | CommandBehavior.SequentialAccess, cancellationToken).NotOnCapturedContext())
                 {
-                    while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext())
+                    if (reader.HasRows)
                     {
-                        var state = new PoolerState(reader.GetString(0), reader.GetString(1), reader.GetString(2))
+                        states = new List<PoolerState>(100);
+                        while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext())
                         {
-                            EventSequenceId = reader.GetInt64(3)
-                        };
-                        states.Add(state);
+                            var state = new PoolerState(reader.GetString(0), reader.GetString(1), reader.GetString(2))
+                            {
+                                EventSequenceId = reader.GetInt64(3)
+                            };
+                            states.Add(state);
+                        }
                     }
                 }
             }

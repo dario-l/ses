@@ -56,7 +56,6 @@
     <Compile Include="ISerializer.cs" />
     <Compile Include="Subscriptions\IHandle.cs" />
     <Compile Include="Subscriptions\ISubscriptionEventSource.cs" />
-    <Compile Include="Logging\DebugLogger.cs" />
     <Compile Include="Logging\NullLogger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="..\SharedAssemblyInfo.cs">

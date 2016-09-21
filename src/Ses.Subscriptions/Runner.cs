@@ -34,9 +34,9 @@ namespace Ses.Subscriptions
         private System.Timers.Timer CreateTimer(PoolerTimeoutCalculator timeoutCalc)
         {
             var timeout = timeoutCalc.CalculateNext(true);
-            var timer = new System.Timers.Timer(timeout) { AutoReset = false };
-            timer.Elapsed += (_, __) => Run().SwallowException();
-            return timer;
+            var result = new System.Timers.Timer(timeout) { AutoReset = false };
+            result.Elapsed += (_, __) => Run().SwallowException();
+            return result;
         }
 
         public void Start()
@@ -72,7 +72,7 @@ namespace Ses.Subscriptions
         private bool ShouldStop()
         {
             return Pooler.RunForDuration.HasValue
-                && ((DateTime.UtcNow - _startedAt.Value) > Pooler.RunForDuration.Value);
+                && ((DateTime.UtcNow - _startedAt.Value) > Pooler.RunForDuration);
         }
 
         public void Stop()

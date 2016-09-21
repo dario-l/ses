@@ -28,7 +28,7 @@ namespace Ses.Samples
             {
                 var store = new EventStoreBuilder()
                     .WithSerializer(new JilSerializer())
-                    .WithLogger(new NLogLogger())
+                    .WithLogger(new NLogLogger("Ses"))
                     .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly)
                     .WithMsSqlPersistor(connectionString, x =>
                     {
@@ -161,7 +161,7 @@ namespace Ses.Samples
 
             return await new EventStoreSubscriptions(new MsSqlPoolerStateRepository(connectionString).Destroy(true).Initialize())
                 .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly, typeof(MsSqlEventSource).Assembly)
-                .WithLogger(new NLogLogger())
+                .WithLogger(new NLogLogger("Ses.Subscriptions"))
                 .WithUpConverterFactory(new DefaultUpConverterFactory(typeof(SampleRunner).Assembly))
                 .Add(new ProjectionsSubscriptionPooler(sources))
                 .Add(new ProcessManagersSubscriptionPooler(sources))

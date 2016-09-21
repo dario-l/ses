@@ -23,7 +23,8 @@ namespace Ses.Subscriptions
                 var hasAsync = interfaces.Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == asyncHandlerType);
                 var hasSync = interfaces.Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == syncHandlerType);
 
-                if (hasAsync == hasSync) throw new Exception($"Type '{type.FullName}' can not have mixed sync and async handlers implemented.");
+                if (hasAsync == hasSync)
+                    throw new Exception($"Type '{type.FullName}' can not have mixed sync and async handlers implemented.");
 
                 _types.Add(type, new HandlerTypeInfo(type, GetEventTypes(type, hasAsync ? asyncHandlerType : syncHandlerType), hasAsync));
             }
@@ -42,19 +43,16 @@ namespace Ses.Subscriptions
             return list;
         }
 
-        private static bool TypeIsHandler(Type type)
-        {
-            return type.IsClass && typeof(IHandle).IsAssignableFrom(type);
-        }
+        private static bool TypeIsHandler(Type type) => type.IsClass && typeof(IHandle).IsAssignableFrom(type);
 
         public IEnumerable<Type> RegisteredHandlerTypes => _types.Keys;
         public IEnumerable<HandlerTypeInfo> RegisteredHandlerInfos => _types.Values;
 
         public HandlerTypeInfo GetHandlerInfoFor(Type handlerType)
         {
-            HandlerTypeInfo info;
-            _types.TryGetValue(handlerType, out info);
-            return info;
+            HandlerTypeInfo result;
+            _types.TryGetValue(handlerType, out result);
+            return result;
         }
 
         public class HandlerTypeInfo
