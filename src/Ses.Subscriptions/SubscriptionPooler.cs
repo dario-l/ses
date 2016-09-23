@@ -19,9 +19,11 @@ namespace Ses.Subscriptions
         protected SubscriptionPooler(ISubscriptionEventSource[] sources)
         {
             Sources = sources;
-            _handlerRegistrar = new HandlerRegistrar(FindHandlerTypes());
+            _handlerRegistrar = CreateHandlerRegistrar();
             _contractSubscriptions = new Dictionary<ISubscriptionEventSource, int>(Sources.Length);
         }
+
+        private HandlerRegistrar CreateHandlerRegistrar() => new HandlerRegistrar(FindHandlerTypes());
 
         public ISubscriptionEventSource[] Sources { get; }
         public virtual TimeSpan? RunForDuration => null;

@@ -65,7 +65,7 @@ namespace Ses
         public IReadOnlyEventStream Load(Guid streamId, bool pessimisticLock)
         {
             var events = _settings.Persistor.Load(streamId, 1, pessimisticLock);
-            if (events == null || events.Length == 0) return null;
+            if (events.Length == 0) return null;
             var snapshot = events[0] as IRestoredMemento;
             var currentVersion = snapshot?.Version + (events.Length - 1) ?? events.Length;
             return new ReadOnlyEventStream(events, currentVersion);

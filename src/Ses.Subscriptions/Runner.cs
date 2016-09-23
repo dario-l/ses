@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 using Ses.Abstracts;
 using Ses.Abstracts.Contracts;
 using Ses.Abstracts.Converters;
@@ -11,8 +12,8 @@ namespace Ses.Subscriptions
     internal class Runner : IDisposable
     {
         public SubscriptionPooler Pooler { get; }
-        private readonly System.Timers.Timer _runnerTimer;
-        private readonly CancellationTokenSource _disposedTokenSource = new CancellationTokenSource();
+        private System.Timers.Timer _runnerTimer;
+        private CancellationTokenSource _disposedTokenSource = new CancellationTokenSource();
 
         private volatile bool _isRunning;
         private readonly InterlockedDateTime _startedAt;
@@ -33,21 +34,26 @@ namespace Ses.Subscriptions
 
         private System.Timers.Timer CreateTimer(PoolerTimeoutCalculator timeoutCalc)
         {
-            var timeout = timeoutCalc.CalculateNext(true);
+            var timeout = timeoutCalc.CalculateNext();
             var result = new System.Timers.Timer(timeout) { AutoReset = false };
-            result.Elapsed += (_, __) => Run().SwallowException();
+            result.Elapsed += OnElapsed;
             return result;
+        }
+
+        private void OnElapsed(object _, ElapsedEventArgs __)
+        {
+            Run().SwallowException();
         }
 
         public void Start()
         {
-            _poolerContext.Logger.Trace(Pooler.RunForDuration.HasValue
+            _poolerContext.Logger.Trace(Pooler.RunForDuration != null
                 // ReSharper disable once PossibleInvalidOperationException
                 ? $"Starting runner for pooler {Pooler.GetType().FullName} for duration {Pooler.RunForDuration.Value.TotalMinutes} minute(s)..."
                 : $"Starting runner for pooler {Pooler.GetType().FullName}...");
             _startedAt.Set(DateTime.UtcNow);
             if (_isRunning) return;
-            _poolerContext.Logger.Debug(Pooler.RunForDuration.HasValue
+            _poolerContext.Logger.Debug(Pooler.RunForDuration != null
                 // ReSharper disable once PossibleInvalidOperationException
                 ? $"Runner for pooler {Pooler.GetType().FullName} for duration {Pooler.RunForDuration.Value.TotalMinutes} minute(s) started."
                 : $"Runner for pooler {Pooler.GetType().FullName} started.");
@@ -86,8 +92,27 @@ namespace Ses.Subscriptions
 
         public void Dispose()
         {
-            _disposedTokenSource.Cancel();
-            _runnerTimer.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (_runnerTimer == null) return;
+            if (disposing)
+            {
+                if (_runnerTimer != null)
+                {
+                    if (_runnerTimer.Enabled)
+                    {
+                        Stop();
+                    }
+                    _runnerTimer.Dispose();
+                }
+                _disposedTokenSource.Dispose();
+            }
+            _disposedTokenSource = null;
+            _runnerTimer = null;
         }
     }
 }

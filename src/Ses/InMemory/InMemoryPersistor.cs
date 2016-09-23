@@ -32,7 +32,7 @@ namespace Ses.InMemory
                 InMemoryStream stream;
                 if (!_streams.TryGetValue(streamId, out stream))
                 {
-                    return null;
+                    return new IEvent[0];
                 }
 
                 var events = new List<IEvent>(20);

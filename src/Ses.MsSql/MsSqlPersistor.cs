@@ -40,7 +40,6 @@ namespace Ses.MsSql
                         {
                             if (reader[0] == DBNull.Value) break;
 
-                            // ReSharper disable once PossibleNullReferenceException
                             list.Add(OnReadSnapshot(
                                 streamId,
                                 reader.GetString(0),
@@ -54,7 +53,6 @@ namespace Ses.MsSql
 
                         while (reader.Read()) // read events
                         {
-                            // ReSharper disable once PossibleNullReferenceException
                             list.Add(OnReadEvent(
                                 streamId,
                                 reader.GetString(0),

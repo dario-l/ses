@@ -6,10 +6,10 @@ namespace Ses.Abstracts
 {
     public static class SequentialGuid
     {
-        [DllImport("rpcrt4.dll", SetLastError = true)]
-        static extern int UuidCreateSequential(out Guid guid);
+        private static readonly byte[] buffer = new byte[16];
 
-        static readonly byte[] buffer = new byte[16];
+        [DllImport("rpcrt4.dll", SetLastError = true)]
+        private static extern int UuidCreateSequential(out Guid guid);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Guid NewGuid()
