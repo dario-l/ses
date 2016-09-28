@@ -9,14 +9,13 @@ namespace Ses.Abstracts
         [DllImport("rpcrt4.dll", SetLastError = true)]
         static extern int UuidCreateSequential(out Guid guid);
 
-        static readonly byte[] buffer = new byte[16];
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Guid NewGuid()
         {
             Guid guid;
             UuidCreateSequential(out guid);
             var s = guid.ToByteArray();
+            var buffer = new byte[16];
             buffer[3] = s[0];
             buffer[2] = s[1];
             buffer[1] = s[2];
