@@ -46,15 +46,14 @@ namespace Ses.Samples
                 Console.WriteLine(@"Starting subscriptions");
                 var subs = await SampleSubscriptions();
                 await Task.Delay(5000);
-                Console.WriteLine(@"Starting perf test");
+                Console.WriteLine(@"Stopping subscriptions");
                 store.Dispose();
                 subs.Dispose();
-
+                Console.WriteLine(@"Starting perf test");
                 await SamplePerfTest();
 
                 Console.WriteLine(@"Press any key to exit...");
                 Console.ReadKey();
-                GC.Collect(2, GCCollectionMode.Forced);
             }
             catch (Exception e)
             {
@@ -111,7 +110,7 @@ namespace Ses.Samples
                 await repo.SaveChangesAsync(aggregate);
 
                 aggregate = await repo.LoadAsync(streamId);
-                Console.WriteLine($"Aggregate expected version 7 = {aggregate.CommittedVersion}");
+                Console.WriteLine($@"Aggregate expected version 7 = {aggregate.CommittedVersion}");
 
                 scope.Complete();
             }
@@ -121,33 +120,38 @@ namespace Ses.Samples
         {
             using (var store = new EventStoreBuilder()
                 .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly)
-                .WithMsSqlPersistor(connectionString)
+                .WithMsSqlPersistor(connectionString, c => c.RunLinearizer(TimeSpan.FromMilliseconds(10), TimeSpan.FromSeconds(10)))
                 .WithSerializer(new JilSerializer())
                 .Build())
             {
 
-                const int count = 50000;
+                const int count = 10000;
                 var tasks = new List<Task>(count);
                 var token = new System.Threading.CancellationToken();
                 var sw = Stopwatch.StartNew();
                 for (var i = 0; i < count; i++)
                 {
-                    var streamId = SequentialGuid.NewGuid();
-                    var aggregate = new ShoppingCart(streamId, Guid.Empty);
-                    aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 1", quantity: 3);
+                    var task = Task.Run(async () =>
+                    {
+                        using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, options, TransactionScopeAsyncFlowOption.Enabled))
+                        {
+                            var streamId = SequentialGuid.NewGuid();
+                            var aggregate = new ShoppingCart(streamId, Guid.Empty);
+                            aggregate.AddItem(SequentialGuid.NewGuid(), name: "Product 1", quantity: 3);
 
-                    var commitId = SequentialGuid.NewGuid();
-                    var stream = new EventStream(commitId, aggregate.TakeUncommittedEvents());
+                            var commitId = SequentialGuid.NewGuid();
+                            var stream = new EventStream(commitId, aggregate.TakeUncommittedEvents());
 
-                    var task = store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream, token);
+                            await store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream, token);
+
+                            scope.Complete();
+                        }
+                    }, token);
                     tasks.Add(task);
                 }
-                sw.Stop();
-                Console.WriteLine($"Build tasks time {sw.ElapsedMilliseconds}ms");
-                sw.Start();
                 await Task.WhenAll(tasks);
                 sw.Stop();
-                Console.WriteLine($"Overall time {sw.ElapsedMilliseconds}ms - {(count / sw.Elapsed.TotalSeconds)}");
+                Console.WriteLine($@"Overall time {sw.ElapsedMilliseconds}ms - {(count / sw.Elapsed.TotalSeconds)}");
             }
         }
 
