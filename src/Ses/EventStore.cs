@@ -124,9 +124,10 @@ namespace Ses
             for(var i = 0; i < stream.Events.Length; i++)
             {
                 var @event = stream.Events[i];
+                var eventType = @event.GetType();
                 var version = ++expectedVersion;
-                var contractName = _settings.ContractsRegistry.GetContractName(@event.GetType());
-                var payload = _settings.Serializer.Serialize(@event, @event.GetType());
+                var contractName = _settings.ContractsRegistry.GetContractName(eventType);
+                var payload = _settings.Serializer.Serialize(@event, eventType);
                 records[i] = new EventRecord(version, contractName, payload);
             }
             return records;
