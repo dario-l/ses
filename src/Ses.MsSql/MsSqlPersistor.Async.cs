@@ -13,7 +13,7 @@ namespace Ses.MsSql
     {
         public async Task<IEvent[]> LoadAsync(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = new CancellationToken())
         {
-            var list = new List<IEvent>(30);
+            List<IEvent> list = null;
             using (var cnn = new SqlConnection(_connectionString))
             {
                 using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.SelectEvents.Query, cancellationToken).NotOnCapturedContext())
@@ -25,6 +25,8 @@ namespace Ses.MsSql
 
                     using (var reader = await cmd.ExecuteReaderAsync(cancellationToken).NotOnCapturedContext())
                     {
+                        if (reader.HasRows) list = new List<IEvent>(100);
+
                         while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext()) // read snapshot
                         {
                             if (reader[0] == DBNull.Value) break;
@@ -39,6 +41,8 @@ namespace Ses.MsSql
 
                         await reader.NextResultAsync(cancellationToken).NotOnCapturedContext();
 
+                        if (list == null && reader.HasRows) list = new List<IEvent>(30);
+
                         while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext()) // read events
                         {
                             // ReSharper disable once PossibleNullReferenceException
@@ -51,7 +55,7 @@ namespace Ses.MsSql
                     }
                 }
             }
-            return list.ToArray();
+            return list?.ToArray() ?? new IEvent[0];
         }
 
         public async Task DeleteStreamAsync(Guid streamId, int expectedVersion, CancellationToken cancellationToken = new CancellationToken())

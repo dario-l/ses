@@ -56,7 +56,7 @@ namespace Ses
         public async Task<IReadOnlyEventStream> LoadAsync(Guid streamId, bool pessimisticLock, CancellationToken cancellationToken = default(CancellationToken))
         {
             var events = await _settings.Persistor.LoadAsync(streamId, 1, pessimisticLock, cancellationToken);
-            if (events == null || events.Length == 0) return null;
+            if (events.Length == 0) return null;
             var snapshot = events[0] as IRestoredMemento;
             var currentVersion = snapshot?.Version + (events.Length - 1) ?? events.Length;
             return new ReadOnlyEventStream(events, currentVersion);

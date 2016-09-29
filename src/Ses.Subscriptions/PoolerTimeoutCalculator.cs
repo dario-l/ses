@@ -27,7 +27,7 @@ namespace Ses.Subscriptions
             _poolerStaticTimeout = poolerStaticTimeout;
         }
 
-        public double CalculateNext(bool anyDispatched)
+        public double CalculateNext(bool anyDispatched = true)
         {
             if (_poolerStaticTimeout != TimeSpan.Zero)
             {
