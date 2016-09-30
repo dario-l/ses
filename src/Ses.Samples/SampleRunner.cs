@@ -159,7 +159,7 @@ namespace Ses.Samples
         {
             var sources = new ISubscriptionEventSource[]
             {
-                new MsSqlEventSource(new JilSerializer(), connectionString),
+                new MsSqlEventSource(new JilSerializer(), connectionString, 1000),
                 // new SomeApiEventSource()
             };
 

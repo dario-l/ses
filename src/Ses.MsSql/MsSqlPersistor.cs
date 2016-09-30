@@ -11,6 +11,10 @@ namespace Ses.MsSql
         private readonly Linearizer _linearizer;
         private readonly string _connectionString;
 
+        private const byte colIndexForContractName = 0;
+        private const byte colIndexForVersion = 1;
+        private const byte colIndexForPayload = 2;
+
         public MsSqlPersistor(Linearizer linearizer, string connectionString)
         {
             _linearizer = linearizer;
@@ -32,7 +36,7 @@ namespace Ses.MsSql
                         .AddInputParam(SqlQueries.SelectEvents.ParamFromVersion, DbType.Int32, fromVersion)
                         .AddInputParam(SqlQueries.SelectEvents.ParamPessimisticLock, DbType.Boolean, pessimisticLock);
 
-                    using (var reader = cmd.ExecuteReader())
+                    using (var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
                     {
                         if (reader.HasRows) list = new List<IEvent>(100);
 
@@ -40,12 +44,11 @@ namespace Ses.MsSql
                         {
                             if (reader[0] == DBNull.Value) break;
 
-                            // ReSharper disable once PossibleNullReferenceException
                             list.Add(OnReadSnapshot(
                                 streamId,
-                                reader.GetString(0),
-                                reader.GetInt32(1),
-                                (byte[])reader[2]));
+                                reader.GetString(colIndexForContractName),
+                                reader.GetInt32(colIndexForVersion),
+                                GetBytes(reader)));
                         }
 
                         reader.NextResult();
@@ -54,17 +57,25 @@ namespace Ses.MsSql
 
                         while (reader.Read()) // read events
                         {
-                            // ReSharper disable once PossibleNullReferenceException
                             list.Add(OnReadEvent(
                                 streamId,
-                                reader.GetString(0),
-                                reader.GetInt32(1),
-                                (byte[])reader[2]));
+                                reader.GetString(colIndexForContractName),
+                                reader.GetInt32(colIndexForVersion),
+                                GetBytes(reader)));
                         }
                     }
                 }
             }
             return list?.ToArray() ?? new IEvent[0];
+        }
+
+        private static byte[] GetBytes(SqlDataReader reader)
+        {
+            // ReSharper disable once AssignNullToNotNullAttribute
+            var size = reader.GetBytes(colIndexForPayload, 0, null, 0, 0);
+            var buffer = new byte[size];
+            reader.GetBytes(colIndexForPayload, 0, buffer, 0, (int)size);
+            return buffer;
         }
 
         public void DeleteStream(Guid streamId, int expectedVersion)

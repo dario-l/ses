@@ -195,20 +195,21 @@ GO
 
 CREATE PROCEDURE SesSelectTimelineEvents
 (
+    @Limit INT,
     @SequenceId BIGINT
 )
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT TOP 1000
-        s.[StreamId],
-        s.[Version],
-        s.[CommitId],
+    SELECT TOP(@Limit)
         s.[ContractName] AS [EventContractName],
         s.[Payload] AS [EventPayload],
+        sm.[Payload] AS [MetaPayload],
+        s.[StreamId],
+        s.[CommitId],
         s.[CreatedAtUtc],
         s.[EventId],
-        sm.[Payload] AS [MetaPayload]
+        s.[Version]
     FROM
         [Streams] s WITH(READPAST,ROWLOCK)
         LEFT JOIN [StreamsMetadata] sm WITH(NOLOCK) ON sm.StreamId = s.StreamId AND sm.CommitId = s.CommitId
@@ -221,21 +222,22 @@ GO
 
 CREATE PROCEDURE SesSelectTimelineSubscriptionEvents
 (
+    @Limit INT,
     @SequenceId BIGINT,
     @SubscriptionId INT
 )
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT TOP 500
-        s.[StreamId],
-        s.[Version],
-        s.[CommitId],
+    SELECT TOP(@Limit)
         s.[ContractName] AS [EventContractName],
         s.[Payload] AS [EventPayload],
+        sm.[Payload] AS [MetaPayload],
+        s.[StreamId],
+        s.[CommitId],
         s.[CreatedAtUtc],
         s.[EventId],
-        sm.[Payload] AS [MetaPayload]
+        s.[Version]
     FROM
         [Streams] s WITH(READPAST,ROWLOCK)
         INNER JOIN [StreamsSubscriptionContracts] ssc WITH(NOLOCK) ON ssc.EventContractName = s.ContractName

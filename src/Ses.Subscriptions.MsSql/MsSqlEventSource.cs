@@ -16,24 +16,39 @@ namespace Ses.Subscriptions.MsSql
     [DataContract(Name = "Ses.Subscriptions.MsSql.MsSqlEventSource")]
     public class MsSqlEventSource : ISubscriptionEventSource
     {
-        private readonly ISerializer _serializer;
-        private readonly string _connectionString;
-        private const string selectEventsProcedure = "SesSelectTimelineEvents";
-        private const string selectSubscriptionEventsProcedure = "SesSelectTimelineSubscriptionEvents";
-        private const string sequenceIdParamName = "@SequenceId";
-        private const string subscriptionIdParamName = "@SubscriptionId";
         private static readonly Type metadataType = typeof(Dictionary<string, object>);
 
-        public MsSqlEventSource(ISerializer serializer, string connectionString)
+        private readonly ISerializer _serializer;
+        private readonly string _connectionString;
+        private readonly int _fetchLimit;
+
+        private const string selectEventsProcedure = "SesSelectTimelineEvents";
+        private const string selectSubscriptionEventsProcedure = "SesSelectTimelineSubscriptionEvents";
+        private const string limitParamName = "@Limit";
+        private const string sequenceIdParamName = "@SequenceId";
+        private const string subscriptionIdParamName = "@SubscriptionId";
+        
+        private const byte colIndexForContractName = 0;
+        private const byte colIndexForEventPayload = 1;
+        private const byte colIndexForMetaPayload = 2;
+        private const byte colIndexForStreamId = 3;
+        private const byte colIndexForCommitId = 4;
+        private const byte colIndexForCreatedAtUtc = 5;
+        private const byte colIndexForEventId = 6;
+        private const byte colIndexForVersion = 7;
+
+        public MsSqlEventSource(ISerializer serializer, string connectionString, int fetchLimit = 100)
         {
             _serializer = serializer;
             _connectionString = connectionString;
+            _fetchLimit = fetchLimit;
         }
 
-        protected virtual void OnSqlCommandCreated(SqlCommand cmd, long lastVersion, int? subscriptionId)
+        protected virtual void OnSqlCommandCreated(SqlCommand cmd, long lastVersion, int? subscriptionId, int fetchLimit)
         {
             cmd.CommandType = CommandType.StoredProcedure;
             cmd.CommandText = subscriptionId.HasValue ? selectSubscriptionEventsProcedure : selectEventsProcedure;
+            cmd.AddInputParam(limitParamName, DbType.Int32, fetchLimit);
             cmd.AddInputParam(sequenceIdParamName, DbType.Int64, lastVersion);
             if (subscriptionId.HasValue)
             {
@@ -48,30 +63,29 @@ namespace Ses.Subscriptions.MsSql
             {
                 await cnn.OpenAsync(cancellationToken).NotOnCapturedContext();
                 var cmd = cnn.CreateCommand();
-                OnSqlCommandCreated(cmd, lastVersion, subscriptionId);
-                using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult, cancellationToken).NotOnCapturedContext())
+                OnSqlCommandCreated(cmd, lastVersion, subscriptionId, _fetchLimit);
+                using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult | CommandBehavior.SequentialAccess, cancellationToken).NotOnCapturedContext())
                 {
                     if (reader.HasRows)
                     {
-                        extractedEvents = new List<ExtractedEvent>(100);
+                        extractedEvents = new List<ExtractedEvent>(_fetchLimit);
                         while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext())
                         {
-                            var eventType = registry.GetType(reader.GetString(3));
-                            var @event = UpConvert(upConverterFactory, eventType, _serializer.Deserialize<IEvent>((byte[])reader[4], eventType));
-                            var metadata = reader[7] == DBNull.Value
+                            var eventType = registry.GetType(await reader.GetFieldValueAsync<string>(colIndexForContractName, cancellationToken).NotOnCapturedContext());
+
+                            var @event = UpConvert(upConverterFactory, eventType, _serializer.Deserialize<IEvent>(await reader.GetFieldValueAsync<byte[]>(colIndexForEventPayload, cancellationToken).NotOnCapturedContext(), eventType));
+                            var metadata = await reader.IsDBNullAsync(colIndexForMetaPayload, cancellationToken).NotOnCapturedContext()
                                 ? null
-                                : _serializer.Deserialize<IDictionary<string, object>>((byte[])reader[7], metadataType);
+                                : _serializer.Deserialize<IDictionary<string, object>>(await reader.GetFieldValueAsync<byte[]>(colIndexForMetaPayload, cancellationToken).NotOnCapturedContext(), metadataType);
 
                             var envelope = new EventEnvelope(
-                                reader.GetGuid(0), // StreamId 0
-                                reader.GetGuid(2), // CommitId 2
-                                reader.GetDateTime(5), // CreatedAtUtc 5
-                                reader.GetInt64(6), // EventId 6
-                                reader.GetInt32(1), // Version 1
-                                @event, // 6
-                                metadata); // 7
-
-                            //Fetched(envelope, GetType());
+                                await reader.GetFieldValueAsync<Guid>(colIndexForStreamId, cancellationToken).NotOnCapturedContext(), // StreamId 0
+                                await reader.GetFieldValueAsync<Guid>(colIndexForCommitId, cancellationToken).NotOnCapturedContext(), // CommitId 1
+                                await reader.GetFieldValueAsync<DateTime>(colIndexForCreatedAtUtc, cancellationToken).NotOnCapturedContext(), // CreatedAtUtc 2
+                                await reader.GetFieldValueAsync<long>(colIndexForEventId, cancellationToken).NotOnCapturedContext(), // EventId 3
+                                await reader.GetFieldValueAsync<int>(colIndexForVersion, cancellationToken).NotOnCapturedContext(), // Version 4
+                                @event,
+                                metadata);
 
                             extractedEvents.Add(new ExtractedEvent(envelope, GetType()));
                         }
@@ -103,9 +117,9 @@ namespace Ses.Subscriptions.MsSql
                 {
                     await cnn.OpenAsync(cancellationToken).NotOnCapturedContext();
                     cmd.Transaction = cnn.BeginTransaction();
-                    cmd.CommandText = "IF(SELECT Count(1) FROM StreamsSubscriptions WHERE Name = @Name) = 0 BEGIN INSERT INTO StreamsSubscriptions(Name) OUTPUT Inserted.ID VALUES(@Name); END;";
+                    cmd.CommandText = "IF NOT EXISTS(SELECT TOP 1 1 FROM StreamsSubscriptions WHERE Name = @Name) BEGIN INSERT INTO StreamsSubscriptions(Name) OUTPUT Inserted.ID VALUES(@Name); END;";
                     cmd.AddInputParam("@Name", DbType.String, name);
-                    var subscriptionId = (int)(await cmd.ExecuteScalarAsync(cancellationToken).NotOnCapturedContext());
+                    var subscriptionId = (int)await cmd.ExecuteScalarAsync(cancellationToken).NotOnCapturedContext();
                     cmd.Parameters.Clear();
                     cmd.CommandText = "INSERT INTO StreamsSubscriptionContracts(StreamsSubscriptionId,EventContractName)VALUES(@SubscriptionId,@ContractName)";
                     cmd.AddInputParam("@SubscriptionId", DbType.Int32, subscriptionId);
@@ -139,7 +153,7 @@ namespace Ses.Subscriptions.MsSql
                 {
                     cnn.Open();
                     cmd.Transaction = cnn.BeginTransaction();
-                    cmd.CommandText = "IF(SELECT Count(1) FROM StreamsSubscriptions WHERE Name = @Name) = 0 BEGIN INSERT INTO StreamsSubscriptions(Name) OUTPUT Inserted.ID VALUES(@Name); END;";
+                    cmd.CommandText = "IF NOT EXISTS(SELECT TOP 1 1 FROM StreamsSubscriptions WHERE Name = @Name) BEGIN INSERT INTO StreamsSubscriptions(Name) OUTPUT Inserted.ID VALUES(@Name); END;";
                     cmd.AddInputParam("@Name", DbType.String, name);
                     var subscriptionId = (int)cmd.ExecuteScalar();
                     cmd.Parameters.Clear();

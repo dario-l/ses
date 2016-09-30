@@ -23,20 +23,20 @@ namespace Ses.MsSql
                         .AddInputParam(SqlQueries.SelectEvents.ParamFromVersion, DbType.Int32, fromVersion)
                         .AddInputParam(SqlQueries.SelectEvents.ParamPessimisticLock, DbType.Boolean, pessimisticLock);
 
-                    using (var reader = await cmd.ExecuteReaderAsync(cancellationToken).NotOnCapturedContext())
+                    using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken).NotOnCapturedContext())
                     {
                         if (reader.HasRows) list = new List<IEvent>(100);
 
                         while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext()) // read snapshot
                         {
-                            if (reader[0] == DBNull.Value) break;
+                            if (await reader.IsDBNullAsync(colIndexForContractName, cancellationToken).NotOnCapturedContext()) break;
 
                             // ReSharper disable once PossibleNullReferenceException
                             list.Add(OnReadSnapshot(
                                 streamId,
-                                reader.GetString(0),
-                                reader.GetInt32(1),
-                                (byte[])reader[2]));
+                                await reader.GetFieldValueAsync<string>(colIndexForContractName, cancellationToken).NotOnCapturedContext(),
+                                await reader.GetFieldValueAsync<int>(colIndexForVersion, cancellationToken).NotOnCapturedContext(),
+                                await reader.GetFieldValueAsync<byte[]>(colIndexForPayload, cancellationToken).NotOnCapturedContext()));
                         }
 
                         await reader.NextResultAsync(cancellationToken).NotOnCapturedContext();
@@ -45,12 +45,11 @@ namespace Ses.MsSql
 
                         while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext()) // read events
                         {
-                            // ReSharper disable once PossibleNullReferenceException
                             list.Add(OnReadEvent(
                                 streamId,
-                                reader.GetString(0),
-                                reader.GetInt32(1),
-                                (byte[])reader[2]));
+                                await reader.GetFieldValueAsync<string>(colIndexForContractName, cancellationToken).NotOnCapturedContext(),
+                                await reader.GetFieldValueAsync<int>(colIndexForVersion, cancellationToken).NotOnCapturedContext(),
+                                await reader.GetFieldValueAsync<byte[]>(colIndexForPayload, cancellationToken).NotOnCapturedContext()));
                         }
                     }
                 }

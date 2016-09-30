@@ -9,6 +9,11 @@ namespace Ses.Subscriptions.MsSql
 {
     public class MsSqlPoolerStateRepository : IPoolerStateRepository
     {
+        private const byte colIndexForPoolerContractName = 0;
+        private const byte colIndexForSourceContractName = 1;
+        private const byte colIndexForHandlerContractName = 2;
+        private const byte colIndexForEventSequence = 3;
+
         private readonly string _connectionString;
 
         public MsSqlPoolerStateRepository(string connectionString)
@@ -63,9 +68,12 @@ namespace Ses.Subscriptions.MsSql
                         states = new List<PoolerState>(100);
                         while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext())
                         {
-                            var state = new PoolerState(reader.GetString(0), reader.GetString(1), reader.GetString(2))
+                            var state = new PoolerState(
+                                await reader.GetFieldValueAsync<string>(colIndexForPoolerContractName, cancellationToken).NotOnCapturedContext(),
+                                await reader.GetFieldValueAsync<string>(colIndexForSourceContractName, cancellationToken).NotOnCapturedContext(),
+                                await reader.GetFieldValueAsync<string>(colIndexForHandlerContractName, cancellationToken).NotOnCapturedContext())
                             {
-                                EventSequenceId = reader.GetInt64(3)
+                                EventSequenceId = await reader.GetFieldValueAsync<long>(colIndexForEventSequence, cancellationToken).NotOnCapturedContext()
                             };
                             states.Add(state);
                         }
