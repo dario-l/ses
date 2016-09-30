@@ -10,7 +10,7 @@ namespace Ses.MsSql.Tests
         [Fact]
         public async Task Can_stop_and_run_many_times()
         {
-            var sub = new Linearizer(null, new NullLogger(), TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2));
+            var sub = new Linearizer(null, new NullLogger(), TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2), 10);
             await Task.Run(() => { sub.Start(); });
 
             await Task.Delay(3000);

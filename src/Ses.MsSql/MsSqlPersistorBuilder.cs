@@ -69,13 +69,14 @@ namespace Ses.MsSql
 
         public Linearizer Linearizer { get; private set; }
 
-        public void RunLinearizer(TimeSpan timeout, TimeSpan? durationWork = null)
+        public void RunLinearizer(TimeSpan timeout, TimeSpan? durationWork = null, int batchSize = 500)
         {
             Linearizer = new Linearizer(
                 _connectionString,
                 _logger,
                 timeout,
-                durationWork ?? TimeSpan.FromSeconds(defaultDurationWorkInSeconds));
+                durationWork ?? TimeSpan.FromSeconds(defaultDurationWorkInSeconds),
+                batchSize);
         }
     }
 }

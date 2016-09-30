@@ -7,7 +7,12 @@
     [CreatedAtUtc] datetime NOT NULL,
     [Payload] varbinary(max) NOT NULL,
     [EventId] BIGINT NULL
-    CONSTRAINT [PK_Streams] PRIMARY KEY CLUSTERED ([StreamId],[Version],[CommitId])
+    CONSTRAINT [PK_Streams] PRIMARY KEY CLUSTERED ([StreamId],[Version])
+);
+
+CREATE UNIQUE NONCLUSTERED INDEX [IX_Streams_CommitId_Version] ON [dbo].[Streams] (
+    [CommitId] ASC,
+    [Version] ASC
 );
 
 CREATE NONCLUSTERED INDEX [IX_Streams_EventId_InternalId] ON [dbo].[Streams] (
@@ -22,6 +27,10 @@ INCLUDE (
     [Payload],
     [CreatedAtUtc]
 )
+WHERE ([EventId] IS NOT NULL);
+
+CREATE NONCLUSTERED INDEX [IX_Streams_InternalId] ON [dbo].[Streams] ([InternalId])
+INCLUDE ([StreamId],[Version],[EventId]);
 
 CREATE TABLE [StreamsMetadata] (
     [StreamId] uniqueidentifier NOT NULL,
@@ -297,17 +306,26 @@ AS BEGIN
 END;
 GO
 
-CREATE PROCEDURE SesLinearize AS
+CREATE PROCEDURE SesLinearize
+(
+    @Limit INT
+)
+AS
 BEGIN
     SET NOCOUNT ON;
-    DECLARE @id BIGINT
+    DECLARE @id BIGINT, @Version INT, @StreamId UNIQUEIDENTIFIER, @EventId BIGINT
+
+    SELECT @EventId = IsNull(MAX(EventId), 0) FROM Streams WITH (READPAST,ROWLOCK)
+
     DECLARE cur CURSOR FAST_FORWARD FOR
-        SELECT TOP 100 InternalId FROM Streams WITH (READPAST,ROWLOCK) WHERE EventId IS NULL ORDER BY InternalId ASC
-    OPEN cur  
-    FETCH NEXT FROM cur INTO @id
+        SELECT TOP(@Limit) InternalId, Version, StreamId FROM Streams WITH (READPAST,ROWLOCK) WHERE EventId IS NULL ORDER BY InternalId ASC
+    OPEN cur
+    FETCH NEXT FROM cur INTO @id, @Version, @StreamId
     WHILE @@FETCH_STATUS = 0 BEGIN
-        UPDATE Streams SET EventId = (SELECT IsNull(MAX(EventId), 0) FROM Streams WITH (READPAST,ROWLOCK)) + 1 WHERE InternalId = @id
-    FETCH NEXT FROM cur INTO @id END
+        SET @EventId = @EventId + 1
+        UPDATE Streams SET EventId = @EventId WHERE InternalId = @id
+        UPDATE StreamsSnapshots SET [LastStreamVersion] = @Version WHERE [StreamId] = @StreamId
+    FETCH NEXT FROM cur INTO @id, @Version, @StreamId END
     CLOSE cur
     DEALLOCATE cur
 END;

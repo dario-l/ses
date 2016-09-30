@@ -120,7 +120,7 @@ namespace Ses.Samples
         {
             using (var store = new EventStoreBuilder()
                 .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly)
-                .WithMsSqlPersistor(connectionString, c => c.RunLinearizer(TimeSpan.FromMilliseconds(10), TimeSpan.FromSeconds(10)))
+                .WithMsSqlPersistor(connectionString, c => c.RunLinearizer(TimeSpan.FromMilliseconds(10), TimeSpan.FromSeconds(240)))
                 .WithSerializer(new JilSerializer())
                 .Build())
             {
@@ -152,6 +152,9 @@ namespace Ses.Samples
                 await Task.WhenAll(tasks);
                 sw.Stop();
                 Console.WriteLine($@"Overall time {sw.ElapsedMilliseconds}ms - {(count / sw.Elapsed.TotalSeconds)}");
+                Console.WriteLine(@"Waiting for Linearizer...");
+                await Task.Delay(5000, token);
+                Console.WriteLine(@"Done.");
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Data.SqlClient;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,6 +11,7 @@ namespace Ses.MsSql
 {
     internal class Linearizer : IDisposable
     {
+        private const string batchSizeParamName = "@Limit";
         private CancellationTokenSource _disposedTokenSource = new CancellationTokenSource();
         private readonly ILogger _logger;
         private readonly string _connectionString;
@@ -17,14 +19,16 @@ namespace Ses.MsSql
         private readonly TimeSpan _durationWork;
         private volatile bool _isRunning;
         private readonly InterlockedDateTime _startedAt;
+        private readonly int _batchSize;
 
-        public Linearizer(string connectionString, ILogger logger, TimeSpan timeout, TimeSpan durationWork)
+        public Linearizer(string connectionString, ILogger logger, TimeSpan timeout, TimeSpan durationWork, int batchSize)
         {
             _logger = logger;
             _connectionString = PrepareConnectionString(connectionString);
             _timer = new System.Timers.Timer(timeout.TotalMilliseconds) { AutoReset = false, SynchronizingObject = null,  Site = null };
             _timer.Elapsed += OnTimerElapsed;
             _durationWork = durationWork;
+            _batchSize = batchSize;
             _startedAt = new InterlockedDateTime(DateTime.MaxValue);
         }
 
@@ -79,6 +83,8 @@ namespace Ses.MsSql
                 using (var cnn = new SqlConnection(_connectionString))
                 using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.Linearize.Query, _disposedTokenSource.Token).NotOnCapturedContext())
                 {
+                    cmd.CommandTimeout = 60000;
+                    cmd.AddInputParam(batchSizeParamName, DbType.Int32, _batchSize);
                     await cmd
                         .ExecuteNonQueryAsync(_disposedTokenSource.Token)
                         .NotOnCapturedContext();

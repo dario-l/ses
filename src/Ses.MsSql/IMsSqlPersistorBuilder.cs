@@ -6,6 +6,6 @@ namespace Ses.MsSql
     {
         void Destroy(bool ignoreErrors = false);
         void Initialize();
-        void RunLinearizer(TimeSpan timeout, TimeSpan? durationWork = null);
+        void RunLinearizer(TimeSpan timeout, TimeSpan? durationWork = null, int batchSize = 500);
     }
 }
