@@ -140,7 +140,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
     DECLARE @IsNew BIT = 0
-    IF EXISTS(SELECT TOP 1 1 FROM [Streams] WHERE [StreamId] = @StreamId) BEGIN
+    IF NOT EXISTS(SELECT TOP 1 1 FROM [Streams] WHERE [StreamId] = @StreamId) BEGIN
         SET @IsNew = 1
     END
 
