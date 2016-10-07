@@ -117,20 +117,25 @@ namespace Ses.Subscriptions.MsSql
                 {
                     await cnn.OpenAsync(cancellationToken).NotOnCapturedContext();
                     cmd.Transaction = cnn.BeginTransaction();
-                    cmd.CommandText = "IF NOT EXISTS(SELECT TOP 1 1 FROM StreamsSubscriptions WHERE Name = @Name) BEGIN INSERT INTO StreamsSubscriptions(Name) OUTPUT Inserted.ID VALUES(@Name); END;";
+                    cmd.CommandText = @"SELECT TOP 1 Id FROM StreamsSubscriptions WHERE Name = @Name";
                     cmd.AddInputParam("@Name", DbType.String, name);
-                    var subscriptionId = (int)await cmd.ExecuteScalarAsync(cancellationToken).NotOnCapturedContext();
-                    cmd.Parameters.Clear();
-                    cmd.CommandText = "INSERT INTO StreamsSubscriptionContracts(StreamsSubscriptionId,EventContractName)VALUES(@SubscriptionId,@ContractName)";
-                    cmd.AddInputParam("@SubscriptionId", DbType.Int32, subscriptionId);
-                    cmd.AddInputParam("@ContractName", DbType.String, (string)null);
-                    foreach (var contractName in contractNames)
+                    var subscriptionId = (int?)await cmd.ExecuteScalarAsync(cancellationToken).NotOnCapturedContext();
+                    if (subscriptionId == null)
                     {
-                        cmd.Parameters[1].Value = contractName;
-                        await cmd.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();
+                        cmd.CommandText = @"INSERT INTO StreamsSubscriptions(Name) OUTPUT Inserted.ID VALUES(@Name);";
+                        subscriptionId = (int)await cmd.ExecuteScalarAsync(cancellationToken).NotOnCapturedContext();
+                        cmd.Parameters.Clear();
+                        cmd.CommandText = @"INSERT INTO StreamsSubscriptionContracts(StreamsSubscriptionId,EventContractName)VALUES(@SubscriptionId,@ContractName)";
+                        cmd.AddInputParam("@SubscriptionId", DbType.Int32, subscriptionId);
+                        cmd.AddInputParam("@ContractName", DbType.String, (string)null);
+                        foreach (var contractName in contractNames)
+                        {
+                            cmd.Parameters[1].Value = contractName;
+                            await cmd.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();
+                        }
+                        cmd.Transaction.Commit();
                     }
-                    cmd.Transaction.Commit();
-                    return subscriptionId;
+                    return subscriptionId.Value;
                 }
                 catch
                 {
@@ -153,20 +158,25 @@ namespace Ses.Subscriptions.MsSql
                 {
                     cnn.Open();
                     cmd.Transaction = cnn.BeginTransaction();
-                    cmd.CommandText = "IF NOT EXISTS(SELECT TOP 1 1 FROM StreamsSubscriptions WHERE Name = @Name) BEGIN INSERT INTO StreamsSubscriptions(Name) OUTPUT Inserted.ID VALUES(@Name); END;";
+                    cmd.CommandText = @"SELECT TOP 1 Id FROM StreamsSubscriptions WHERE Name = @Name";
                     cmd.AddInputParam("@Name", DbType.String, name);
-                    var subscriptionId = (int)cmd.ExecuteScalar();
-                    cmd.Parameters.Clear();
-                    cmd.CommandText = "INSERT INTO StreamsSubscriptionContracts(StreamsSubscriptionId,EventContractName)VALUES(@SubscriptionId,@ContractName)";
-                    cmd.AddInputParam("@SubscriptionId", DbType.Int32, subscriptionId);
-                    cmd.AddInputParam("@ContractName", DbType.String, (string)null);
-                    foreach (var contractName in contractNames)
+                    var subscriptionId = (int?)cmd.ExecuteScalar();
+                    if (subscriptionId == null)
                     {
-                        cmd.Parameters[1].Value = contractName;
-                        cmd.ExecuteNonQuery();
+                        cmd.CommandText = @"INSERT INTO StreamsSubscriptions(Name) OUTPUT Inserted.ID VALUES(@Name);";
+                        subscriptionId = (int)cmd.ExecuteScalar();
+                        cmd.Parameters.Clear();
+                        cmd.CommandText = @"INSERT INTO StreamsSubscriptionContracts(StreamsSubscriptionId,EventContractName)VALUES(@SubscriptionId,@ContractName)";
+                        cmd.AddInputParam("@SubscriptionId", DbType.Int32, subscriptionId);
+                        cmd.AddInputParam("@ContractName", DbType.String, (string)null);
+                        foreach (var contractName in contractNames)
+                        {
+                            cmd.Parameters[1].Value = contractName;
+                            cmd.ExecuteNonQuery();
+                        }
+                        cmd.Transaction.Commit();
                     }
-                    cmd.Transaction.Commit();
-                    return subscriptionId;
+                    return subscriptionId.Value;
                 }
                 catch
                 {
