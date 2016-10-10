@@ -24,7 +24,7 @@ namespace Ses.Domain
             State = snapshot;
         }
 
-        protected override void Invoke(IEvent @event)
+        protected internal override void Invoke(IEvent @event)
         {
             RedirectToWhen.InvokeEventOptional(State, @event);
         }

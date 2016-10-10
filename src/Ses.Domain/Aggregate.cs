@@ -72,7 +72,7 @@ namespace Ses.Domain
         /// when transaction completes.
         /// </summary>
         /// <param name="event">An event which should be applied</param>
-        protected virtual void Apply(IEvent @event)
+        protected void Apply(IEvent @event)
         {
             Invoke(@event);
             _uncommittedEvents.Add(@event);
@@ -84,7 +84,7 @@ namespace Ses.Domain
         /// during the lifetime of this instance.
         /// </summary>
         /// <param name="event">An event which should be invoked</param>
-        protected virtual void Invoke(IEvent @event)
+        protected internal virtual void Invoke(IEvent @event)
         {
             RedirectToWhen.InvokeEventOptional(this, @event);
         }
