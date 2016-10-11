@@ -1,6 +1,6 @@
 # SimpleEventStore
 
-*THIS PROJECT IS HIGHLY EXPERIMENTAL*
+**This project is still under development (with occasionally breaking changes) but it is used in production already**
 
 SimpleEventStore is a simple event store library for .NET based on rdbms persistance.
 
@@ -61,3 +61,7 @@ using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, opti
     scope.Complete();
 }
 ```
+
+##### It is working on production already
+
+SimpleEventStore has used in commercial project https://timeharmony.pl already.
