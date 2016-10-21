@@ -1,5 +1,6 @@
 using System;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using Ses.Abstracts;
 
 namespace Ses.MsSql
@@ -64,6 +65,7 @@ namespace Ses.MsSql
             catch (Exception e)
             {
                 _logger.Error(e.ToString());
+                Debug.WriteLine(e.ToString());
             }
         }
 

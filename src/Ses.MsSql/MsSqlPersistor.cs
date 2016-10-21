@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using Ses.Abstracts;
+// ReSharper disable PossibleNullReferenceException
 
 namespace Ses.MsSql
 {
@@ -27,44 +28,55 @@ namespace Ses.MsSql
         public IEvent[] Load(Guid streamId, int fromVersion, bool pessimisticLock)
         {
             List<IEvent> list = null;
-            using (var cnn = new SqlConnection(_connectionString))
+            try
             {
-                using (var cmd = cnn.OpenAndCreateCommand(SqlQueries.SelectEvents.Query))
+                using (var cnn = new SqlConnection(_connectionString))
                 {
-                    cmd
-                        .AddInputParam(SqlQueries.SelectEvents.ParamStreamId, DbType.Guid, streamId)
-                        .AddInputParam(SqlQueries.SelectEvents.ParamFromVersion, DbType.Int32, fromVersion)
-                        .AddInputParam(SqlQueries.SelectEvents.ParamPessimisticLock, DbType.Boolean, pessimisticLock);
-
-                    using (var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
+                    using (var cmd = cnn.OpenAndCreateCommand(SqlQueries.SelectEvents.Query))
                     {
-                        if (reader.HasRows) list = new List<IEvent>(100);
+                        cmd
+                            .AddInputParam(SqlQueries.SelectEvents.ParamStreamId, DbType.Guid, streamId)
+                            .AddInputParam(SqlQueries.SelectEvents.ParamFromVersion, DbType.Int32, fromVersion)
+                            .AddInputParam(SqlQueries.SelectEvents.ParamPessimisticLock, DbType.Boolean, pessimisticLock);
 
-                        while (reader.Read()) // read snapshot
+                        using (var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
                         {
-                            if (reader[0] == DBNull.Value) break;
+                            if (reader.HasRows) list = new List<IEvent>(100);
 
-                            list.Add(OnReadSnapshot(
-                                streamId,
-                                reader.GetString(colIndexForContractName),
-                                reader.GetInt32(colIndexForVersion),
-                                GetBytes(reader)));
-                        }
+                            while (reader.Read()) // read snapshot
+                            {
+                                if (reader[0] == DBNull.Value) break;
 
-                        reader.NextResult();
+                                list.Add(OnReadSnapshot(
+                                    streamId,
+                                    reader.GetString(colIndexForContractName),
+                                    reader.GetInt32(colIndexForVersion),
+                                    GetBytes(reader)));
+                            }
 
-                        if (list == null && reader.HasRows) list = new List<IEvent>(30);
+                            reader.NextResult();
 
-                        while (reader.Read()) // read events
-                        {
-                            list.Add(OnReadEvent(
-                                streamId,
-                                reader.GetString(colIndexForContractName),
-                                reader.GetInt32(colIndexForVersion),
-                                GetBytes(reader)));
+                            if (list == null && reader.HasRows) list = new List<IEvent>(30);
+
+                            while (reader.Read()) // read events
+                            {
+                                list.Add(OnReadEvent(
+                                    streamId,
+                                    reader.GetString(colIndexForContractName),
+                                    reader.GetInt32(colIndexForVersion),
+                                    GetBytes(reader)));
+                            }
                         }
                     }
                 }
+            }
+            catch (SqlException ex)
+            {
+                if (ex.IsStreamNotLockable())
+                {
+                    throw new InvalidOperationException($"Can not load and lock stream {streamId} because it is not created with param 'isLockable' set to true.", ex);
+                }
+                throw;
             }
             return list?.ToArray() ?? new IEvent[0];
         }
@@ -98,7 +110,7 @@ namespace Ses.MsSql
                     }
                     catch (SqlException e)
                     {
-                        if (e.Message.StartsWith("WrongExpectedVersion"))
+                        if (e.IsWrongExpectedVersionRised())
                         {
                             throw new WrongExpectedVersionException($"Deleting stream {streamId} error", e);
                         }
@@ -127,7 +139,7 @@ namespace Ses.MsSql
                 }
                 catch (SqlException e)
                 {
-                    if (e.Message.StartsWith("WrongExpectedVersion"))
+                    if (e.IsWrongExpectedVersionRised())
                     {
                         throw new WrongExpectedVersionException($"Updating snapshot for stream {streamId} error", e);
                     }

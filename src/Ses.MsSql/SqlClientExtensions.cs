@@ -10,16 +10,24 @@ namespace Ses.MsSql
     internal static class SqlClientExtensions
     {
         private const short duplicateKeyViolationErrorNumber = 2627;
+        private const short duplicateUniqueIndexViolationErrorNumber = 2601;
         private const string wrongExpectedVersionKey = "WrongExpectedVersion";
+        private const string streamIsNotLockable = "StreamIsNotLockable";
 
         public static bool IsUniqueConstraintViolation(this SqlException e, string indexName = null)
         {
-            return e.Number == duplicateKeyViolationErrorNumber && (indexName == null || e.Message.Contains($"'{indexName}'"));
+            return (e.Number == duplicateKeyViolationErrorNumber || e.Number == duplicateUniqueIndexViolationErrorNumber)
+                && (indexName == null || e.Message.Contains($"'{indexName}'"));
         }
 
         public static bool IsWrongExpectedVersionRised(this SqlException e)
         {
             return e.Message.StartsWith(wrongExpectedVersionKey, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static bool IsStreamNotLockable(this SqlException e)
+        {
+            return e.Message.StartsWith(streamIsNotLockable, StringComparison.OrdinalIgnoreCase);
         }
 
         public static SqlCommand AddInputParam(this SqlCommand cmd, string name, DbType type, object value, bool isNullable = false)

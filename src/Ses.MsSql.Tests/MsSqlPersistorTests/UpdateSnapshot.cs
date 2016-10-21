@@ -20,12 +20,8 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
             });
         }
 
-        public class FakeSnapshot : IMemento
-        {
-        }
+        public class FakeSnapshot : IMemento { }
 
-        public UpdateSnapshot(LocalDbFixture fixture) : base(fixture)
-        {
-        }
+        public UpdateSnapshot(LocalDbFixture fixture) : base(fixture) { }
     }
 }

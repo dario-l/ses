@@ -5,6 +5,7 @@ using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using Ses.Abstracts;
+using Ses.Conflicts;
 using Ses.MsSql;
 
 namespace Ses.TestBase
@@ -34,21 +35,22 @@ namespace Ses.TestBase
 
         public string ConnectionString { get; }
 
-        public async Task<IEventStore> GetEventStore(Assembly[] contractsRegistryAssemblies)
+        public async Task<IEventStore> GetEventStore(Assembly[] contractsRegistryAssemblies, IConcurrencyConflictResolver resolver = null)
         {
             if(!_databaseCreated) await CreateDatabase(GetLocation());
 
-            var store = new EventStoreBuilder()
+            var builder = new EventStoreBuilder()
                 .WithDefaultContractsRegistry(contractsRegistryAssemblies)
                 .WithMsSqlPersistor(ConnectionString, x =>
                 {
                     x.Destroy(true);
                     x.Initialize();
                 })
-                .WithSerializer(new JilSerializer())
-                .Build();
+                .WithSerializer(new JilSerializer());
 
-            return store;
+            if (resolver != null) builder.WithConcurrencyConflictResolver(resolver);
+
+            return builder.Build();
         }
 
         private static string GetLocation()

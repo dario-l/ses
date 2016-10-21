@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Ses.Abstracts;
+using Ses.Conflicts;
 using Ses.TestBase;
 using Xunit;
 
@@ -19,9 +20,9 @@ namespace Ses.MsSql.Tests
 
         protected string ConnectionString { get; }
 
-        protected async Task<IEventStore> GetEventStore()
+        protected async Task<IEventStore> GetEventStore(IConcurrencyConflictResolver resolver = null)
         {
-            return await _dbInstance.GetEventStore(new[] { typeof(TestsBase).Assembly });
+            return await _dbInstance.GetEventStore(new[] { typeof(TestsBase).Assembly }, resolver);
         }
 
         public void Dispose()

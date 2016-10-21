@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.Serialization;
 using Ses.Abstracts.Contracts;
 using Ses.Abstracts.UnitTests.Fakes;
 using Xunit;

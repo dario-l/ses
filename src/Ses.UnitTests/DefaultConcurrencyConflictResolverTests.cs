@@ -7,22 +7,23 @@ namespace Ses.UnitTests
     public class DefaultConcurrencyConflictResolverTests
     {
         [Fact]
-        public void When_not_any_conflict_registered_then_returns_false()
+        public void When_not_any_conflict_registered_then_returns_true()
         {
             var sut = new DefaultConcurrencyConflictResolver();
             var result = sut.ConflictsWith(typeof(FakeEvent1), new[]
             {
+                typeof(FakeEvent1),
                 typeof(FakeEvent2)
             });
 
-            Assert.False(result);
+            Assert.True(result);
         }
 
         [Fact]
         public void With_registered_conflict_returns_true()
         {
             var sut = new DefaultConcurrencyConflictResolver();
-            sut.RegisterConflictList(typeof(FakeEvent1), typeof(FakeEvent2));
+            sut.RegisterConflicts(typeof(FakeEvent1), typeof(FakeEvent2));
 
             var result = sut.ConflictsWith(typeof(FakeEvent1), new[]
             {
@@ -30,6 +31,20 @@ namespace Ses.UnitTests
             });
 
             Assert.True(result);
+        }
+
+        [Fact]
+        public void With_not_registered_conflict_returns_false()
+        {
+            var sut = new DefaultConcurrencyConflictResolver();
+            sut.RegisterConflicts(typeof(FakeEvent1), typeof(FakeEvent2));
+
+            var result = sut.ConflictsWith(typeof(FakeEvent1), new[]
+            {
+                typeof(FakeEvent1)
+            });
+
+            Assert.False(result);
         }
     }
 }

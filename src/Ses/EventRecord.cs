@@ -12,5 +12,7 @@ namespace Ses
         public int Version { get; private set; }
         public string ContractName { get; private set; }
         public byte[] Payload { get; private set; }
+
+        public static EventRecord Null => new EventRecord(-1, null, null);
     }
 }

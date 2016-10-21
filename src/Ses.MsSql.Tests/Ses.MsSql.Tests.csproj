@@ -67,6 +67,7 @@
   <ItemGroup>
     <Compile Include="LocalDbFixture.cs" />
     <Compile Include="MsSqlPersistorTests\DeleteStream.cs" />
+    <Compile Include="MsSqlPersistorTests\SaveChangesWithResolver.cs" />
     <Compile Include="MsSqlPersistorTests\SaveChanges.cs" />
     <Compile Include="MsSqlPersistorTests\Load.cs" />
     <Compile Include="MsSqlPersistorTests\UpdateSnapshot.cs" />

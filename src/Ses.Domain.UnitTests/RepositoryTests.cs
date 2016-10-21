@@ -16,7 +16,7 @@ namespace Ses.Domain.UnitTests
             var streamId = Guid.Empty;
 
             var store = A.Fake<IEventStore>();
-            A.CallTo(() => store.LoadAsync(streamId, false, CancellationToken.None)).Returns((IReadOnlyEventStream)null);
+            A.CallTo(() => store.LoadAsync(streamId, 1, false, CancellationToken.None)).Returns((IReadOnlyEventStream)null);
 
             var repo = new Repository<FakeAggregate>(store);
 
@@ -34,7 +34,7 @@ namespace Ses.Domain.UnitTests
             var committedVersion = events.Length;
 
             var store = A.Fake<IEventStore>();
-            A.CallTo(() => store.LoadAsync(streamId, false, CancellationToken.None))
+            A.CallTo(() => store.LoadAsync(streamId, 1, false, CancellationToken.None))
                 .Returns(new ReadOnlyEventStream(events, committedVersion));
 
             var repo = new Repository<FakeAggregate>(store);

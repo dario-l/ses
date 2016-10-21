@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Ses.Abstracts;
 using Ses.Abstracts.Extensions;
+// ReSharper disable PossibleNullReferenceException
 
 namespace Ses.MsSql
 {
@@ -31,7 +32,6 @@ namespace Ses.MsSql
                         {
                             if (await reader.IsDBNullAsync(colIndexForContractName, cancellationToken).NotOnCapturedContext()) break;
 
-                            // ReSharper disable once PossibleNullReferenceException
                             list.Add(OnReadSnapshot(
                                 streamId,
                                 await reader.GetFieldValueAsync<string>(colIndexForContractName, cancellationToken).NotOnCapturedContext(),
@@ -70,19 +70,19 @@ namespace Ses.MsSql
                     try
                     {
                         cmd.AddInputParam(SqlQueries.DeleteStream.ParamStreamId, DbType.Guid, streamId);
-                        if(expectedVersion != ExpectedVersion.Any)
+                        if (expectedVersion != ExpectedVersion.Any)
                             cmd.AddInputParam(SqlQueries.DeleteStream.ParamExpectedVersion, DbType.Int32, expectedVersion);
 
                         await cmd.ExecuteNonQueryAsync(cancellationToken)
                             .NotOnCapturedContext();
                     }
-                    catch (SqlException e)
+                    catch (SqlException ex) when (ex.Message.StartsWith("WrongExpectedVersion"))
                     {
-                        if (e.Message.StartsWith("WrongExpectedVersion"))
-                        {
-                            throw new WrongExpectedVersionException($"Deleting stream {streamId} error", e);
-                        }
-                        throw;
+                        throw new WrongExpectedVersionException(
+                            $"Deleting stream {streamId} error",
+                            expectedVersion,
+                            null,
+                            ex);
                     }
                 }
             }
@@ -106,11 +106,15 @@ namespace Ses.MsSql
                             .NotOnCapturedContext();
                     }
                 }
-                catch (SqlException e)
+                catch (SqlException ex)
                 {
-                    if (e.Message.StartsWith("WrongExpectedVersion"))
+                    if (ex.Message.StartsWith("WrongExpectedVersion"))
                     {
-                        throw new WrongExpectedVersionException($"Updating snapshot for stream {streamId} error", e);
+                        throw new WrongExpectedVersionException(
+                            $"Updating snapshot for stream {streamId} error",
+                            version,
+                            contractName,
+                            ex);
                     }
                     throw;
                 }
@@ -140,9 +144,10 @@ namespace Ses.MsSql
 
         private static async Task SaveChangesNoStreamAsync(SqlConnection cnn, EventRecord[] events, Guid streamId, Guid commitId, byte[] metadata, bool isLockable, CancellationToken cancellationToken)
         {
-            try
+            var currentRecord = EventRecord.Null;
+            using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertEvents.QueryNoStream, cancellationToken).NotOnCapturedContext())
             {
-                using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertEvents.QueryNoStream, cancellationToken).NotOnCapturedContext())
+                try
                 {
                     cmd
                         .AddInputParam(SqlQueries.InsertEvents.ParamStreamId, DbType.Guid, streamId)
@@ -156,6 +161,7 @@ namespace Ses.MsSql
 
                     foreach (var record in events)
                     {
+                        currentRecord = record;
                         cmd.Parameters[5].Value = record.ContractName;
                         cmd.Parameters[6].Value = record.Version;
                         cmd.Parameters[7].Value = record.Payload;
@@ -165,23 +171,30 @@ namespace Ses.MsSql
 
                         cmd.Parameters[3].Value = DBNull.Value; // metadata is one per CommitId
                     }
+
                 }
-            }
-            catch (SqlException e)
-            {
-                if (e.IsUniqueConstraintViolation() || e.IsWrongExpectedVersionRised())
+                catch (SqlException ex)
                 {
-                    throw new WrongExpectedVersionException($"Saving new stream {streamId} error. Stream exists.", e);
+                    if (ex.IsUniqueConstraintViolation() || ex.IsWrongExpectedVersionRised())
+                    {
+                        throw new WrongExpectedVersionException(
+                            $"Saving new stream {streamId} error. Stream exists.",
+                            currentRecord.Version,
+                            currentRecord.ContractName,
+                            ex);
+                    }
+                    throw;
                 }
-                throw;
             }
         }
 
         private static async Task SaveChangesAnyAsync(SqlConnection cnn, EventRecord[] events, Guid streamId, Guid commitId, byte[] metadata, bool isLockable, CancellationToken cancellationToken)
         {
-            try
+            var currentRecord = EventRecord.Null;
+
+            using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertEvents.QueryAny, cancellationToken).NotOnCapturedContext())
             {
-                using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertEvents.QueryAny, cancellationToken).NotOnCapturedContext())
+                try
                 {
                     cmd
                         .AddInputParam(SqlQueries.InsertEvents.ParamStreamId, DbType.Guid, streamId)
@@ -195,6 +208,7 @@ namespace Ses.MsSql
 
                     foreach (var record in events)
                     {
+                        currentRecord = record;
                         cmd.Parameters[5].Value = record.ContractName;
                         cmd.Parameters[6].Value = record.Version;
                         cmd.Parameters[7].Value = record.Payload;
@@ -205,23 +219,28 @@ namespace Ses.MsSql
                         cmd.Parameters[3].Value = DBNull.Value; // metadata is one per CommitId
                     }
                 }
-            }
-            catch (SqlException e)
-            {
-                // TODO: check concurrency violation
-                if(e.IsUniqueConstraintViolation() || e.IsWrongExpectedVersionRised())
+                catch (SqlException ex)
                 {
-                    throw new WrongExpectedVersionException($"Saving new or existing stream {streamId} error. Stream exists.", e);
+                    if (ex.IsUniqueConstraintViolation() || ex.IsWrongExpectedVersionRised())
+                    {
+                        throw new WrongExpectedVersionException(
+                            $"Saving new or existing stream {streamId} error. Stream exists.",
+                            currentRecord.Version,
+                            currentRecord.ContractName,
+                            ex);
+                    }
+                    throw;
                 }
-                throw;
             }
+
         }
 
         private static async Task SaveChangesExpectedVersionAsync(SqlConnection cnn, EventRecord[] events, Guid streamId, Guid commitId, int expectedVersion, byte[] metadata, CancellationToken cancellationToken)
         {
-            try
+            var currentRecord = EventRecord.Null;
+            using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertEvents.QueryExpectedVersion, cancellationToken).NotOnCapturedContext())
             {
-                using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.InsertEvents.QueryExpectedVersion, cancellationToken).NotOnCapturedContext())
+                try
                 {
                     cmd
                         .AddInputParam(SqlQueries.InsertEvents.ParamStreamId, DbType.Guid, streamId)
@@ -235,6 +254,7 @@ namespace Ses.MsSql
 
                     foreach (var record in events)
                     {
+                        currentRecord = record;
                         cmd.Parameters[5].Value = record.ContractName;
                         cmd.Parameters[6].Value = record.Version;
                         cmd.Parameters[7].Value = record.Payload;
@@ -245,16 +265,20 @@ namespace Ses.MsSql
                         cmd.Parameters[3].Value = DBNull.Value; // metadata is one per CommitId
                     }
                 }
-            }
-            catch (SqlException e)
-            {
-                // TODO: check concurrency violation
-                if (e.IsUniqueConstraintViolation() || e.IsWrongExpectedVersionRised())
+                catch (SqlException ex)
                 {
-                    throw new WrongExpectedVersionException($"Saving new or existing stream {streamId} error. Stream exists.", e);
+                    if (ex.IsUniqueConstraintViolation() || ex.IsWrongExpectedVersionRised())
+                    {
+                        throw new WrongExpectedVersionException(
+                            $"Saving new or existing stream {streamId} error. Stream exists.",
+                            currentRecord.Version,
+                            currentRecord.ContractName,
+                            ex);
+                    }
+                    throw;
                 }
-                throw;
             }
+
         }
     }
 }

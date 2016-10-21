@@ -82,7 +82,7 @@ namespace Ses.Samples
 
                 await store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream);
 
-                await store.LoadAsync(streamId, false);
+                await store.LoadAsync(streamId, 1, false);
                 scope.Complete();
             }
         }

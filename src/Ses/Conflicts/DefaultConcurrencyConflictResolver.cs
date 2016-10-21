@@ -18,7 +18,9 @@ namespace Ses.Conflicts
         {
             if (eventToCheck == null) throw new ArgumentNullException(nameof(eventToCheck));
             if (previousEventTypes == null) throw new ArgumentNullException(nameof(previousEventTypes));
-            // If type not registered assume it not conflicts
+            // If type not registered assume the worst and say it conflicts
+            if (!_conflictRegister.ContainsKey(eventToCheck)) return true;
+
             var any1 = false;
             foreach (var previousType in previousEventTypes)
             {
@@ -36,10 +38,10 @@ namespace Ses.Conflicts
                 any1 = true;
                 break;
             }
-            return _conflictRegister.ContainsKey(eventToCheck) && any1;
+            return any1;
         }
 
-        public void RegisterConflictList(Type eventDefinition, params Type[] conflictsWith)
+        public void RegisterConflicts(Type eventDefinition, params Type[] conflictsWith)
         {
             if (eventDefinition == null) throw new ArgumentNullException(nameof(eventDefinition));
             if (conflictsWith == null) throw new ArgumentNullException(nameof(conflictsWith));

@@ -8,8 +8,9 @@ namespace Ses.Domain
 {
     public class Repository<TAggregate> : IRepository<TAggregate> where TAggregate : class, IAggregate, new()
     {
-        const string aggregateTypeClrMeta = "AggregateTypeClr";
+        private const string aggregateTypeClrMeta = "AggregateTypeClr";
         private readonly IEventStore _store;
+        private const byte loadFromVersionDefault = 1;
 
         public Repository(IEventStore store)
         {
@@ -18,14 +19,14 @@ namespace Ses.Domain
 
         public async Task<TAggregate> LoadAsync(Guid streamId, bool pessimisticLock = false, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var stream = await _store.LoadAsync(streamId, pessimisticLock, cancellationToken);
+            var stream = await _store.LoadAsync(streamId, loadFromVersionDefault, pessimisticLock, cancellationToken);
             if(stream == null) throw new AggregateNotFoundException(streamId, typeof(TAggregate));
             return RestoreAggregate(streamId, stream);
         }
 
         public TAggregate Load(Guid streamId, bool pessimisticLock = false)
         {
-            var stream = _store.Load(streamId, pessimisticLock);
+            var stream = _store.Load(streamId, loadFromVersionDefault, pessimisticLock);
             if (stream == null) throw new AggregateNotFoundException(streamId, typeof(TAggregate));
             return RestoreAggregate(streamId, stream);
         }

@@ -9,6 +9,6 @@ namespace Ses.Conflicts
 
     public interface IConcurrencyConflictResolverRegister
     {
-        void RegisterConflictList(Type eventDefinition, params Type[] conflictsWith);
+        void RegisterConflicts(Type eventDefinition, params Type[] conflictsWith);
     }
 }

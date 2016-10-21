@@ -32,7 +32,7 @@ namespace Ses.UnitTests
             IEventStream stream = new EventStream(Guid.Empty, events);
             await _store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream);
 
-            var restoredStream = await _store.LoadAsync(streamId, false);
+            var restoredStream = await _store.LoadAsync(streamId, 1, false);
 
             Assert.True(restoredStream.CommittedEvents.Count() == events.Length);
         }
@@ -45,7 +45,7 @@ namespace Ses.UnitTests
             IEventStream stream = new EventStream(Guid.Empty, events);
             await _store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream);
 
-            var restoredStream = await _store.LoadAsync(streamId, false);
+            var restoredStream = await _store.LoadAsync(streamId, 1, false);
 
             Assert.Null(restoredStream);
         }

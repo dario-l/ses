@@ -5,87 +5,80 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
 {
     public class SaveChanges : TestsBase
     {
-        [Fact]
-        public async void Can_save_new_stream()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async void Can_save_new_stream(bool isLockable)
         {
             var store = await GetEventStore();
 
             var streamId = SequentialGuid.NewGuid();
-            var stream = new EventStream(streamId, new[] { new FakeEvent() });
-            await store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream);
+            var stream = new EventStream(streamId, new IEvent[] { new FakeEvent1() }, isLockable);
+            var ex = await Record.ExceptionAsync(async () => {
+                await store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream);
+            });
+
+            Assert.Null(ex);
         }
 
-        [Fact]
-        public async void Can_not_save_new_stream_when_expecting_nostream_and_the_same_streamid_exists()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async void Can_not_save_new_stream_when_expecting_nostream_and_the_same_streamid_exists(bool isLockable)
         {
             var store = await GetEventStore();
 
             var streamId = SequentialGuid.NewGuid();
-            var stream = new EventStream(streamId, new[] { new FakeEvent() });
+            var stream = new EventStream(streamId, new IEvent[] { new FakeEvent1() }, isLockable);
             await store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream);
 
-            stream = new EventStream(streamId, new[] { new FakeEvent() });
+            stream = new EventStream(streamId, new IEvent[] { new FakeEvent1() }, isLockable);
             await Assert.ThrowsAsync<WrongExpectedVersionException>(async () =>
             {
                 await store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream);
             });
         }
 
-        [Fact]
-        public async void Can_not_save_new_stream_when_expecting_any_and_the_same_streamid_exists()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async void Can_save_stream_with_any_events_even_when_stream_exists(bool isLockable)
         {
             var store = await GetEventStore();
 
             var streamId = SequentialGuid.NewGuid();
-            var stream = new EventStream(streamId, new[] { new FakeEvent() });
+            var stream = new EventStream(streamId, new IEvent[] { new FakeEvent1() }, isLockable);
             await store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream);
 
-            stream = new EventStream(streamId, new[] { new FakeEvent() });
-            await Assert.ThrowsAsync<WrongExpectedVersionException>(async () =>
+            stream = new EventStream(streamId, new IEvent[] { new FakeEvent1() }, isLockable);
+            var exception = await Record.ExceptionAsync(async () =>
             {
                 await store.SaveChangesAsync(streamId, ExpectedVersion.Any, stream);
             });
+
+            Assert.Null(exception);
         }
 
-        [Fact]
-        public async void Can_not_save_new_stream_when_expecting_1_but_stream_has_3()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async void Can_not_save_new_stream_when_expecting_1_but_stream_has_3(bool isLockable)
         {
             var store = await GetEventStore();
 
             var streamId = SequentialGuid.NewGuid();
-            var stream = new EventStream(streamId, new[] { new FakeEvent(), new FakeEvent() });
+            var stream = new EventStream(streamId, new IEvent[] { new FakeEvent1(), new FakeEvent1() }, isLockable);
             await store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream);
 
-            stream = new EventStream(streamId, new[] { new FakeEvent() });
+            stream = new EventStream(streamId, new IEvent[] { new FakeEvent1() }, isLockable);
             await Assert.ThrowsAsync<WrongExpectedVersionException>(async () =>
             {
                 await store.SaveChangesAsync(streamId, 1, stream);
             });
         }
 
-        [Fact]
-        public async void Can_not_save_new_stream_when_saving_the_same_event_version_twice()
-        {
-            var store = await GetEventStore();
+        public class FakeEvent1 : IEvent { }
 
-            var streamId = SequentialGuid.NewGuid();
-            var stream = new EventStream(streamId, new[] { new FakeEvent(), new FakeEvent() });
-            await store.SaveChangesAsync(streamId, ExpectedVersion.NoStream, stream);
-
-            stream = new EventStream(streamId, new[] { new FakeEvent() });
-            await store.SaveChangesAsync(streamId, 2, stream);
-            await Assert.ThrowsAsync<WrongExpectedVersionException>(async () =>
-            {
-                await store.SaveChangesAsync(streamId, ExpectedVersion.Any, stream);
-            });
-        }
-
-        public class FakeEvent : IEvent
-        {
-        }
-
-        public SaveChanges(LocalDbFixture fixture) : base(fixture)
-        {
-        }
+        public SaveChanges(LocalDbFixture fixture) : base(fixture) { }
     }
 }

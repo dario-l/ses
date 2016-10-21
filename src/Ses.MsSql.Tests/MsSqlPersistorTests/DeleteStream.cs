@@ -36,8 +36,6 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
             Assert.NotNull(x);
         }
 
-        public DeleteStream(LocalDbFixture fixture) : base(fixture)
-        {
-        }
+        public DeleteStream(LocalDbFixture fixture) : base(fixture) { }
     }
 }
