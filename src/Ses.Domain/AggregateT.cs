@@ -3,24 +3,28 @@ using Ses.Abstracts;
 
 namespace Ses.Domain
 {
-    public abstract class Aggregate<TSnapshot> : Aggregate, IAggregate<TSnapshot> where TSnapshot : class, IMemento, new()
+    public abstract class Aggregate<TState> : Aggregate where TState : class, IMemento, new()
     {
         protected Aggregate()
         {
-            State = new TSnapshot();
+            State = new TState();
         }
 
-        protected TSnapshot State { get; set; }
+        protected TState State { get; set; }
 
-        public virtual IAggregateSnapshot<TSnapshot> GetSnapshot()
+        /// <summary>
+        /// Returns snapshot from current state.
+        /// </summary>
+        /// <returns>Snapshot from current state</returns>
+        public override IAggregateSnapshot GetSnapshot()
         {
-            return new AggregateSnapshot<TSnapshot>(CurrentVersion, State);
+            return new AggregateSnapshot(CurrentVersion, State);
         }
 
         protected override void RestoreFromSnapshot(IMemento memento)
         {
-            var snapshot = memento as TSnapshot;
-            if (snapshot == null) throw new InvalidCastException("Memento is not type of " + typeof(TSnapshot).FullName);
+            var snapshot = memento as TState;
+            if (snapshot == null) throw new InvalidCastException("Memento is not type of " + typeof(TState).FullName);
             State = snapshot;
         }
 

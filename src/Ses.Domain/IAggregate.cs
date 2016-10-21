@@ -36,17 +36,11 @@ namespace Ses.Domain
         /// <param name="id"></param>
         /// <param name="history"></param>
         void Restore(Guid id, IEvent[] history);
-    }
 
-    /// <summary>
-    /// Defines aggregate root with snapshoting
-    /// </summary>
-    public interface IAggregate<out TSnapshot> : IAggregate where TSnapshot : class, IMemento, new()
-    {
         /// <summary>
         /// Returns snapshot from current state.
         /// </summary>
         /// <returns>Snapshot from current state</returns>
-        IAggregateSnapshot<TSnapshot> GetSnapshot();
+        IAggregateSnapshot GetSnapshot();
     }
 }

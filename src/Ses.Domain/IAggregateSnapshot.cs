@@ -2,9 +2,9 @@
 
 namespace Ses.Domain
 {
-    public interface IAggregateSnapshot<out TSnapshot> where TSnapshot : class, IMemento, new()
+    public interface IAggregateSnapshot
     {
-        TSnapshot State { get; }
+        IMemento State { get; }
         int Version { get; }
     }
 }

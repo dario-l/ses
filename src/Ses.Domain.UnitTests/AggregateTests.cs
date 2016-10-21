@@ -26,7 +26,7 @@ namespace Ses.Domain.UnitTests
             }.ToArray();
             sut.Restore(SequentialGuid.NewGuid(), events.ToArray());
             events = sut.TakeUncommittedEvents();
-            Assert.Equal(0, events.Count());
+            Assert.Equal(0, events.Length);
         }
 
         [Fact]
@@ -77,7 +77,7 @@ namespace Ses.Domain.UnitTests
         {
             var sut = new FakeAggregate();
             sut.BussinesOperation();
-            Assert.Equal(1, sut.TakeUncommittedEvents().Count());
+            Assert.Equal(1, sut.TakeUncommittedEvents().Length);
         }
 
         [Fact]
@@ -85,8 +85,8 @@ namespace Ses.Domain.UnitTests
         {
             var sut = new FakeAggregate();
             sut.BussinesOperation();
-            var snapshot = sut.GetSnapshot();
-            Assert.True(snapshot.State.FakeEventApplied);
+            var snapshot = (FakeAggregateState)sut.GetSnapshot().State;
+            Assert.True(snapshot.FakeEventApplied);
         }
     }
 }

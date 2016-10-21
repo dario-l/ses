@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Ses.Abstracts;
 
 namespace Ses.Domain
@@ -33,10 +32,19 @@ namespace Ses.Domain
             }
         }
 
-        public virtual void Restore(Guid id, IEvent[] history)
+        public void Restore(Guid id, IEvent[] history)
         {
             Id = id;
             RestoreFrom(history);
+        }
+
+        /// <summary>
+        /// Returns snapshot from current state.
+        /// </summary>
+        /// <returns>Snapshot from current state</returns>
+        public virtual IAggregateSnapshot GetSnapshot()
+        {
+            return null;
         }
 
         protected virtual void RestoreFromSnapshot(IMemento memento) { }

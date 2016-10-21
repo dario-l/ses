@@ -2,15 +2,15 @@ using Ses.Abstracts;
 
 namespace Ses.Domain
 {
-    internal class AggregateSnapshot<TSnapshot> : IAggregateSnapshot<TSnapshot> where TSnapshot : class, IMemento, new()
+    public class AggregateSnapshot : IAggregateSnapshot
     {
-        public AggregateSnapshot(int version, TSnapshot state)
+        public AggregateSnapshot(int version, IMemento state)
         {
             Version = version;
             State = state;
         }
 
-        public TSnapshot State { get; }
+        public IMemento State { get; }
         public int Version { get; }
     }
 }

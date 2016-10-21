@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using Ses.Abstracts;
 
 namespace Ses.Samples.Cart
 {
+    [DataContract(Name = "ShoppingCartState")]
     public class ShoppingCartState : IMemento
     {
         public List<CartItem> Items { get; private set; }
