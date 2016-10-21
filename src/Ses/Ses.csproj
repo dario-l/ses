@@ -55,8 +55,6 @@
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="SnapshotConcurrencyException.cs" />
-    <Compile Include="StreamConcurrencyException.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Ses.Abstracts\Ses.Abstracts.csproj">
