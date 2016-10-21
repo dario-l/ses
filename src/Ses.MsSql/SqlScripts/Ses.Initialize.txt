@@ -85,13 +85,34 @@ BEGIN
     END
 
     DECLARE @SPayload VARBINARY(MAX), @SContractName NVARCHAR(255), @SVersion int
-    SELECT @SContractName=[ContractName],@SVersion=[Version],@SPayload=[Payload] FROM [StreamsSnapshots] WITH(READPAST,ROWLOCK) WHERE [StreamId]=@StreamId AND [Version]>0
+
+    SELECT
+        @SContractName = [ContractName],
+        @SVersion = [Version],
+        @SPayload = [Payload]
+    FROM
+        [StreamsSnapshots] WITH(READPAST,ROWLOCK)
+    WHERE
+        [StreamId] = @StreamId
+        AND [Version] > 0
+    
     SELECT @SContractName, @SVersion, @SPayload
+
     IF @SVersion IS NOT NULL BEGIN
         SET @FromVersion = @SVersion + 1
     END
 
-    SELECT [ContractName],[Version],[Payload] FROM [Streams] WITH(READPAST,ROWLOCK) WHERE [StreamId]=@StreamId AND [Version]>=@FromVersion ORDER BY [Version] ASC
+    SELECT
+        [ContractName],
+        [Version],
+        [Payload]
+    FROM
+        [Streams] WITH(READPAST,ROWLOCK)
+    WHERE
+        [StreamId] = @StreamId
+        AND [Version] >= @FromVersion
+    ORDER BY
+        [Version] ASC
 END;
 GO
 
@@ -115,21 +136,21 @@ BEGIN
     END
 
     IF @EventVersion = 1 BEGIN
-        INSERT INTO [StreamsSnapshots]([StreamId],[Version],[LastStreamVersion],[ContractName],[GeneratedAtUtc],[Payload])
-        VALUES(@StreamId,0,0,'Init',@CreatedAtUtc,0);
+        INSERT INTO [StreamsSnapshots]([StreamId], [Version], [LastStreamVersion], [ContractName], [GeneratedAtUtc], [Payload])
+        VALUES(@StreamId, 0, 0, 'Init', @CreatedAtUtc, 0);
 
         IF @IsLockable = 1 BEGIN
-            INSERT INTO [Streams]([StreamId],[CommitId],[Version],[ContractName],[Payload],[CreatedAtUtc])
-            VALUES(@StreamId,@CommitId,0,'Lockable',0,@CreatedAtUtc);
+            INSERT INTO [Streams]([StreamId], [CommitId], [Version], [ContractName], [Payload], [CreatedAtUtc])
+            VALUES(@StreamId, @CommitId, 0, 'Lockable', 0, @CreatedAtUtc);
         END
     END
 
-    INSERT INTO [Streams]([StreamId],[CommitId],[Version],[ContractName],[Payload],[CreatedAtUtc])
-    VALUES(@StreamId,@CommitId,@EventVersion,@EventContractName,@EventPayload,@CreatedAtUtc);
+    INSERT INTO [Streams]([StreamId], [CommitId], [Version], [ContractName], [Payload], [CreatedAtUtc])
+    VALUES(@StreamId, @CommitId, @EventVersion, @EventContractName, @EventPayload, @CreatedAtUtc);
 
     IF(@MetadataPayload IS NOT NULL AND LEN(@MetadataPayload) > 0) BEGIN
-        INSERT INTO [StreamsMetadata]([StreamId],[CommitId],[Payload])
-        VALUES(@StreamId,@CommitId,@MetadataPayload);
+        INSERT INTO [StreamsMetadata]([StreamId], [CommitId], [Payload])
+        VALUES(@StreamId, @CommitId, @MetadataPayload);
     END
 END;
 GO
@@ -154,21 +175,21 @@ BEGIN
     END
 
     IF(@IsNew = 1 AND @IsLockable = 1) BEGIN
-        INSERT INTO [Streams]([StreamId],[CommitId],[Version],[ContractName],[CreatedAtUtc],[Payload])
-        VALUES(@StreamId,@CommitId,0,'Lockable',@CreatedAtUtc,0);
+        INSERT INTO [Streams]([StreamId], [CommitId], [Version], [ContractName], [CreatedAtUtc], [Payload])
+        VALUES(@StreamId, @CommitId, 0, 'Lockable', @CreatedAtUtc, 0);
     END
 
-    INSERT INTO [Streams]([StreamId],[CommitId],[Version],[ContractName],[Payload],[CreatedAtUtc])
-    VALUES(@StreamId,@CommitId,@EventVersion,@EventContractName,@EventPayload,@CreatedAtUtc);
+    INSERT INTO [Streams]([StreamId], [CommitId], [Version], [ContractName], [Payload], [CreatedAtUtc])
+    VALUES(@StreamId, @CommitId, @EventVersion, @EventContractName, @EventPayload, @CreatedAtUtc);
 
     IF(@MetadataPayload IS NOT NULL AND LEN(@MetadataPayload) > 0) BEGIN
-        INSERT INTO [StreamsMetadata]([StreamId],[CommitId],[Payload])
-        VALUES(@StreamId,@CommitId,@MetadataPayload);
+        INSERT INTO [StreamsMetadata]([StreamId], [CommitId], [Payload])
+        VALUES(@StreamId, @CommitId, @MetadataPayload);
     END
 
     IF(@IsNew = 1 AND @IsLockable = 1) BEGIN
-        INSERT INTO [StreamsSnapshots]([StreamId],[Version],[LastStreamVersion],[ContractName],[GeneratedAtUtc],[Payload])
-        VALUES(@StreamId,0,0,'Init',@CreatedAtUtc,0);
+        INSERT INTO [StreamsSnapshots]([StreamId], [Version], [LastStreamVersion], [ContractName], [GeneratedAtUtc], [Payload])
+        VALUES(@StreamId, 0, 0, 'Init', @CreatedAtUtc, 0);
     END
 END;
 GO
@@ -192,12 +213,12 @@ BEGIN
         RETURN;
     END
 
-    INSERT INTO [Streams]([StreamId],[CommitId],[Version],[ContractName],[Payload],[CreatedAtUtc])
-    VALUES(@StreamId,@CommitId,@EventVersion,@EventContractName,@EventPayload,@CreatedAtUtc);
+    INSERT INTO [Streams]([StreamId], [CommitId], [Version], [ContractName], [Payload], [CreatedAtUtc])
+    VALUES(@StreamId, @CommitId, @EventVersion, @EventContractName, @EventPayload, @CreatedAtUtc);
 
     IF(@MetadataPayload IS NOT NULL AND LEN(@MetadataPayload) > 0) BEGIN
-        INSERT INTO [StreamsMetadata]([StreamId],[CommitId],[Payload])
-        VALUES(@StreamId,@CommitId,@MetadataPayload);
+        INSERT INTO [StreamsMetadata]([StreamId], [CommitId], [Payload])
+        VALUES(@StreamId, @CommitId, @MetadataPayload);
     END
 END;
 GO
@@ -265,9 +286,9 @@ CREATE PROCEDURE SesDeleteStreamAny
 )
 AS BEGIN
     SET NOCOUNT ON;
-    DELETE FROM [StreamsSnapshots] WHERE [StreamId]=@StreamId
-    DELETE FROM [StreamsMetadata] WHERE [StreamId]=@StreamId
-    DELETE FROM [Streams] WHERE [StreamId]=@StreamId
+    DELETE FROM [StreamsSnapshots] WHERE [StreamId] = @StreamId
+    DELETE FROM [StreamsMetadata] WHERE [StreamId] = @StreamId
+    DELETE FROM [Streams] WHERE [StreamId] = @StreamId
 END;
 GO
 
@@ -278,13 +299,26 @@ CREATE PROCEDURE SesDeleteStreamExpectedVersion
 )
 AS BEGIN
     SET NOCOUNT ON;
-    DELETE FROM [StreamsSnapshots] WHERE [StreamId]=@StreamId AND (SELECT COUNT([Version]) FROM [Streams] WHERE [Version] >= @ExpectedVersion AND [StreamId] = @StreamId) = 1
+    
+    DELETE FROM [StreamsSnapshots]
+    WHERE
+        [StreamId] = @StreamId
+        AND (
+            SELECT
+                COUNT([Version])
+            FROM
+                [Streams]
+            WHERE
+                [Version] >= @ExpectedVersion
+                AND [StreamId] = @StreamId
+        ) = 1
+    
     IF @@ROWCOUNT = 0 BEGIN
         RAISERROR('WrongExpectedVersion', 16, 1);
         RETURN;
     END
-    DELETE FROM [StreamsMetadata] WHERE [StreamId]=@StreamId
-    DELETE FROM [Streams] WHERE [StreamId]=@StreamId
+    DELETE FROM [StreamsMetadata] WHERE [StreamId] = @StreamId
+    DELETE FROM [Streams] WHERE [StreamId] = @StreamId
 END;
 GO
 
@@ -298,7 +332,15 @@ CREATE PROCEDURE SesUpdateSnapshot
 )
 AS BEGIN
     SET NOCOUNT ON;
-    UPDATE [StreamsSnapshots] SET GeneratedAtUtc = @GeneratedAtUtc, Version = @Version, Payload = @Payload, ContractName = @ContractName WHERE [StreamId] = @StreamId
+    
+    UPDATE [StreamsSnapshots] SET
+        GeneratedAtUtc = @GeneratedAtUtc,
+        Version = @Version,
+        Payload = @Payload,
+        ContractName = @ContractName
+    WHERE
+        [StreamId] = @StreamId
+    
     IF @@ROWCOUNT = 0 BEGIN
         RAISERROR('WrongExpectedVersion', 16, 1);
         RETURN;
