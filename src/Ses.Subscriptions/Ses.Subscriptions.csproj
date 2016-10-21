@@ -38,10 +38,12 @@
   <ItemGroup>
     <Compile Include="EnumerableExtensions.cs" />
     <Compile Include="EventStoreSubscriptions.cs" />
+    <Compile Include="FetchAttemptsThresholdException.cs" />
     <Compile Include="HandlerRegistrar.cs" />
     <Compile Include="IEventStoreSubscriptions.cs" />
     <Compile Include="IPoolerStateRepository.cs" />
     <Compile Include="PoolerContext.cs" />
+    <Compile Include="PoolerRetriesPolicy.cs" />
     <Compile Include="PoolerState.cs" />
     <Compile Include="PoolerTimeoutCalculator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

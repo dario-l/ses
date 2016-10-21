@@ -69,9 +69,17 @@ namespace Ses.Subscriptions
             }
             else
             {
-                var anyDispatched = await Pooler.Execute(_poolerContext, _disposedTokenSource.Token);
-                _runnerTimer.Interval = _timeoutCalc.CalculateNext(anyDispatched);
-                _runnerTimer.Start();
+                try
+                {
+                    var anyDispatched = await Pooler.Execute(_poolerContext, _disposedTokenSource.Token);
+                    _runnerTimer.Interval = _timeoutCalc.CalculateNext(anyDispatched);
+                    _runnerTimer.Start();
+                }
+                catch (FetchAttemptsThresholdException e)
+                {
+                    _poolerContext.Logger.Error(e.ToString());
+                    Stop();
+                }
             }
         }
 

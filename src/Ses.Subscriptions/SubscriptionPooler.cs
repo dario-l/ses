@@ -18,6 +18,7 @@ namespace Ses.Subscriptions
 
         protected SubscriptionPooler(ISubscriptionEventSource[] sources)
         {
+            RetriesPolicy = PoolerRetriesPolicy.Defaut();
             Sources = sources;
             _handlerRegistrar = CreateHandlerRegistrar();
             _contractSubscriptions = new Dictionary<ISubscriptionEventSource, int>(Sources.Length);
@@ -26,6 +27,7 @@ namespace Ses.Subscriptions
         private HandlerRegistrar CreateHandlerRegistrar() => new HandlerRegistrar(FindHandlerTypes());
 
         public ISubscriptionEventSource[] Sources { get; }
+        public PoolerRetriesPolicy RetriesPolicy { get; protected set; }
         public virtual TimeSpan? RunForDuration => null;
         public virtual TimeSpan GetFetchTimeout() => TimeSpan.Zero;
         protected abstract IEnumerable<Type> FindHandlerTypes();
@@ -36,6 +38,7 @@ namespace Ses.Subscriptions
 
         internal void OnStart(IContractsRegistry contractsRegistry)
         {
+            if (RetriesPolicy == null) RetriesPolicy = PoolerRetriesPolicy.NoRetries();
             _poolerContractName = contractsRegistry.GetContractName(GetType());
             var eventTypes = GetConcreteSubscriptionEventTypes();
             if (eventTypes == null) return;
@@ -67,36 +70,48 @@ namespace Ses.Subscriptions
         internal async Task<bool> Execute(PoolerContext ctx, CancellationToken cancellationToken = default(CancellationToken))
         {
             var anyDispatched = false;
-            try
+            var executionRetryAttempts = 0;
+            while (true)
             {
-                var poolerStates = new List<PoolerState>(await ctx.StateRepository.LoadAsync(_poolerContractName, cancellationToken));
-                var timeline = await FetchEventTimeline(ctx, poolerStates);
-
-                foreach (var item in timeline)
+                try
                 {
-                    foreach (var handlerInfo in _handlerRegistrar.RegisteredHandlerInfos) // all handlers can/should run in parallel
+                    var poolerStates = new List<PoolerState>(await ctx.StateRepository.LoadAsync(_poolerContractName, cancellationToken));
+                    var timeline = await FetchEventTimeline(ctx, poolerStates);
+
+                    foreach (var item in timeline)
                     {
-                        var state = FindOrCreateState(ctx.ContractsRegistry, poolerStates, item.SourceType, handlerInfo.HandlerType);
-                        if (item.Envelope.SequenceId > state.EventSequenceId)
+                        foreach (var handlerInfo in _handlerRegistrar.RegisteredHandlerInfos) // all handlers can/should run in parallel
                         {
-                            try
+                            var state = FindOrCreateState(ctx.ContractsRegistry, poolerStates, item.SourceType, handlerInfo.HandlerType);
+                            if (item.Envelope.SequenceId > state.EventSequenceId)
                             {
-                                anyDispatched = await TryDispatch(ctx, handlerInfo, item.Envelope, state);
-                            }
-                            catch (Exception ex)
-                            {
-                                PostHandleEventException(item.Envelope, handlerInfo.HandlerType, ex);
-                                throw;
+                                var handlingRetryAttempts = 0;
+                                while (true)
+                                {
+                                    try
+                                    {
+                                        anyDispatched = await TryDispatch(ctx, handlerInfo, item.Envelope, state);
+                                        break;
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        PostHandleEventError(item.Envelope, handlerInfo.HandlerType, ex, handlingRetryAttempts);
+                                        if (handlingRetryAttempts >= RetriesPolicy.HandlerAttemptsThreshold) throw;
+                                        handlingRetryAttempts++;
+                                    }
+                                }
                             }
                         }
                     }
+                    return anyDispatched;
+                }
+                catch (Exception e)
+                {
+                    if (executionRetryAttempts >= RetriesPolicy.FetchAttemptsThreshold)
+                        throw new FetchAttemptsThresholdException(GetType().Name, executionRetryAttempts, e);
+                    executionRetryAttempts++;
                 }
             }
-            catch (Exception e)
-            {
-                ctx.Logger.Error(e.ToString());
-            }
-            return anyDispatched;
         }
 
         private async Task<bool> TryDispatch(PoolerContext ctx, HandlerRegistrar.HandlerTypeInfo handlerInfo, EventEnvelope envelope, PoolerState state)
@@ -131,7 +146,7 @@ namespace Ses.Subscriptions
 
         protected virtual void PreHandleEvent(EventEnvelope envelope, Type handlerType) { }
         protected virtual void PostHandleEvent(EventEnvelope envelope, Type handlerType) { }
-        protected virtual void PostHandleEventException(EventEnvelope envelope, Type handlerType, Exception exception) { }
+        protected virtual void PostHandleEventError(EventEnvelope envelope, Type handlerType, Exception exception, int retryAttempts) { }
 
         private PoolerState FindOrCreateState(IContractsRegistry contractsRegistry, List<PoolerState> poolerStates, Type sourceType, Type handlerType)
         {
@@ -172,7 +187,7 @@ namespace Ses.Subscriptions
 
             var events = await Task.WhenAll(tasks.ToArray());
             var merged = Merge(events);
-            ctx.Logger.Trace("Fetched {0} events from {1} stream sources.", merged.Count.ToString(), Sources.Length.ToString());
+            ctx.Logger.Trace("{0} fetched {1} events from {2} stream sources.", _poolerContractName, merged.Count.ToString(), Sources.Length.ToString());
             return merged;
         }
 

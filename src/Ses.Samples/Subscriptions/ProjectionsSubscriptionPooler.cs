@@ -12,7 +12,7 @@ namespace Ses.Samples.Subscriptions
     {
         public ProjectionsSubscriptionPooler(ISubscriptionEventSource[] sources) : base(sources)
         {
-            
+            RetriesPolicy = PoolerRetriesPolicy.Defaut();
         }
 
         protected override IEnumerable<Type> FindHandlerTypes()
