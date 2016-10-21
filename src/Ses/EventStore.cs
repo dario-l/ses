@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Ses.Abstracts;
 
@@ -12,19 +13,40 @@ namespace Ses
         {
             Advanced = new EventStoreAdvanced(settings);
             _settings = settings;
-            _settings.Persistor.OnReadEvent += OnEventRead;
-            _settings.Persistor.OnReadSnapshot += OnSnapshotRead;
         }
 
         public IEventStoreAdvanced Advanced { get; }
 
         public IReadOnlyEventStream Load(Guid streamId, int fromVersion, bool pessimisticLock)
         {
-            var events = _settings.Persistor.Load(streamId, fromVersion, pessimisticLock);
-            if (events == null || events.Length == 0) return null;
-            var snapshot = events[0] as IRestoredMemento;
+            var records = _settings.Persistor.Load(streamId, fromVersion, pessimisticLock);
+            if (records == null || records.Length == 0) return null;
+            return CreateReadOnlyStream(streamId, fromVersion, records);
+        }
+
+        private IReadOnlyEventStream CreateReadOnlyStream(Guid streamId, int fromVersion, EventRecord[] records)
+        {
+            var snapshotRecord = records[0];
+            var snapshot = snapshotRecord.Kind == EventRecord.RecordKind.Snapshot
+                ? DeserializeSnapshot(streamId, snapshotRecord.ContractName, snapshotRecord.Version, snapshotRecord.Payload)
+                : null;
+
+            var events = DeserializeEvents(streamId, records, snapshot);
             var currentVersion = CalculateCurrentVersion(fromVersion, events, snapshot);
             return new ReadOnlyEventStream(events, currentVersion);
+        }
+
+        private IEvent[] DeserializeEvents(Guid streamId, EventRecord[] records, IRestoredMemento snapshot)
+        {
+            var events = new List<IEvent>(records.Length);
+            if (snapshot != null) { events.Add(snapshot); }
+            var start = snapshot == null ? 0 : 1;
+            for (var i = start; i < records.Length; i++)
+            {
+                var record = records[i];
+                events.Add(DeserializeEvent(streamId, record.ContractName, record.Version, record.Payload));
+            }
+            return events.ToArray();
         }
 
         public void SaveChanges(Guid streamId, int expectedVersion, IEventStream stream)
@@ -92,19 +114,35 @@ namespace Ses
                 var version = ++expectedVersion;
                 var contractName = _settings.ContractsRegistry.GetContractName(eventType);
                 var payload = _settings.Serializer.Serialize(@event, eventType);
-                records[i] = new EventRecord(version, contractName, payload);
+                records[i] = EventRecord.Event(contractName, version, payload);
             }
             return records;
         }
 
-        private IEvent OnEventRead(Guid streamId, string contractName, int version, byte[] payload)
+        private IEvent DeserializeEvent(Guid streamId, string contractName, int version, byte[] payload)
         {
             var eventType = _settings.ContractsRegistry.GetType(contractName);
             var @event = _settings.Serializer.Deserialize<IEvent>(payload, eventType);
             if (@event == null)
-                throw new InvalidCastException($"Deserialized payload from stream {streamId} is not an IEvent of type {eventType.FullName}.");
+                throw new InvalidCastException($"Deserialized payload with version {version} from stream {streamId} is not an IEvent of type {eventType.FullName}.");
 
-            if (_settings.UpConverterFactory == null) return @event;
+            return _settings.UpConverterFactory == null ? @event : UpConvert(eventType, @event);
+        }
+
+        private IRestoredMemento DeserializeSnapshot(Guid streamId, string contractName, int version, byte[] payload)
+        {
+            var snapshotType = _settings.ContractsRegistry.GetType(contractName);
+            var memento = _settings.Serializer.Deserialize<IMemento>(payload, snapshotType);
+            if (memento == null)
+                throw new InvalidCastException($"Deserialized payload from stream {streamId} is not an IMemento of type {snapshotType.FullName}.");
+
+            return _settings.UpConverterFactory == null
+                ? new RestoredMemento(version, memento)
+                : new RestoredMemento(version, UpConvert(snapshotType, memento));
+        }
+
+        private T UpConvert<T>(Type eventType, T @event) where T : IEvent
+        {
             var upConverter = _settings.UpConverterFactory.CreateInstance(eventType);
             while (upConverter != null)
             {
@@ -112,23 +150,6 @@ namespace Ses
                 upConverter = _settings.UpConverterFactory.CreateInstance(@event.GetType());
             }
             return @event;
-        }
-
-        private IRestoredMemento OnSnapshotRead(Guid streamId, string contractName, int version, byte[] payload)
-        {
-            var snapshotType = _settings.ContractsRegistry.GetType(contractName);
-            var memento = _settings.Serializer.Deserialize<IMemento>(payload, snapshotType);
-            if (memento == null)
-                throw new InvalidCastException($"Deserialized payload from stream {streamId} is not an IMemento of type {snapshotType.FullName}.");
-
-            if (_settings.UpConverterFactory == null) return new RestoredMemento(version, memento);
-            var upConverter = _settings.UpConverterFactory.CreateInstance(snapshotType);
-            while (upConverter != null)
-            {
-                memento = ((dynamic)upConverter).Convert((dynamic)memento);
-                upConverter = _settings.UpConverterFactory.CreateInstance(memento.GetType());
-            }
-            return new RestoredMemento(version, memento);
         }
 
         public void Dispose()

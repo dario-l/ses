@@ -12,9 +12,9 @@ namespace Ses.MsSql
 {
     internal partial class MsSqlPersistor
     {
-        public async Task<IEvent[]> LoadAsync(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = new CancellationToken())
+        public async Task<EventRecord[]> LoadAsync(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = new CancellationToken())
         {
-            List<IEvent> list = null;
+            List<EventRecord> list = null;
             using (var cnn = new SqlConnection(_connectionString))
             {
                 using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.SelectEvents.Query, cancellationToken).NotOnCapturedContext())
@@ -26,14 +26,13 @@ namespace Ses.MsSql
 
                     using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cancellationToken).NotOnCapturedContext())
                     {
-                        if (reader.HasRows) list = new List<IEvent>(100);
+                        if (reader.HasRows) list = new List<EventRecord>(100);
 
                         while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext()) // read snapshot
                         {
                             if (await reader.IsDBNullAsync(colIndexForContractName, cancellationToken).NotOnCapturedContext()) break;
 
-                            list.Add(OnReadSnapshot(
-                                streamId,
+                            list.Add(EventRecord.Snapshot(
                                 await reader.GetFieldValueAsync<string>(colIndexForContractName, cancellationToken).NotOnCapturedContext(),
                                 await reader.GetFieldValueAsync<int>(colIndexForVersion, cancellationToken).NotOnCapturedContext(),
                                 await reader.GetFieldValueAsync<byte[]>(colIndexForPayload, cancellationToken).NotOnCapturedContext()));
@@ -41,12 +40,11 @@ namespace Ses.MsSql
 
                         await reader.NextResultAsync(cancellationToken).NotOnCapturedContext();
 
-                        if (list == null && reader.HasRows) list = new List<IEvent>(30);
+                        if (list == null && reader.HasRows) list = new List<EventRecord>(30);
 
                         while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext()) // read events
                         {
-                            list.Add(OnReadEvent(
-                                streamId,
+                            list.Add(EventRecord.Event(
                                 await reader.GetFieldValueAsync<string>(colIndexForContractName, cancellationToken).NotOnCapturedContext(),
                                 await reader.GetFieldValueAsync<int>(colIndexForVersion, cancellationToken).NotOnCapturedContext(),
                                 await reader.GetFieldValueAsync<byte[]>(colIndexForPayload, cancellationToken).NotOnCapturedContext()));
@@ -54,7 +52,7 @@ namespace Ses.MsSql
                     }
                 }
             }
-            return list?.ToArray() ?? new IEvent[0];
+            return list?.ToArray() ?? new EventRecord[0];
         }
 
         public async Task DeleteStreamAsync(Guid streamId, int expectedVersion, CancellationToken cancellationToken = new CancellationToken())

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using Ses.Abstracts;
 // ReSharper disable PossibleNullReferenceException
 
 namespace Ses.MsSql
@@ -22,12 +21,9 @@ namespace Ses.MsSql
             _connectionString = connectionString;
         }
 
-        public event OnReadEventHandler OnReadEvent;
-        public event OnReadSnapshotHandler OnReadSnapshot;
-
-        public IEvent[] Load(Guid streamId, int fromVersion, bool pessimisticLock)
+        public EventRecord[] Load(Guid streamId, int fromVersion, bool pessimisticLock)
         {
-            List<IEvent> list = null;
+            List<EventRecord> list = null;
             try
             {
                 using (var cnn = new SqlConnection(_connectionString))
@@ -41,14 +37,13 @@ namespace Ses.MsSql
 
                         using (var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
                         {
-                            if (reader.HasRows) list = new List<IEvent>(100);
+                            if (reader.HasRows) list = new List<EventRecord>(100);
 
                             while (reader.Read()) // read snapshot
                             {
                                 if (reader[0] == DBNull.Value) break;
 
-                                list.Add(OnReadSnapshot(
-                                    streamId,
+                                list.Add(EventRecord.Snapshot(
                                     reader.GetString(colIndexForContractName),
                                     reader.GetInt32(colIndexForVersion),
                                     GetBytes(reader)));
@@ -56,12 +51,11 @@ namespace Ses.MsSql
 
                             reader.NextResult();
 
-                            if (list == null && reader.HasRows) list = new List<IEvent>(30);
+                            if (list == null && reader.HasRows) list = new List<EventRecord>(30);
 
                             while (reader.Read()) // read events
                             {
-                                list.Add(OnReadEvent(
-                                    streamId,
+                                list.Add(EventRecord.Event(
                                     reader.GetString(colIndexForContractName),
                                     reader.GetInt32(colIndexForVersion),
                                     GetBytes(reader)));
@@ -78,7 +72,7 @@ namespace Ses.MsSql
                 }
                 throw;
             }
-            return list?.ToArray() ?? new IEvent[0];
+            return list?.ToArray() ?? new EventRecord[0];
         }
 
         private static byte[] GetBytes(SqlDataReader reader)

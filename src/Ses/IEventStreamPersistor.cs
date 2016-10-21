@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Ses.Abstracts;
 
 namespace Ses
 {
@@ -15,7 +14,7 @@ namespace Ses
         /// <param name="pessimisticLock">If <c>true</c> then acquires pessimistic lock.</param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<IEvent[]> LoadAsync(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = default(CancellationToken));
+        Task<EventRecord[]> LoadAsync(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Loads events from data source.
@@ -24,7 +23,7 @@ namespace Ses
         /// <param name="fromVersion"></param>
         /// <param name="pessimisticLock">If <c>true</c> then acquires pessimistic lock.</param>
         /// <returns></returns>
-        IEvent[] Load(Guid streamId, int fromVersion, bool pessimisticLock);
+        EventRecord[] Load(Guid streamId, int fromVersion, bool pessimisticLock);
 
         /// <summary>
         /// Deletes stream for a given id.
@@ -51,16 +50,6 @@ namespace Ses
         void UpdateSnapshot(Guid streamId, int version, string contractName, byte[] payload);
 
         /// <summary>
-        /// Fires when event was read from data source.
-        /// </summary>
-        event OnReadEventHandler OnReadEvent;
-
-        /// <summary>
-        /// Fires when snapshot was read from data source.
-        /// </summary>
-        event OnReadSnapshotHandler OnReadSnapshot;
-
-        /// <summary>
         /// 
         /// </summary>
         /// <param name="streamId"></param>
@@ -75,7 +64,4 @@ namespace Ses
 
         void SaveChanges(Guid streamId, Guid commitId, int expectedVersion, EventRecord[] events, byte[] metadata, bool isLockable);
     }
-
-    public delegate IEvent OnReadEventHandler(Guid streamId, string contractName, int version, byte[] payload);
-    public delegate IRestoredMemento OnReadSnapshotHandler(Guid streamId, string contractName, int version, byte[] payload);
 }

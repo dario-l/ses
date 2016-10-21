@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Ses.Abstracts;
 
 namespace Ses.InMemory
 {
@@ -19,10 +18,7 @@ namespace Ses.InMemory
             throw new NotImplementedException();
         }
 
-        public event OnReadEventHandler OnReadEvent;
-        public event OnReadSnapshotHandler OnReadSnapshot;
-
-        public IEvent[] Load(Guid streamId, int fromVersion, bool pessimisticLock)
+        public EventRecord[] Load(Guid streamId, int fromVersion, bool pessimisticLock)
         {
             if (pessimisticLock) throw new NotImplementedException("Pessimistic lock is not implemented.");
             _lock.EnterReadLock();
@@ -32,15 +28,15 @@ namespace Ses.InMemory
                 InMemoryStream stream;
                 if (!_streams.TryGetValue(streamId, out stream))
                 {
-                    return new IEvent[0];
+                    return new EventRecord[0];
                 }
 
-                var events = new List<IEvent>(20);
+                var events = new List<EventRecord>(20);
                 InMemorySnapshot snapshot;
                 if (_snapshots.TryGetValue(streamId, out snapshot) && snapshot.Version >= fromVersion)
                 {
                     // ReSharper disable once PossibleNullReferenceException
-                    events.Add(OnReadSnapshot(streamId, snapshot.ContractName, snapshot.Version, snapshot.Payload));
+                    events.Add(EventRecord.Snapshot(snapshot.ContractName, snapshot.Version, snapshot.Payload));
                 }
 
                 if (snapshot == null)
@@ -48,7 +44,7 @@ namespace Ses.InMemory
                     foreach (var @event in stream.Events)
                     {
                         if (@event.Version < fromVersion) continue;
-                        events.Add(CreateEventObject(streamId, @event));
+                        events.Add(CreateEventObject(@event));
                     }
                 }
                 else
@@ -56,7 +52,7 @@ namespace Ses.InMemory
                     foreach (var @event in stream.Events)
                     {
                         if (@event.Version <= snapshot.Version) continue;
-                        events.Add(CreateEventObject(streamId, @event));
+                        events.Add(CreateEventObject(@event));
                     }
                 }
                 return events.ToArray();
@@ -67,15 +63,14 @@ namespace Ses.InMemory
             }
         }
 
-        public Task<IEvent[]> LoadAsync(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = new CancellationToken())
+        public Task<EventRecord[]> LoadAsync(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = new CancellationToken())
         {
             return Task.FromResult(Load(streamId, fromVersion, pessimisticLock));
         }
 
-        private IEvent CreateEventObject(Guid streamId, InMemoryEventRecord arg)
+        private static EventRecord CreateEventObject(InMemoryEventRecord arg)
         {
-            // ReSharper disable once PossibleNullReferenceException
-            return OnReadEvent(streamId, arg.ContractName, arg.Version, arg.EventData);
+            return EventRecord.Event(arg.ContractName, arg.Version, arg.EventData);
         }
 
         public Task DeleteStreamAsync(Guid streamId, int expectedVersion, CancellationToken cancellationToken = new CancellationToken())

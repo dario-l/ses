@@ -34,7 +34,7 @@ namespace Ses.UnitTests
 
             var restoredStream = await _store.LoadAsync(streamId, 1, false);
 
-            Assert.True(restoredStream.CommittedEvents.Count() == events.Length);
+            Assert.True(restoredStream.CommittedEvents.Length == events.Length);
         }
 
         [Fact]

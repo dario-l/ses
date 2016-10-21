@@ -12,11 +12,9 @@ namespace Ses
 
         public async Task<IReadOnlyEventStream> LoadAsync(Guid streamId, int fromVersion, bool pessimisticLock, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var events = await _settings.Persistor.LoadAsync(streamId, fromVersion, pessimisticLock, cancellationToken);
-            if (events.Length == 0) return null;
-            var snapshot = events[0] as IRestoredMemento;
-            var currentVersion = CalculateCurrentVersion(fromVersion, events, snapshot);
-            return new ReadOnlyEventStream(events, currentVersion);
+            var records = await _settings.Persistor.LoadAsync(streamId, fromVersion, pessimisticLock, cancellationToken);
+            if (records == null || records.Length == 0) return null;
+            return CreateReadOnlyStream(streamId, fromVersion, records);
         }
 
         private static int CalculateCurrentVersion(int fromVersion, IEvent[] events, IRestoredMemento snapshot)
