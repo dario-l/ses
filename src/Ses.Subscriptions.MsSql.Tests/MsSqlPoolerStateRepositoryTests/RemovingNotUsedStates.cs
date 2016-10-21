@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using Ses.TestBase;
+using Xunit;
 
 namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
 {
@@ -30,6 +31,10 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
             var result = await sut.LoadAsync("fakePooler");
 
             Assert.Empty(result);
+        }
+
+        public RemovingNotUsedStates(LocalDbFixture fixture) : base(fixture)
+        {
         }
     }
 }

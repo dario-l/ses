@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{EA45D5DE-2B9F-4057-9657-0F0FD2F032C4}</ProjectGuid>
+    <ProjectGuid>{77A9DA31-A288-45B2-BF8D-030C5022C8F0}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Ses.MsSql.Tests</RootNamespace>
-    <AssemblyName>Ses.MsSql.Tests</AssemblyName>
+    <RootNamespace>Ses.TestBase</RootNamespace>
+    <AssemblyName>Ses.TestBase</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -34,19 +34,23 @@
       <HintPath>..\packages\Jil.2.14.5\lib\net45\Jil.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Sigil, Version=4.7.0.0, Culture=neutral, PublicKeyToken=2d06c3494341c8ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Sigil.4.7.0\lib\net45\Sigil.dll</HintPath>
+    <Reference Include="Sigil, Version=4.6.1.0, Culture=neutral, PublicKeyToken=2d06c3494341c8ab, processorArchitecture=MSIL">
+      <HintPath>..\packages\Sigil.4.6.1\lib\net45\Sigil.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
     <Reference Include="System.Data.SqlLocalDb, Version=1.15.0.0, Culture=neutral, PublicKeyToken=9a192a7522c9e1a0, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Data.SqlLocalDb.1.15.0\lib\net40\System.Data.SqlLocalDb.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
     <Reference Include="xunit.abstractions, Version=2.0.0.0, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
       <HintPath>..\packages\xunit.abstractions.2.0.0\lib\net35\xunit.abstractions.dll</HintPath>
       <Private>True</Private>
@@ -65,36 +69,27 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="LocalDbFixture.cs" />
-    <Compile Include="MsSqlPersistorTests\DeleteStream.cs" />
-    <Compile Include="MsSqlPersistorTests\SaveChanges.cs" />
-    <Compile Include="MsSqlPersistorTests\Load.cs" />
-    <Compile Include="MsSqlPersistorTests\UpdateSnapshot.cs" />
-    <Compile Include="SimpleEventStoreCollection.cs" />
-    <Compile Include="TestsBase.cs" />
+    <Compile Include="DatabaseInstance.cs" />
+    <Compile Include="JilSerializer.cs" />
+    <Compile Include="LocalDbInstanceProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Ses.Abstracts\Ses.Abstracts.csproj">
-      <Project>{8872b02a-5745-4adc-a214-c953a471a9e8}</Project>
+      <Project>{8872B02A-5745-4ADC-A214-C953A471A9E8}</Project>
       <Name>Ses.Abstracts</Name>
     </ProjectReference>
     <ProjectReference Include="..\Ses.MsSql\Ses.MsSql.csproj">
       <Project>{a97505e5-4a89-4c15-ae47-d5e89f5ebd40}</Project>
       <Name>Ses.MsSql</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Ses.TestBase\Ses.TestBase.csproj">
-      <Project>{77a9da31-a288-45b2-bf8d-030c5022c8f0}</Project>
-      <Name>Ses.TestBase</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Ses\Ses.csproj">
-      <Project>{00f648ac-e5b6-47d2-843c-1f34c6fc9843}</Project>
+      <Project>{00F648AC-E5B6-47D2-843C-1F34C6FC9843}</Project>
       <Name>Ses</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

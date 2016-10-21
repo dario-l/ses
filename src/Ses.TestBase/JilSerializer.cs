@@ -2,7 +2,7 @@
 using System.Text;
 using Ses.Abstracts;
 
-namespace Ses.Subscriptions.MsSql.Tests
+namespace Ses.TestBase
 {
     public class JilSerializer : ISerializer
     {

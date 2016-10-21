@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ses.Subscriptions.MsSql.Tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ses.Subscriptions.Tests", "Ses.Subscriptions.Tests\Ses.Subscriptions.Tests.csproj", "{6921DC8C-ED9C-455D-A87C-8FCD01F2C83F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ses.TestBase", "Ses.TestBase\Ses.TestBase.csproj", "{77A9DA31-A288-45B2-BF8D-030C5022C8F0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -95,6 +97,10 @@ Global
 		{6921DC8C-ED9C-455D-A87C-8FCD01F2C83F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6921DC8C-ED9C-455D-A87C-8FCD01F2C83F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6921DC8C-ED9C-455D-A87C-8FCD01F2C83F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{77A9DA31-A288-45B2-BF8D-030C5022C8F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77A9DA31-A288-45B2-BF8D-030C5022C8F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77A9DA31-A288-45B2-BF8D-030C5022C8F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77A9DA31-A288-45B2-BF8D-030C5022C8F0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -106,5 +112,6 @@ Global
 		{EA45D5DE-2B9F-4057-9657-0F0FD2F032C4} = {30BB5F0E-705B-412C-95B1-4AC821B4DCAA}
 		{2E51D2E5-F258-4DFD-B772-5F9DCA4A22CD} = {30BB5F0E-705B-412C-95B1-4AC821B4DCAA}
 		{6921DC8C-ED9C-455D-A87C-8FCD01F2C83F} = {30BB5F0E-705B-412C-95B1-4AC821B4DCAA}
+		{77A9DA31-A288-45B2-BF8D-030C5022C8F0} = {30BB5F0E-705B-412C-95B1-4AC821B4DCAA}
 	EndGlobalSection
 EndGlobal

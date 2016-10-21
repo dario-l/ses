@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using Ses.TestBase;
+using Xunit;
 
 namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
 {
@@ -74,6 +75,10 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
 
 
             Assert.True(result.Length == 1);
+        }
+
+        public LoadingAndInserting(LocalDbFixture fixture) : base(fixture)
+        {
         }
     }
 }

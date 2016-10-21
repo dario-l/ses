@@ -33,5 +33,9 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
         public class FakeEvent : IEvent
         {
         }
+
+        public Load(LocalDbFixture fixture) : base(fixture)
+        {
+        }
     }
 }

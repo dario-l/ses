@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using Ses.TestBase;
+using Xunit;
 
 namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
 {
@@ -42,6 +43,11 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
             var x = Record.Exception(() => sut.Destroy(true));
 
             Assert.Null(x);
+        }
+
+        public Initializing(LocalDbFixture fixture) : base(fixture)
+        {
+
         }
     }
 }
