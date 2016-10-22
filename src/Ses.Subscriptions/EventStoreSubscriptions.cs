@@ -27,6 +27,11 @@ namespace Ses.Subscriptions
             _logger = new NullLogger();
         }
 
+        public Type[] GetPoolerTypes()
+        {
+            return _runners.Keys.ToArray();
+        }
+
         public EventStoreSubscriptions Add(SubscriptionPooler pooler)
         {
             if (_poolers.Contains(pooler)) return this;
@@ -125,10 +130,17 @@ namespace Ses.Subscriptions
             }
         }
 
-        public void RunStoppedPooler(Type type)
+        public void RunStoppedPooler(Type type, bool force = false)
         {
             if (!_runners.ContainsKey(type)) throw new InvalidOperationException($"Pooler {type.FullName} is not registered.");
-            _runners[type].Start();
+            if (force)
+            {
+                _runners[type].ForceStart();
+            }
+            else
+            {
+                _runners[type].Start();
+            }
         }
 
         public void RunStoppedPoolers()

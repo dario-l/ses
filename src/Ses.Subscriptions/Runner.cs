@@ -16,6 +16,7 @@ namespace Ses.Subscriptions
         private CancellationTokenSource _disposedTokenSource = new CancellationTokenSource();
 
         private volatile bool _isRunning;
+        private volatile bool _isLockedByPolicy;
         private readonly InterlockedDateTime _startedAt;
 
         private readonly PoolerTimeoutCalculator _timeoutCalc;
@@ -45,24 +46,38 @@ namespace Ses.Subscriptions
             Run().SwallowException();
         }
 
+        public void ForceStart()
+        {
+            _isLockedByPolicy = false;
+            Start();
+        }
+
         public void Start()
         {
-            _poolerContext.Logger.Trace(Pooler.RunForDuration != null
-                // ReSharper disable once PossibleInvalidOperationException
-                ? $"Starting runner for pooler {Pooler.GetType().FullName} for duration {Pooler.RunForDuration.Value.TotalMinutes} minute(s)..."
-                : $"Starting runner for pooler {Pooler.GetType().FullName}...");
-            _startedAt.Set(DateTime.UtcNow);
-            if (_isRunning) return;
-            _poolerContext.Logger.Debug(Pooler.RunForDuration != null
-                // ReSharper disable once PossibleInvalidOperationException
-                ? $"Runner for pooler {Pooler.GetType().FullName} for duration {Pooler.RunForDuration.Value.TotalMinutes} minute(s) started."
-                : $"Runner for pooler {Pooler.GetType().FullName} started.");
-            _runnerTimer.Start();
-            _isRunning = true;
+            if (_isLockedByPolicy)
+            {
+                _poolerContext.Logger.Warn($"Runner for pooler {Pooler.GetType().FullName} is locked and can't be started.");
+            }
+            else
+            {
+                _poolerContext.Logger.Trace(Pooler.RunForDuration != null
+                    // ReSharper disable once PossibleInvalidOperationException
+                    ? $"Starting runner for pooler {Pooler.GetType().FullName} for duration {Pooler.RunForDuration.Value.TotalMinutes} minute(s)..."
+                    : $"Starting runner for pooler {Pooler.GetType().FullName}...");
+                _startedAt.Set(DateTime.UtcNow);
+                if (_isRunning) return;
+                _poolerContext.Logger.Debug(Pooler.RunForDuration != null
+                    // ReSharper disable once PossibleInvalidOperationException
+                    ? $"Runner for pooler {Pooler.GetType().FullName} for duration {Pooler.RunForDuration.Value.TotalMinutes} minute(s) started."
+                    : $"Runner for pooler {Pooler.GetType().FullName} started.");
+                _runnerTimer.Start();
+                _isRunning = true;
+            }
         }
 
         private async Task Run()
         {
+            if (_isLockedByPolicy) return;
             if (ShouldStop())
             {
                 Stop();
@@ -77,6 +92,7 @@ namespace Ses.Subscriptions
                 }
                 catch (FetchAttemptsThresholdException e)
                 {
+                    _isLockedByPolicy = true;
                     _poolerContext.Logger.Error(e.ToString());
                     Stop();
                 }
