@@ -10,10 +10,10 @@ DROP PROCEDURE [SesUpdateSnapshot];
 DROP PROCEDURE [SesLinearize];
 
 DROP INDEX [IX_Streams_CommitId_Version] ON [Streams];
-DROP INDEX [IX_Streams_EventId_InternalId];
+DROP INDEX [IX_Streams_EventId_InternalId] ON [Streams];
 DROP INDEX [IX_Streams_InternalId] ON [Streams];
 DROP TABLE [Streams];
 DROP TABLE [StreamsMetadata];
 DROP TABLE [StreamsSnapshots];
 DROP TABLE [StreamsSubscriptions]
-DROP TABLE [StreamsSubscriptionContracts]
+DROP TABLE [StreamsSubscriptionContracts];

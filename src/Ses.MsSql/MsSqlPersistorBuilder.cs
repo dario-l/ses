@@ -31,8 +31,9 @@ namespace Ses.MsSql
                     {
                         cmd.ExecuteNonQuery();
                     }
-                    catch(Exception)
+                    catch(Exception e)
                     {
+                        _logger.Error(e.ToString());
                         if (!ignoreErrors) throw;
                     }
                 }

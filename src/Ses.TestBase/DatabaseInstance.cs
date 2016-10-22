@@ -43,7 +43,6 @@ namespace Ses.TestBase
                 .WithDefaultContractsRegistry(contractsRegistryAssemblies)
                 .WithMsSqlPersistor(ConnectionString, x =>
                 {
-                    x.Destroy(true);
                     x.Initialize();
                 })
                 .WithSerializer(new JilSerializer());
