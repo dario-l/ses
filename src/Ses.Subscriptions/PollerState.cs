@@ -1,22 +1,22 @@
 namespace Ses.Subscriptions
 {
-    public class PoolerState
+    public class PollerState
     {
-        public PoolerState(string poolerContractName, string sourceContractName, string handlerContractName)
+        public PollerState(string pollerContractName, string sourceContractName, string handlerContractName)
         {
-            PoolerContractName = poolerContractName;
+            PollerContractName = pollerContractName;
             SourceContractName = sourceContractName;
             HandlerContractName = handlerContractName;
         }
 
-        public string PoolerContractName { get; }
+        public string PollerContractName { get; }
         public string SourceContractName { get; }
         public string HandlerContractName { get; }
         public long EventSequenceId { get; set; }
 
         public override string ToString()
         {
-            return $"{PoolerContractName}/{SourceContractName}/{HandlerContractName} = {EventSequenceId}";
+            return $"{PollerContractName}/{SourceContractName}/{HandlerContractName} = {EventSequenceId}";
         }
     }
 }

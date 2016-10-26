@@ -8,10 +8,10 @@ using Ses.Subscriptions;
 
 namespace Ses.Samples.Subscriptions
 {
-    [DataContract(Name = "EmailSenderSubscriptionPooler")]
-    public class EmailSenderSubscriptionPooler : SubscriptionPooler
+    [DataContract(Name = "EmailSenderSubscriptionPoller")]
+    public class EmailSenderSubscriptionPoller : SubscriptionPoller
     {
-        public EmailSenderSubscriptionPooler(ISubscriptionEventSource[] sources) : base(sources)
+        public EmailSenderSubscriptionPoller(ISubscriptionEventSource[] sources) : base(sources)
         {
             
         }

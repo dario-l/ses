@@ -11,7 +11,7 @@ namespace Ses.Subscriptions
 {
     internal class Runner : IDisposable
     {
-        public SubscriptionPooler Pooler { get; }
+        public SubscriptionPoller Poller { get; }
         private System.Timers.Timer _runnerTimer;
         private CancellationTokenSource _disposedTokenSource = new CancellationTokenSource();
 
@@ -19,21 +19,21 @@ namespace Ses.Subscriptions
         private volatile bool _isLockedByPolicy;
         private readonly InterlockedDateTime _startedAt;
 
-        private readonly PoolerTimeoutCalculator _timeoutCalc;
-        private readonly PoolerContext _poolerContext;
+        private readonly PollerTimeoutCalculator _timeoutCalc;
+        private readonly PollerContext _pollerContext;
 
-        public Runner(IContractsRegistry contractsRegistry, ILogger logger, IPoolerStateRepository stateRepository, SubscriptionPooler pooler, IUpConverterFactory upConverterFactory)
+        public Runner(IContractsRegistry contractsRegistry, ILogger logger, IPollerStateRepository stateRepository, SubscriptionPoller poller, IUpConverterFactory upConverterFactory)
         {
-            if (pooler == null) throw new ArgumentNullException(nameof(pooler));
-            Pooler = pooler;
+            if (poller == null) throw new ArgumentNullException(nameof(poller));
+            Poller = poller;
 
-            _poolerContext = new PoolerContext(contractsRegistry, logger, stateRepository, upConverterFactory);
+            _pollerContext = new PollerContext(contractsRegistry, logger, stateRepository, upConverterFactory);
             _startedAt = new InterlockedDateTime(DateTime.MaxValue);
-            _timeoutCalc = new PoolerTimeoutCalculator(Pooler.GetFetchTimeout());
+            _timeoutCalc = new PollerTimeoutCalculator(Poller.GetFetchTimeout());
             _runnerTimer = CreateTimer(_timeoutCalc);
         }
 
-        private System.Timers.Timer CreateTimer(PoolerTimeoutCalculator timeoutCalc)
+        private System.Timers.Timer CreateTimer(PollerTimeoutCalculator timeoutCalc)
         {
             var timeout = timeoutCalc.CalculateNext();
             var result = new System.Timers.Timer(timeout) { AutoReset = false };
@@ -56,20 +56,20 @@ namespace Ses.Subscriptions
         {
             if (_isLockedByPolicy)
             {
-                _poolerContext.Logger.Warn($"Runner for pooler {Pooler.GetType().FullName} is locked and can't be started.");
+                _pollerContext.Logger.Warn($"Runner for poller {Poller.GetType().FullName} is locked and can't be started.");
             }
             else
             {
-                _poolerContext.Logger.Trace(Pooler.RunForDuration != null
+                _pollerContext.Logger.Trace(Poller.RunForDuration != null
                     // ReSharper disable once PossibleInvalidOperationException
-                    ? $"Starting runner for pooler {Pooler.GetType().FullName} for duration {Pooler.RunForDuration.Value.TotalMinutes} minute(s)..."
-                    : $"Starting runner for pooler {Pooler.GetType().FullName}...");
+                    ? $"Starting runner for poller {Poller.GetType().FullName} for duration {Poller.RunForDuration.Value.TotalMinutes} minute(s)..."
+                    : $"Starting runner for poller {Poller.GetType().FullName}...");
                 _startedAt.Set(DateTime.UtcNow);
                 if (_isRunning) return;
-                _poolerContext.Logger.Debug(Pooler.RunForDuration != null
+                _pollerContext.Logger.Debug(Poller.RunForDuration != null
                     // ReSharper disable once PossibleInvalidOperationException
-                    ? $"Runner for pooler {Pooler.GetType().FullName} for duration {Pooler.RunForDuration.Value.TotalMinutes} minute(s) started."
-                    : $"Runner for pooler {Pooler.GetType().FullName} started.");
+                    ? $"Runner for poller {Poller.GetType().FullName} for duration {Poller.RunForDuration.Value.TotalMinutes} minute(s) started."
+                    : $"Runner for poller {Poller.GetType().FullName} started.");
                 _runnerTimer.Start();
                 _isRunning = true;
             }
@@ -86,14 +86,14 @@ namespace Ses.Subscriptions
             {
                 try
                 {
-                    var anyDispatched = await Pooler.Execute(_poolerContext, _disposedTokenSource.Token);
+                    var anyDispatched = await Poller.Execute(_pollerContext, _disposedTokenSource.Token);
                     _runnerTimer.Interval = _timeoutCalc.CalculateNext(anyDispatched);
                     _runnerTimer.Start();
                 }
                 catch (FetchAttemptsThresholdException e)
                 {
                     _isLockedByPolicy = true;
-                    _poolerContext.Logger.Error(e.ToString());
+                    _pollerContext.Logger.Error(e.ToString());
                     Stop();
                 }
             }
@@ -101,8 +101,8 @@ namespace Ses.Subscriptions
 
         private bool ShouldStop()
         {
-            return Pooler.RunForDuration.HasValue
-                && ((DateTime.UtcNow - _startedAt.Value) > Pooler.RunForDuration);
+            return Poller.RunForDuration.HasValue
+                && ((DateTime.UtcNow - _startedAt.Value) > Poller.RunForDuration);
         }
 
         public void Stop()
@@ -111,7 +111,7 @@ namespace Ses.Subscriptions
             _runnerTimer.Stop();
             _isRunning = false;
             _startedAt.Set(DateTime.MaxValue);
-            _poolerContext.Logger.Debug($"Runner for pooler {Pooler.GetType().FullName} stopped.");
+            _pollerContext.Logger.Debug($"Runner for poller {Poller.GetType().FullName} stopped.");
         }
 
 

@@ -13,16 +13,16 @@ namespace Ses.Subscriptions
     public class EventStoreSubscriptions : IEventStoreSubscriptions
     {
         private readonly Dictionary<Type, Runner> _runners;
-        private readonly List<SubscriptionPooler> _poolers;
-        private readonly IPoolerStateRepository _poolerStateRepository;
+        private readonly List<SubscriptionPoller> _poolers;
+        private readonly IPollerStateRepository _poolerStateRepository;
         private IContractsRegistry _contractRegistry;
         private ILogger _logger;
         private IUpConverterFactory _upConverterFactory;
 
-        public EventStoreSubscriptions(IPoolerStateRepository poolerStateRepository)
+        public EventStoreSubscriptions(IPollerStateRepository poolerStateRepository)
         {
             _poolerStateRepository = poolerStateRepository;
-            _poolers = new List<SubscriptionPooler>();
+            _poolers = new List<SubscriptionPoller>();
             _runners = new Dictionary<Type, Runner>();
             _logger = new NullLogger();
         }
@@ -32,7 +32,7 @@ namespace Ses.Subscriptions
             return _runners.Keys.ToArray();
         }
 
-        public EventStoreSubscriptions Add(SubscriptionPooler pooler)
+        public EventStoreSubscriptions Add(SubscriptionPoller pooler)
         {
             if (_poolers.Contains(pooler)) return this;
             _poolers.Add(pooler);
@@ -96,7 +96,7 @@ namespace Ses.Subscriptions
             return this;
         }
 
-        private void ClearUnusedStates(SubscriptionPooler pooler)
+        private void ClearUnusedStates(SubscriptionPoller pooler)
         {
             var poolerContractName = _contractRegistry.GetContractName(pooler.GetType());
             var handlerTypes = pooler.GetRegisteredHandlers();
@@ -108,7 +108,7 @@ namespace Ses.Subscriptions
                 sourceTypes.Select(x => _contractRegistry.GetContractName(x)).ToArray());
         }
 
-        private async Task ClearUnusedStatesAsync(SubscriptionPooler pooler)
+        private async Task ClearUnusedStatesAsync(SubscriptionPoller pooler)
         {
             var poolerContractName = _contractRegistry.GetContractName(pooler.GetType());
             var handlerTypes = pooler.GetRegisteredHandlers();

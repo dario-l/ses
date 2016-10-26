@@ -7,10 +7,10 @@ using Ses.Subscriptions;
 
 namespace Ses.Samples.Subscriptions
 {
-    [DataContract(Name = "ProcessManagersSubscriptionPooler")]
-    public class ProcessManagersSubscriptionPooler : SubscriptionPooler
+    [DataContract(Name = "ProcessManagersSubscriptionPoller")]
+    public class ProcessManagersSubscriptionPoller : SubscriptionPoller
     {
-        public ProcessManagersSubscriptionPooler(ISubscriptionEventSource[] sources) : base(sources)
+        public ProcessManagersSubscriptionPoller(ISubscriptionEventSource[] sources) : base(sources)
         {
             
         }

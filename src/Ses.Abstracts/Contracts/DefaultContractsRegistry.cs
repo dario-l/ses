@@ -50,7 +50,7 @@ namespace Ses.Abstracts.Contracts
                        || typeof(IMemento).IsAssignableFrom(t)
                        || typeof(IHandle).IsAssignableFrom(t)
                        || typeof(ISubscriptionEventSource).IsAssignableFrom(t)
-                       || typeof(ISubscriptionPooler).IsAssignableFrom(t)
+                       || typeof(ISubscriptionPoller).IsAssignableFrom(t)
                        );
         }
 

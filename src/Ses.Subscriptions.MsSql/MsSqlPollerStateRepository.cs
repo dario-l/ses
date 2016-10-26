@@ -7,21 +7,21 @@ using Ses.Abstracts.Extensions;
 
 namespace Ses.Subscriptions.MsSql
 {
-    public class MsSqlPoolerStateRepository : IPoolerStateRepository
+    public class MsSqlPollerStateRepository : IPollerStateRepository
     {
-        private const byte colIndexForPoolerContractName = 0;
+        private const byte colIndexForPollerContractName = 0;
         private const byte colIndexForSourceContractName = 1;
         private const byte colIndexForHandlerContractName = 2;
         private const byte colIndexForEventSequence = 3;
 
         private readonly string _connectionString;
 
-        public MsSqlPoolerStateRepository(string connectionString)
+        public MsSqlPollerStateRepository(string connectionString)
         {
             _connectionString = connectionString;
         }
 
-        public MsSqlPoolerStateRepository Initialize()
+        public MsSqlPollerStateRepository Initialize()
         {
             using (var cnn = new SqlConnection(_connectionString))
             using (var cmd = cnn.CreateCommand())
@@ -33,7 +33,7 @@ namespace Ses.Subscriptions.MsSql
             return this;
         }
 
-        public MsSqlPoolerStateRepository Destroy(bool ignoreErrors = false)
+        public MsSqlPollerStateRepository Destroy(bool ignoreErrors = false)
         {
             using (var cnn = new SqlConnection(_connectionString))
             using (var cmd = cnn.CreateCommand())
@@ -52,24 +52,24 @@ namespace Ses.Subscriptions.MsSql
             return this;
         }
 
-        public async Task<PoolerState[]> LoadAsync(string poolerContractName, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<PollerState[]> LoadAsync(string pollerContractName, CancellationToken cancellationToken = default(CancellationToken))
         {
-            List<PoolerState> states = null;
+            List<PollerState> states = null;
             using (var cnn = new SqlConnection(_connectionString))
             using (var cmd = cnn.CreateCommand())
             {
                 cmd.CommandText = SqlClientScripts.SelectStates;
-                cmd.AddInputParam(SqlClientScripts.ParamPoolerContractName, DbType.String, poolerContractName);
+                cmd.AddInputParam(SqlClientScripts.ParamPollerContractName, DbType.String, pollerContractName);
                 await cmd.Connection.OpenAsync(cancellationToken).NotOnCapturedContext();
                 using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleResult | CommandBehavior.SequentialAccess, cancellationToken).NotOnCapturedContext())
                 {
                     if (reader.HasRows)
                     {
-                        states = new List<PoolerState>(100);
+                        states = new List<PollerState>(100);
                         while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext())
                         {
-                            var state = new PoolerState(
-                                await reader.GetFieldValueAsync<string>(colIndexForPoolerContractName, cancellationToken).NotOnCapturedContext(),
+                            var state = new PollerState(
+                                await reader.GetFieldValueAsync<string>(colIndexForPollerContractName, cancellationToken).NotOnCapturedContext(),
                                 await reader.GetFieldValueAsync<string>(colIndexForSourceContractName, cancellationToken).NotOnCapturedContext(),
                                 await reader.GetFieldValueAsync<string>(colIndexForHandlerContractName, cancellationToken).NotOnCapturedContext())
                             {
@@ -80,17 +80,17 @@ namespace Ses.Subscriptions.MsSql
                     }
                 }
             }
-            return states?.ToArray() ?? new PoolerState[0];
+            return states?.ToArray() ?? new PollerState[0];
         }
 
-        public async Task InsertOrUpdateAsync(PoolerState state, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task InsertOrUpdateAsync(PollerState state, CancellationToken cancellationToken = default(CancellationToken))
         {
             using (var cnn = new SqlConnection(_connectionString))
             using (var cmd = cnn.CreateCommand())
             {
                 await cnn.OpenAsync(cancellationToken).NotOnCapturedContext();
                 cmd.CommandText = SqlClientScripts.UpdateState;
-                cmd.AddInputParam(SqlClientScripts.ParamPoolerContractName, DbType.String, state.PoolerContractName);
+                cmd.AddInputParam(SqlClientScripts.ParamPollerContractName, DbType.String, state.PollerContractName);
                 cmd.AddInputParam(SqlClientScripts.ParamSourceContractName, DbType.String, state.SourceContractName);
                 cmd.AddInputParam(SqlClientScripts.ParamHandlerContractName, DbType.String, state.HandlerContractName);
                 cmd.AddInputParam(SqlClientScripts.ParamEventSequence, DbType.Int64, state.EventSequenceId);
@@ -110,7 +110,7 @@ namespace Ses.Subscriptions.MsSql
             using (var cmd = cnn.CreateCommand())
             {
                 cmd.CommandText = SqlClientScripts.DeleteNotUsedStates;
-                cmd.AddInputParam(SqlClientScripts.ParamPoolerContractName, DbType.String, poolerContractName);
+                cmd.AddInputParam(SqlClientScripts.ParamPollerContractName, DbType.String, poolerContractName);
                 cmd.AddArrayParameters(SqlClientScripts.ParamHandlerContractNames, DbType.String, handlerContractNames);
                 cmd.AddArrayParameters(SqlClientScripts.ParamSourceContractNames, DbType.String, sourceContractNames);
                 await cnn.OpenAsync(cancellationToken).NotOnCapturedContext();
@@ -126,7 +126,7 @@ namespace Ses.Subscriptions.MsSql
             using (var cmd = cnn.CreateCommand())
             {
                 cmd.CommandText = SqlClientScripts.DeleteNotUsedStates;
-                cmd.AddInputParam(SqlClientScripts.ParamPoolerContractName, DbType.String, poolerContractName);
+                cmd.AddInputParam(SqlClientScripts.ParamPollerContractName, DbType.String, poolerContractName);
                 cmd.AddArrayParameters(SqlClientScripts.ParamHandlerContractNames, DbType.String, handlerContractNames);
                 cmd.AddArrayParameters(SqlClientScripts.ParamSourceContractNames, DbType.String, sourceContractNames);
                 cnn.Open();

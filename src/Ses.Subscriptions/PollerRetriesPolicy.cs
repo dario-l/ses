@@ -1,11 +1,11 @@
 namespace Ses.Subscriptions
 {
-    public class PoolerRetriesPolicy
+    public class PollerRetriesPolicy
     {
         public int HandlerAttemptsThreshold { get; private set; }
         public int FetchAttemptsThreshold { get; private set; }
 
-        public PoolerRetriesPolicy(int fetchAttemptsThreshold, int handlerAttemptsThreshold)
+        public PollerRetriesPolicy(int fetchAttemptsThreshold, int handlerAttemptsThreshold)
         {
             if (fetchAttemptsThreshold < 0) fetchAttemptsThreshold = 0;
             if (handlerAttemptsThreshold < 0) handlerAttemptsThreshold = 0;
@@ -13,14 +13,14 @@ namespace Ses.Subscriptions
             HandlerAttemptsThreshold = handlerAttemptsThreshold;
         }
 
-        public static PoolerRetriesPolicy Defaut()
+        public static PollerRetriesPolicy Defaut()
         {
-            return new PoolerRetriesPolicy(3, 3);
+            return new PollerRetriesPolicy(3, 3);
         }
 
-        public static PoolerRetriesPolicy NoRetries()
+        public static PollerRetriesPolicy NoRetries()
         {
-            return new PoolerRetriesPolicy(0, 0);
+            return new PollerRetriesPolicy(0, 0);
         }
     }
 }

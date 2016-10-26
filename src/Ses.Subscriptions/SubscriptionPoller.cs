@@ -9,16 +9,16 @@ using Ses.Abstracts.Subscriptions;
 
 namespace Ses.Subscriptions
 {
-    public abstract class SubscriptionPooler : ISubscriptionPooler
+    public abstract class SubscriptionPoller : ISubscriptionPoller
     {
         private readonly TransactionOptions _transactionOptions = new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted };
         private readonly HandlerRegistrar _handlerRegistrar;
         private readonly Dictionary<ISubscriptionEventSource, int> _contractSubscriptions;
-        private string _poolerContractName;
+        private string _pollerContractName;
 
-        protected SubscriptionPooler(ISubscriptionEventSource[] sources)
+        protected SubscriptionPoller(ISubscriptionEventSource[] sources)
         {
-            RetriesPolicy = PoolerRetriesPolicy.Defaut();
+            RetriesPolicy = PollerRetriesPolicy.Defaut();
             Sources = sources;
             _handlerRegistrar = CreateHandlerRegistrar();
             _contractSubscriptions = new Dictionary<ISubscriptionEventSource, int>(Sources.Length);
@@ -27,7 +27,7 @@ namespace Ses.Subscriptions
         private HandlerRegistrar CreateHandlerRegistrar() => new HandlerRegistrar(FindHandlerTypes());
 
         public ISubscriptionEventSource[] Sources { get; }
-        public PoolerRetriesPolicy RetriesPolicy { get; protected set; }
+        public PollerRetriesPolicy RetriesPolicy { get; protected set; }
         public virtual TimeSpan? RunForDuration => null;
         public virtual TimeSpan GetFetchTimeout() => TimeSpan.Zero;
         protected abstract IEnumerable<Type> FindHandlerTypes();
@@ -38,8 +38,8 @@ namespace Ses.Subscriptions
 
         internal void OnStart(IContractsRegistry contractsRegistry)
         {
-            if (RetriesPolicy == null) RetriesPolicy = PoolerRetriesPolicy.NoRetries();
-            _poolerContractName = contractsRegistry.GetContractName(GetType());
+            if (RetriesPolicy == null) RetriesPolicy = PollerRetriesPolicy.NoRetries();
+            _pollerContractName = contractsRegistry.GetContractName(GetType());
             var eventTypes = GetConcreteSubscriptionEventTypes();
             if (eventTypes == null) return;
 
@@ -47,14 +47,14 @@ namespace Ses.Subscriptions
 
             foreach (var source in Sources)
             {
-                var id = source.CreateSubscriptionForContracts(_poolerContractName, contractNames);
+                var id = source.CreateSubscriptionForContracts(_pollerContractName, contractNames);
                 _contractSubscriptions.Add(source, id);
             }
         }
 
         internal async Task OnStartAsync(IContractsRegistry contractsRegistry)
         {
-            _poolerContractName = contractsRegistry.GetContractName(GetType());
+            _pollerContractName = contractsRegistry.GetContractName(GetType());
             var eventTypes = GetConcreteSubscriptionEventTypes();
             if (eventTypes == null) return;
 
@@ -62,12 +62,12 @@ namespace Ses.Subscriptions
 
             foreach (var source in Sources)
             {
-                var id = await source.CreateSubscriptionForContractsAsync(_poolerContractName, contractNames);
+                var id = await source.CreateSubscriptionForContractsAsync(_pollerContractName, contractNames);
                 _contractSubscriptions.Add(source, id);
             }
         }
 
-        internal async Task<bool> Execute(PoolerContext ctx, CancellationToken cancellationToken = default(CancellationToken))
+        internal async Task<bool> Execute(PollerContext ctx, CancellationToken cancellationToken = default(CancellationToken))
         {
             var anyDispatched = false;
             var executionRetryAttempts = 0;
@@ -75,14 +75,14 @@ namespace Ses.Subscriptions
             {
                 try
                 {
-                    var poolerStates = new List<PoolerState>(await ctx.StateRepository.LoadAsync(_poolerContractName, cancellationToken));
-                    var timeline = await FetchEventTimeline(ctx, poolerStates);
+                    var pollerStates = new List<PollerState>(await ctx.StateRepository.LoadAsync(_pollerContractName, cancellationToken));
+                    var timeline = await FetchEventTimeline(ctx, pollerStates);
 
                     foreach (var item in timeline)
                     {
                         foreach (var handlerInfo in _handlerRegistrar.RegisteredHandlerInfos) // all handlers can/should run in parallel
                         {
-                            var state = FindOrCreateState(ctx.ContractsRegistry, poolerStates, item.SourceType, handlerInfo.HandlerType);
+                            var state = FindOrCreateState(ctx.ContractsRegistry, pollerStates, item.SourceType, handlerInfo.HandlerType);
                             if (item.Envelope.SequenceId > state.EventSequenceId)
                             {
                                 var handlingRetryAttempts = 0;
@@ -114,7 +114,7 @@ namespace Ses.Subscriptions
             }
         }
 
-        private async Task<bool> TryDispatch(PoolerContext ctx, HandlerRegistrar.HandlerTypeInfo handlerInfo, EventEnvelope envelope, PoolerState state)
+        private async Task<bool> TryDispatch(PollerContext ctx, HandlerRegistrar.HandlerTypeInfo handlerInfo, EventEnvelope envelope, PollerState state)
         {
             var eventType = envelope.Event.GetType();
             var shouldDispatch = handlerInfo.ContainsEventType(eventType);
@@ -148,31 +148,31 @@ namespace Ses.Subscriptions
         protected virtual void PostHandleEvent(EventEnvelope envelope, Type handlerType) { }
         protected virtual void PostHandleEventError(EventEnvelope envelope, Type handlerType, Exception exception, int retryAttempts) { }
 
-        private PoolerState FindOrCreateState(IContractsRegistry contractsRegistry, List<PoolerState> poolerStates, Type sourceType, Type handlerType)
+        private PollerState FindOrCreateState(IContractsRegistry contractsRegistry, List<PollerState> pollerStates, Type sourceType, Type handlerType)
         {
             var sourceContractName = contractsRegistry.GetContractName(sourceType);
             var handlerContractName = contractsRegistry.GetContractName(handlerType);
 
-            PoolerState state = null;
-            foreach (var x in poolerStates)
+            PollerState state = null;
+            foreach (var x in pollerStates)
             {
                 if (x.HandlerContractName != handlerContractName || x.SourceContractName != sourceContractName) continue;
                 state = x;
                 break;
             }
             if (state != null) return state;
-            state = new PoolerState(_poolerContractName, sourceContractName, handlerContractName);
-            poolerStates.Add(state);
+            state = new PollerState(_pollerContractName, sourceContractName, handlerContractName);
+            pollerStates.Add(state);
             return state;
         }
 
-        private async Task<List<ExtractedEvent>> FetchEventTimeline(PoolerContext ctx, List<PoolerState> poolerStates)
+        private async Task<List<ExtractedEvent>> FetchEventTimeline(PollerContext ctx, List<PollerState> pollerStates)
         {
             var tasks = new List<Task<List<ExtractedEvent>>>(Sources.Length);
             foreach (var source in Sources)
             {
-                var minSequenceId = GetMinSequenceIdFor(ctx.ContractsRegistry, poolerStates, source);
-                ctx.Logger.Trace("Min sequence id for {0} is {1}", _poolerContractName, minSequenceId.ToString());
+                var minSequenceId = GetMinSequenceIdFor(ctx.ContractsRegistry, pollerStates, source);
+                ctx.Logger.Trace("Min sequence id for {0} is {1}", _pollerContractName, minSequenceId.ToString());
 
                 var concreteSubscriptionIdentifier = _contractSubscriptions.Count > 0 && _contractSubscriptions.ContainsKey(source)
                     ? _contractSubscriptions[source]
@@ -187,7 +187,7 @@ namespace Ses.Subscriptions
 
             var events = await Task.WhenAll(tasks.ToArray());
             var merged = Merge(events);
-            ctx.Logger.Trace("{0} fetched {1} events from {2} stream sources.", _poolerContractName, merged.Count.ToString(), Sources.Length.ToString());
+            ctx.Logger.Trace("{0} fetched {1} events from {2} stream sources.", _pollerContractName, merged.Count.ToString(), Sources.Length.ToString());
             return merged;
         }
 
@@ -207,11 +207,11 @@ namespace Ses.Subscriptions
             return merged;
         }
 
-        private static long GetMinSequenceIdFor(IContractsRegistry contractsRegistry, List<PoolerState> poolerStates, ISubscriptionEventSource source)
+        private static long GetMinSequenceIdFor(IContractsRegistry contractsRegistry, List<PollerState> pollerStates, ISubscriptionEventSource source)
         {
             var sourceContractName = contractsRegistry.GetContractName(source.GetType());
             long? min = null;
-            foreach (var x in poolerStates)
+            foreach (var x in pollerStates)
             {
                 if (x.SourceContractName != sourceContractName) continue;
                 if (min == null || min > x.EventSequenceId) min = x.EventSequenceId;

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Ses.Subscriptions
 {
-    internal class PoolerTimeoutCalculator
+    internal class PollerTimeoutCalculator
     {
         private const short minTimeoutValue = 20;
         private const short maxTimeoutLevel = 10000;
@@ -20,19 +20,19 @@ namespace Ses.Subscriptions
         };
 
         private short _notDispatchingCounter;
-        private readonly TimeSpan _poolerStaticTimeout;
+        private readonly TimeSpan _pollerStaticTimeout;
 
-        public PoolerTimeoutCalculator(TimeSpan poolerStaticTimeout)
+        public PollerTimeoutCalculator(TimeSpan poolerStaticTimeout)
         {
-            _poolerStaticTimeout = poolerStaticTimeout;
+            _pollerStaticTimeout = poolerStaticTimeout;
         }
 
         public double CalculateNext(bool anyDispatched = true)
         {
-            if (_poolerStaticTimeout != TimeSpan.Zero)
+            if (_pollerStaticTimeout != TimeSpan.Zero)
             {
                 _notDispatchingCounter = 0;
-                return anyDispatched ? minTimeoutValue : _poolerStaticTimeout.TotalMilliseconds;
+                return anyDispatched ? minTimeoutValue : _pollerStaticTimeout.TotalMilliseconds;
             }
 
             if (!anyDispatched)

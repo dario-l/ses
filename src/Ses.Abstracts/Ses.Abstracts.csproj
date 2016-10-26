@@ -41,7 +41,7 @@
     <Compile Include="IEventStoreAdvancedAsync.cs" />
     <Compile Include="IEventStoreAsync.cs" />
     <Compile Include="InterlockedDateTime.cs" />
-    <Compile Include="Subscriptions\ISubscriptionPooler.cs" />
+    <Compile Include="Subscriptions\ISubscriptionPoller.cs" />
     <Compile Include="Converters\DefaultEventConverterFactory.cs" />
     <Compile Include="Converters\IUpConverterFactory.cs" />
     <Compile Include="Converters\IUpConvertEvent.cs" />

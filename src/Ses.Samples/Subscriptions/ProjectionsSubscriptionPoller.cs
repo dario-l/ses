@@ -7,12 +7,12 @@ using Ses.Subscriptions;
 
 namespace Ses.Samples.Subscriptions
 {
-    [DataContract(Name = "ProjectionsSubscriptionPooler")]
-    public class ProjectionsSubscriptionPooler : SubscriptionPooler
+    [DataContract(Name = "ProjectionsSubscriptionPoller")]
+    public class ProjectionsSubscriptionPoller : SubscriptionPoller
     {
-        public ProjectionsSubscriptionPooler(ISubscriptionEventSource[] sources) : base(sources)
+        public ProjectionsSubscriptionPoller(ISubscriptionEventSource[] sources) : base(sources)
         {
-            RetriesPolicy = PoolerRetriesPolicy.Defaut();
+            RetriesPolicy = PollerRetriesPolicy.Defaut();
         }
 
         protected override IEnumerable<Type> FindHandlerTypes()

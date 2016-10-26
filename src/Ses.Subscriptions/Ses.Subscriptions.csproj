@@ -41,14 +41,14 @@
     <Compile Include="FetchAttemptsThresholdException.cs" />
     <Compile Include="HandlerRegistrar.cs" />
     <Compile Include="IEventStoreSubscriptions.cs" />
-    <Compile Include="IPoolerStateRepository.cs" />
-    <Compile Include="PoolerContext.cs" />
-    <Compile Include="PoolerRetriesPolicy.cs" />
-    <Compile Include="PoolerState.cs" />
-    <Compile Include="PoolerTimeoutCalculator.cs" />
+    <Compile Include="IPollerStateRepository.cs" />
+    <Compile Include="PollerContext.cs" />
+    <Compile Include="PollerRetriesPolicy.cs" />
+    <Compile Include="PollerState.cs" />
+    <Compile Include="PollerTimeoutCalculator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Runner.cs" />
-    <Compile Include="SubscriptionPooler.cs" />
+    <Compile Include="SubscriptionPoller.cs" />
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>

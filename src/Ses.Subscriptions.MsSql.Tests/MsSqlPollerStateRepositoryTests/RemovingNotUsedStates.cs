@@ -1,7 +1,6 @@
-﻿using Ses.TestBase;
-using Xunit;
+﻿using Xunit;
 
-namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
+namespace Ses.Subscriptions.MsSql.Tests.MsSqlPollerStateRepositoryTests
 {
     public class RemovingNotUsedStates : TestsBase
     {
@@ -10,7 +9,7 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
         {
             await GetEventStore();
 
-            var sut = new MsSqlPoolerStateRepository(ConnectionString).Initialize();
+            var sut = new MsSqlPollerStateRepository(ConnectionString).Initialize();
 
             var x = await Record.ExceptionAsync(async () => await sut.RemoveNotUsedStatesAsync("fakePooler", new[] { "fakeHandler" }, new[] { "fakeSource" }));
 
@@ -22,11 +21,11 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
         {
             await GetEventStore();
 
-            var sut = new MsSqlPoolerStateRepository(ConnectionString).Initialize();
+            var sut = new MsSqlPollerStateRepository(ConnectionString).Initialize();
 
-            var state = new PoolerState("fakePooler", "fakeSource", "fakeHandler");
+            var state = new PollerState("fakePooler", "fakeSource", "fakeHandler");
 
-            await sut.RemoveNotUsedStatesAsync(state.PoolerContractName, new[] { state.HandlerContractName }, new[] { state.SourceContractName });
+            await sut.RemoveNotUsedStatesAsync(state.PollerContractName, new[] { state.HandlerContractName }, new[] { state.SourceContractName });
 
             var result = await sut.LoadAsync("fakePooler");
 

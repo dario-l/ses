@@ -10,7 +10,7 @@
         <licenseUrl>https://github.com/dario-l/Ses/blob/master/License.txt</licenseUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Abstract subscriptions for SimpleEventStore.</description>
-        <tags>eventstore mssql subscriptions</tags>
+        <tags>eventstore mssql subscriptions polling</tags>
     </metadata>
     <files>
         <file src="bin\Release\Ses.Abstracts.*" target="lib\net45" />

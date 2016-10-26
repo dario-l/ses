@@ -166,13 +166,13 @@ namespace Ses.Samples
                 // new SomeApiEventSource()
             };
 
-            return await new EventStoreSubscriptions(new MsSqlPoolerStateRepository(connectionString).Destroy(true).Initialize())
+            return await new EventStoreSubscriptions(new MsSqlPollerStateRepository(connectionString).Destroy(true).Initialize())
                 .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly, typeof(MsSqlEventSource).Assembly)
                 .WithLogger(new NLogLogger("Ses.Subscriptions"))
                 .WithUpConverterFactory(new DefaultUpConverterFactory(typeof(SampleRunner).Assembly))
-                .Add(new ProjectionsSubscriptionPooler(sources))
-                .Add(new ProcessManagersSubscriptionPooler(sources))
-                .Add(new EmailSenderSubscriptionPooler(sources))
+                .Add(new ProjectionsSubscriptionPoller(sources))
+                .Add(new ProcessManagersSubscriptionPoller(sources))
+                .Add(new EmailSenderSubscriptionPoller(sources))
                 .StartAsync();
         }
     }

@@ -65,9 +65,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="LocalDbFixture.cs" />
-    <Compile Include="MsSqlPoolerStateRepositoryTests\RemovingNotUsedStates.cs" />
-    <Compile Include="MsSqlPoolerStateRepositoryTests\LoadingAndInserting.cs" />
-    <Compile Include="MsSqlPoolerStateRepositoryTests\Initializing.cs" />
+    <Compile Include="MsSqlPollerStateRepositoryTests\RemovingNotUsedStates.cs" />
+    <Compile Include="MsSqlPollerStateRepositoryTests\LoadingAndInserting.cs" />
+    <Compile Include="MsSqlPollerStateRepositoryTests\Initializing.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimpleEventStoreCollection.cs" />
     <Compile Include="TestsBase.cs" />

@@ -1,7 +1,6 @@
-﻿using Ses.TestBase;
-using Xunit;
+﻿using Xunit;
 
-namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
+namespace Ses.Subscriptions.MsSql.Tests.MsSqlPollerStateRepositoryTests
 {
     public class Initializing : TestsBase
     {
@@ -10,7 +9,7 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
         {
             await GetEventStore();
 
-            var sut = new MsSqlPoolerStateRepository(ConnectionString);
+            var sut = new MsSqlPollerStateRepository(ConnectionString);
 
             var x = Record.Exception(() => sut.Initialize());
 
@@ -22,7 +21,7 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
         {
             await GetEventStore();
 
-            var sut = new MsSqlPoolerStateRepository(ConnectionString);
+            var sut = new MsSqlPollerStateRepository(ConnectionString);
 
             var x = Record.Exception(() =>
             {
@@ -38,7 +37,7 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPoolerStateRepositoryTests
         {
             await GetEventStore();
 
-            var sut = new MsSqlPoolerStateRepository(ConnectionString);
+            var sut = new MsSqlPollerStateRepository(ConnectionString);
 
             var x = Record.Exception(() => sut.Destroy(true));
 

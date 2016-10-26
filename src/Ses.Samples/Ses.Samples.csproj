@@ -63,10 +63,10 @@
     <Compile Include="Cart\ItemRemovedFromShoppingCart.cs" />
     <Compile Include="NLogLogger.cs" />
     <Compile Include="Subscriptions\ProcessManagers\SomeProcessManager.cs" />
-    <Compile Include="Subscriptions\ProjectionsSubscriptionPooler.cs" />
+    <Compile Include="Subscriptions\ProjectionsSubscriptionPoller.cs" />
     <Compile Include="Subscriptions\Projections\CartProjection.cs" />
-    <Compile Include="Subscriptions\EmailSenderSubscriptionPooler.cs" />
-    <Compile Include="Subscriptions\ProcessManagersSubscriptionPooler.cs" />
+    <Compile Include="Subscriptions\EmailSenderSubscriptionPoller.cs" />
+    <Compile Include="Subscriptions\ProcessManagersSubscriptionPoller.cs" />
     <Compile Include="Serializers\JilSerializer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
