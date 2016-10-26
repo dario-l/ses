@@ -33,6 +33,11 @@ namespace Ses.Subscriptions
         protected abstract IEnumerable<Type> FindHandlerTypes();
         protected abstract IHandle CreateHandlerInstance(Type handlerType);
         protected virtual IEnumerable<Type> GetConcreteSubscriptionEventTypes() => null;
+        protected virtual void PreHandleEvent(EventEnvelope envelope, Type handlerType) { }
+        protected virtual void PostHandleEvent(EventEnvelope envelope, Type handlerType) { }
+        protected virtual void PostHandleEventError(EventEnvelope envelope, Type handlerType, Exception exception, int retryAttempts) { }
+        protected virtual void PreExecuting(int fetchedEventsCount) { }
+        protected virtual void PostExecuting(int fetchedEventsCount, Type[] dispatchedHandlers) { }
 
         internal Type[] GetRegisteredHandlers() => _handlerRegistrar.RegisteredHandlerTypes;
 
@@ -77,32 +82,42 @@ namespace Ses.Subscriptions
                 {
                     var pollerStates = new List<PollerState>(await ctx.StateRepository.LoadAsync(_pollerContractName, cancellationToken));
                     var timeline = await FetchEventTimeline(ctx, pollerStates);
+                    PreExecuting(timeline.Count);
 
+
+                    var typesListOfDispatchedHandlers = new List<Type>(_handlerRegistrar.RegisteredHandlerInfos.Length);
                     foreach (var item in timeline)
                     {
                         foreach (var handlerInfo in _handlerRegistrar.RegisteredHandlerInfos) // all handlers can/should run in parallel
                         {
                             var state = FindOrCreateState(ctx.ContractsRegistry, pollerStates, item.SourceType, handlerInfo.HandlerType);
-                            if (item.Envelope.SequenceId > state.EventSequenceId)
+                            if (item.Envelope.SequenceId <= state.EventSequenceId) continue;
+
+                            var handlingRetryAttempts = 0;
+                            bool dispatched;
+                            while (true)
                             {
-                                var handlingRetryAttempts = 0;
-                                while (true)
+                                try
                                 {
-                                    try
-                                    {
-                                        anyDispatched = await TryDispatch(ctx, handlerInfo, item.Envelope, state);
-                                        break;
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        PostHandleEventError(item.Envelope, handlerInfo.HandlerType, ex, handlingRetryAttempts);
-                                        if (handlingRetryAttempts >= RetriesPolicy.HandlerAttemptsThreshold) throw;
-                                        handlingRetryAttempts++;
-                                    }
+                                    dispatched = await TryDispatch(ctx, handlerInfo, item.Envelope, state);
+                                    break;
+                                }
+                                catch (Exception ex)
+                                {
+                                    PostHandleEventError(item.Envelope, handlerInfo.HandlerType, ex, handlingRetryAttempts);
+                                    if (handlingRetryAttempts >= RetriesPolicy.HandlerAttemptsThreshold) throw;
+                                    handlingRetryAttempts++;
                                 }
                             }
+
+                            if (dispatched && !typesListOfDispatchedHandlers.Contains(handlerInfo.HandlerType))
+                                typesListOfDispatchedHandlers.Add(handlerInfo.HandlerType);
+
+                            anyDispatched |= dispatched;
                         }
                     }
+
+                    PostExecuting(timeline.Count, typesListOfDispatchedHandlers.ToArray());
                     return anyDispatched;
                 }
                 catch (Exception e)
@@ -143,10 +158,6 @@ namespace Ses.Subscriptions
             if (shouldDispatch) PostHandleEvent(envelope, handlerInfo.HandlerType);
             return shouldDispatch;
         }
-
-        protected virtual void PreHandleEvent(EventEnvelope envelope, Type handlerType) { }
-        protected virtual void PostHandleEvent(EventEnvelope envelope, Type handlerType) { }
-        protected virtual void PostHandleEventError(EventEnvelope envelope, Type handlerType, Exception exception, int retryAttempts) { }
 
         private PollerState FindOrCreateState(IContractsRegistry contractsRegistry, List<PollerState> pollerStates, Type sourceType, Type handlerType)
         {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Serialization;
 using Ses.Abstracts.Subscriptions;
@@ -26,5 +27,15 @@ namespace Ses.Samples.Subscriptions
         }
 
         public override TimeSpan? RunForDuration => TimeSpan.FromMinutes(5); // to run again use: subscriber.RunPooler(typeof(DenormalizersSubscriptionPooler));
+
+        protected override void PreExecuting(int fetchedEventsCount)
+        {
+            Debug.WriteLine("PRE Fetched events: " + fetchedEventsCount);
+        }
+
+        protected override void PostExecuting(int fetchedEventsCount, Type[] dispatchedHandlers)
+        {
+            Debug.WriteLine("POST Fetched events: " + fetchedEventsCount + " Handled by: " + string.Join("|", dispatchedHandlers.Select(x => x.Name)));
+        }
     }
 }
