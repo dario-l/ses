@@ -13,29 +13,29 @@ namespace Ses.Subscriptions
     public class EventStoreSubscriptions : IEventStoreSubscriptions
     {
         private readonly Dictionary<Type, Runner> _runners;
-        private readonly List<SubscriptionPoller> _poolers;
-        private readonly IPollerStateRepository _poolerStateRepository;
+        private readonly List<SubscriptionPoller> _pollers;
+        private readonly IPollerStateRepository _pollerStateRepository;
         private IContractsRegistry _contractRegistry;
         private ILogger _logger;
         private IUpConverterFactory _upConverterFactory;
 
-        public EventStoreSubscriptions(IPollerStateRepository poolerStateRepository)
+        public EventStoreSubscriptions(IPollerStateRepository pollerStateRepository)
         {
-            _poolerStateRepository = poolerStateRepository;
-            _poolers = new List<SubscriptionPoller>();
+            _pollerStateRepository = pollerStateRepository;
+            _pollers = new List<SubscriptionPoller>();
             _runners = new Dictionary<Type, Runner>();
             _logger = new NullLogger();
         }
 
-        public Type[] GetPoolerTypes()
+        public Type[] GetPollerTypes()
         {
             return _runners.Keys.ToArray();
         }
 
-        public EventStoreSubscriptions Add(SubscriptionPoller pooler)
+        public EventStoreSubscriptions Add(SubscriptionPoller poller)
         {
-            if (_poolers.Contains(pooler)) return this;
-            _poolers.Add(pooler);
+            if (_pollers.Contains(poller)) return this;
+            _pollers.Add(poller);
             return this;
         }
 
@@ -67,13 +67,13 @@ namespace Ses.Subscriptions
             if (_contractRegistry == null)
                 throw new InvalidOperationException("Contract registry is not set. Use own IContractRegistry implementation or DefaultContractsRegistry.");
 
-            foreach (var pooler in _poolers)
+            foreach (var poller in _pollers)
             {
-                ClearUnusedStates(pooler);
-                pooler.OnStart(_contractRegistry);
+                ClearUnusedStates(poller);
+                poller.OnStart(_contractRegistry);
 
-                var runner = new Runner(_contractRegistry, _logger, _poolerStateRepository, pooler, _upConverterFactory);
-                _runners.Add(pooler.GetType(), runner);
+                var runner = new Runner(_contractRegistry, _logger, _pollerStateRepository, poller, _upConverterFactory);
+                _runners.Add(poller.GetType(), runner);
                 runner.Start();
             }
             return this;
@@ -84,38 +84,38 @@ namespace Ses.Subscriptions
             if (_contractRegistry == null)
                 throw new InvalidOperationException("Contract registry is not set. Use own IContractRegistry implementation or DefaultContractsRegistry.");
 
-            foreach (var pooler in _poolers)
+            foreach (var poller in _pollers)
             {
-                await ClearUnusedStatesAsync(pooler);
-                await pooler.OnStartAsync(_contractRegistry);
+                await ClearUnusedStatesAsync(poller);
+                await poller.OnStartAsync(_contractRegistry);
 
-                var runner = new Runner(_contractRegistry, _logger, _poolerStateRepository, pooler, _upConverterFactory);
-                _runners.Add(pooler.GetType(), runner);
+                var runner = new Runner(_contractRegistry, _logger, _pollerStateRepository, poller, _upConverterFactory);
+                _runners.Add(poller.GetType(), runner);
                 runner.Start();
             }
             return this;
         }
 
-        private void ClearUnusedStates(SubscriptionPoller pooler)
+        private void ClearUnusedStates(SubscriptionPoller poller)
         {
-            var poolerContractName = _contractRegistry.GetContractName(pooler.GetType());
-            var handlerTypes = pooler.GetRegisteredHandlers();
-            var sourceTypes = pooler.Sources.Select(x => x.GetType()).ToList();
+            var pollerContractName = _contractRegistry.GetContractName(poller.GetType());
+            var handlerTypes = poller.GetRegisteredHandlers();
+            var sourceTypes = poller.Sources.Select(x => x.GetType()).ToList();
 
-            _poolerStateRepository.RemoveNotUsedStates(
-                poolerContractName,
+            _pollerStateRepository.RemoveNotUsedStates(
+                pollerContractName,
                 handlerTypes.Select(x => _contractRegistry.GetContractName(x)).ToArray(),
                 sourceTypes.Select(x => _contractRegistry.GetContractName(x)).ToArray());
         }
 
-        private async Task ClearUnusedStatesAsync(SubscriptionPoller pooler)
+        private async Task ClearUnusedStatesAsync(SubscriptionPoller poller)
         {
-            var poolerContractName = _contractRegistry.GetContractName(pooler.GetType());
-            var handlerTypes = pooler.GetRegisteredHandlers();
-            var sourceTypes = pooler.Sources.Select(x => x.GetType()).ToList();
+            var pollerContractName = _contractRegistry.GetContractName(poller.GetType());
+            var handlerTypes = poller.GetRegisteredHandlers();
+            var sourceTypes = poller.Sources.Select(x => x.GetType()).ToList();
 
-            await _poolerStateRepository.RemoveNotUsedStatesAsync(
-                poolerContractName,
+            await _pollerStateRepository.RemoveNotUsedStatesAsync(
+                pollerContractName,
                 handlerTypes.Select(x => _contractRegistry.GetContractName(x)).ToArray(),
                 sourceTypes.Select(x => _contractRegistry.GetContractName(x)).ToArray());
         }
@@ -130,9 +130,9 @@ namespace Ses.Subscriptions
             }
         }
 
-        public void RunStoppedPooler(Type type, bool force = false)
+        public void RunStoppedPoller(Type type, bool force = false)
         {
-            if (!_runners.ContainsKey(type)) throw new InvalidOperationException($"Pooler {type.FullName} is not registered.");
+            if (!_runners.ContainsKey(type)) throw new InvalidOperationException($"Poller {type.FullName} is not registered.");
             if (force)
             {
                 _runners[type].ForceStart();
@@ -143,7 +143,7 @@ namespace Ses.Subscriptions
             }
         }
 
-        public void RunStoppedPoolers()
+        public void RunStoppedPollers()
         {
             foreach (var runner in _runners)
             {

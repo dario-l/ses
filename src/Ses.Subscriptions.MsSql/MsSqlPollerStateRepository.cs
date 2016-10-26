@@ -102,7 +102,7 @@ namespace Ses.Subscriptions.MsSql
             }
         }
 
-        public async Task RemoveNotUsedStatesAsync(string poolerContractName, string[] handlerContractNames, string[] sourceContractNames, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task RemoveNotUsedStatesAsync(string pollerContractName, string[] handlerContractNames, string[] sourceContractNames, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (handlerContractNames.Length == 0 || sourceContractNames.Length == 0) return;
 
@@ -110,7 +110,7 @@ namespace Ses.Subscriptions.MsSql
             using (var cmd = cnn.CreateCommand())
             {
                 cmd.CommandText = SqlClientScripts.DeleteNotUsedStates;
-                cmd.AddInputParam(SqlClientScripts.ParamPollerContractName, DbType.String, poolerContractName);
+                cmd.AddInputParam(SqlClientScripts.ParamPollerContractName, DbType.String, pollerContractName);
                 cmd.AddArrayParameters(SqlClientScripts.ParamHandlerContractNames, DbType.String, handlerContractNames);
                 cmd.AddArrayParameters(SqlClientScripts.ParamSourceContractNames, DbType.String, sourceContractNames);
                 await cnn.OpenAsync(cancellationToken).NotOnCapturedContext();
@@ -118,7 +118,7 @@ namespace Ses.Subscriptions.MsSql
             }
         }
 
-        public void RemoveNotUsedStates(string poolerContractName, string[] handlerContractNames, string[] sourceContractNames)
+        public void RemoveNotUsedStates(string pollerContractName, string[] handlerContractNames, string[] sourceContractNames)
         {
             if (handlerContractNames.Length == 0 || sourceContractNames.Length == 0) return;
 
@@ -126,7 +126,7 @@ namespace Ses.Subscriptions.MsSql
             using (var cmd = cnn.CreateCommand())
             {
                 cmd.CommandText = SqlClientScripts.DeleteNotUsedStates;
-                cmd.AddInputParam(SqlClientScripts.ParamPollerContractName, DbType.String, poolerContractName);
+                cmd.AddInputParam(SqlClientScripts.ParamPollerContractName, DbType.String, pollerContractName);
                 cmd.AddArrayParameters(SqlClientScripts.ParamHandlerContractNames, DbType.String, handlerContractNames);
                 cmd.AddArrayParameters(SqlClientScripts.ParamSourceContractNames, DbType.String, sourceContractNames);
                 cnn.Open();

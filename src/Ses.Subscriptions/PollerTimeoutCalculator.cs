@@ -22,9 +22,9 @@ namespace Ses.Subscriptions
         private short _notDispatchingCounter;
         private readonly TimeSpan _pollerStaticTimeout;
 
-        public PollerTimeoutCalculator(TimeSpan poolerStaticTimeout)
+        public PollerTimeoutCalculator(TimeSpan pollerStaticTimeout)
         {
-            _pollerStaticTimeout = poolerStaticTimeout;
+            _pollerStaticTimeout = pollerStaticTimeout;
         }
 
         public double CalculateNext(bool anyDispatched = true)

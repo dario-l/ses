@@ -11,7 +11,7 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPollerStateRepositoryTests
 
             var sut = new MsSqlPollerStateRepository(ConnectionString).Initialize();
 
-            var x = await Record.ExceptionAsync(async () => await sut.LoadAsync("fakePooler"));
+            var x = await Record.ExceptionAsync(async () => await sut.LoadAsync("fakePoller"));
 
             Assert.Null(x);
         }
@@ -23,7 +23,7 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPollerStateRepositoryTests
 
             var sut = new MsSqlPollerStateRepository(ConnectionString).Initialize();
 
-            var result = await sut.LoadAsync("fakePooler");
+            var result = await sut.LoadAsync("fakePoller");
 
             Assert.Empty(result);
         }
@@ -37,8 +37,8 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPollerStateRepositoryTests
 
             var x = await Record.ExceptionAsync(async () =>
             {
-                await sut.InsertOrUpdateAsync(new PollerState("fakePooler", "fakeSource", "fakeHandler")); // inserting
-                await sut.InsertOrUpdateAsync(new PollerState("fakePooler", "fakeSource", "fakeHandler")); // updating
+                await sut.InsertOrUpdateAsync(new PollerState("fakePoller", "fakeSource", "fakeHandler")); // inserting
+                await sut.InsertOrUpdateAsync(new PollerState("fakePoller", "fakeSource", "fakeHandler")); // updating
             });
 
             Assert.Null(x);
@@ -51,10 +51,10 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPollerStateRepositoryTests
 
             var sut = new MsSqlPollerStateRepository(ConnectionString).Initialize();
 
-            await sut.InsertOrUpdateAsync(new PollerState("fakePooler", "fakeSource", "fakeHandler")); // inserting
-            await sut.InsertOrUpdateAsync(new PollerState("fakePooler", "fakeSource", "fakeHandler")); // updating
+            await sut.InsertOrUpdateAsync(new PollerState("fakePoller", "fakeSource", "fakeHandler")); // inserting
+            await sut.InsertOrUpdateAsync(new PollerState("fakePoller", "fakeSource", "fakeHandler")); // updating
 
-            var result = await sut.LoadAsync("fakePooler");
+            var result = await sut.LoadAsync("fakePoller");
 
 
             Assert.True(result.Length == 1);
@@ -67,10 +67,10 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPollerStateRepositoryTests
 
             var sut = new MsSqlPollerStateRepository(ConnectionString).Initialize();
 
-            await sut.InsertOrUpdateAsync(new PollerState("fakePooler", "fakeSource", "fakeHandler"));
-            await sut.InsertOrUpdateAsync(new PollerState("fakePooler2", "fakeSource2", "fakeHandler2"));
+            await sut.InsertOrUpdateAsync(new PollerState("fakePoller", "fakeSource", "fakeHandler"));
+            await sut.InsertOrUpdateAsync(new PollerState("fakePoller2", "fakeSource2", "fakeHandler2"));
 
-            var result = await sut.LoadAsync("fakePooler");
+            var result = await sut.LoadAsync("fakePoller");
 
 
             Assert.True(result.Length == 1);

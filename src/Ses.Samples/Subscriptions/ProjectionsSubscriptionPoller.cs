@@ -26,7 +26,7 @@ namespace Ses.Samples.Subscriptions
             return Activator.CreateInstance(handlerType) as IHandle; // usually use IContainer
         }
 
-        public override TimeSpan? RunForDuration => TimeSpan.FromMinutes(5); // to run again use: subscriber.RunPooler(typeof(DenormalizersSubscriptionPooler));
+        public override TimeSpan? RunForDuration => TimeSpan.FromMinutes(5); // to run again use: subscriber.RunPoller(typeof(DenormalizersSubscriptionPoller));
 
         protected override void PreExecuting(int fetchedEventsCount)
         {

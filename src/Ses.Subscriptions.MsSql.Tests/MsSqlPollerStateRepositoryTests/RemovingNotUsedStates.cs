@@ -11,7 +11,7 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPollerStateRepositoryTests
 
             var sut = new MsSqlPollerStateRepository(ConnectionString).Initialize();
 
-            var x = await Record.ExceptionAsync(async () => await sut.RemoveNotUsedStatesAsync("fakePooler", new[] { "fakeHandler" }, new[] { "fakeSource" }));
+            var x = await Record.ExceptionAsync(async () => await sut.RemoveNotUsedStatesAsync("fakePoller", new[] { "fakeHandler" }, new[] { "fakeSource" }));
 
             Assert.Null(x);
         }
@@ -23,17 +23,15 @@ namespace Ses.Subscriptions.MsSql.Tests.MsSqlPollerStateRepositoryTests
 
             var sut = new MsSqlPollerStateRepository(ConnectionString).Initialize();
 
-            var state = new PollerState("fakePooler", "fakeSource", "fakeHandler");
+            var state = new PollerState("fakePoller", "fakeSource", "fakeHandler");
 
             await sut.RemoveNotUsedStatesAsync(state.PollerContractName, new[] { state.HandlerContractName }, new[] { state.SourceContractName });
 
-            var result = await sut.LoadAsync("fakePooler");
+            var result = await sut.LoadAsync("fakePoller");
 
             Assert.Empty(result);
         }
 
-        public RemovingNotUsedStates(LocalDbFixture fixture) : base(fixture)
-        {
-        }
+        public RemovingNotUsedStates(LocalDbFixture fixture) : base(fixture) { }
     }
 }

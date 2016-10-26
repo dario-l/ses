@@ -4,13 +4,13 @@ namespace Ses.Subscriptions
 {
     internal class FetchAttemptsThresholdException : Exception
     {
-        public string PoolerType { get; private set; }
+        public string PollerType { get; private set; }
         public int ExecuteRetryAttempts { get; private set; }
 
-        public FetchAttemptsThresholdException(string poolerType, int executeRetryAttempts, Exception exception)
-            : base($"Pooler {poolerType} excides retries attempts threshold.", exception)
+        public FetchAttemptsThresholdException(string pollerType, int executeRetryAttempts, Exception exception)
+            : base($"Poller {pollerType} excides retries attempts threshold.", exception)
         {
-            PoolerType = poolerType;
+            PollerType = pollerType;
             ExecuteRetryAttempts = executeRetryAttempts;
         }
     }
