@@ -41,7 +41,7 @@ namespace Ses.Subscriptions
 
         internal Type[] GetRegisteredHandlers() => _handlerRegistrar.RegisteredHandlerTypes;
 
-        internal void OnStart(IContractsRegistry contractsRegistry)
+        internal void Initialize(IContractsRegistry contractsRegistry)
         {
             if (RetriesPolicy == null) RetriesPolicy = PollerRetriesPolicy.NoRetries();
             _pollerContractName = contractsRegistry.GetContractName(GetType());
@@ -57,7 +57,7 @@ namespace Ses.Subscriptions
             }
         }
 
-        internal async Task OnStartAsync(IContractsRegistry contractsRegistry)
+        internal async Task InitializeAsync(IContractsRegistry contractsRegistry)
         {
             _pollerContractName = contractsRegistry.GetContractName(GetType());
             var eventTypes = GetConcreteSubscriptionEventTypes();

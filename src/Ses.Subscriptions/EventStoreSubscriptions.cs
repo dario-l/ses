@@ -70,7 +70,7 @@ namespace Ses.Subscriptions
             foreach (var poller in _pollers)
             {
                 ClearUnusedStates(poller);
-                poller.OnStart(_contractRegistry);
+                poller.Initialize(_contractRegistry);
 
                 var runner = new Runner(_contractRegistry, _logger, _pollerStateRepository, poller, _upConverterFactory);
                 _runners.Add(poller.GetType(), runner);
@@ -87,7 +87,7 @@ namespace Ses.Subscriptions
             foreach (var poller in _pollers)
             {
                 await ClearUnusedStatesAsync(poller);
-                await poller.OnStartAsync(_contractRegistry);
+                await poller.InitializeAsync(_contractRegistry);
 
                 var runner = new Runner(_contractRegistry, _logger, _pollerStateRepository, poller, _upConverterFactory);
                 _runners.Add(poller.GetType(), runner);
