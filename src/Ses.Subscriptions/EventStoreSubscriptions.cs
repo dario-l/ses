@@ -27,11 +27,6 @@ namespace Ses.Subscriptions
             _logger = new NullLogger();
         }
 
-        public Type[] GetPollerTypes()
-        {
-            return _runners.Keys.ToArray();
-        }
-
         public EventStoreSubscriptions Add(SubscriptionPoller poller)
         {
             if (_pollers.Contains(poller)) return this;
@@ -200,6 +195,11 @@ namespace Ses.Subscriptions
             {
                 runner.Value.Start();
             }
+        }
+
+        public Type[] GetPollerTypes()
+        {
+            return _runners.Keys.ToArray();
         }
     }
 }

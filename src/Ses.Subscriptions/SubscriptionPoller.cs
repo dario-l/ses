@@ -39,7 +39,10 @@ namespace Ses.Subscriptions
         protected virtual void PreExecuting(int fetchedEventsCount) { }
         protected virtual void PostExecuting(int fetchedEventsCount, Type[] dispatchedHandlers) { }
 
-        internal Type[] GetRegisteredHandlers() => _handlerRegistrar.RegisteredHandlerTypes;
+        internal Type[] GetRegisteredHandlers()
+        {
+            return _handlerRegistrar.RegisteredHandlerTypes;
+        }
 
         internal void Initialize(IContractsRegistry contractsRegistry)
         {
