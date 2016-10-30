@@ -153,7 +153,7 @@ namespace Ses.Samples
                 sw.Stop();
                 Console.WriteLine($@"Overall time {sw.ElapsedMilliseconds}ms - {(count / sw.Elapsed.TotalSeconds)}");
                 Console.WriteLine(@"Waiting for Linearizer...");
-                await Task.Delay(5000, token);
+                await Task.Delay(10000, token);
                 Console.WriteLine(@"Done.");
             }
         }

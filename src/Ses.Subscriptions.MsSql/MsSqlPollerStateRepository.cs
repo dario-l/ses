@@ -83,6 +83,47 @@ namespace Ses.Subscriptions.MsSql
             return states?.ToArray() ?? new PollerState[0];
         }
 
+        public async Task CreateStatesAsync(PollerState[] states, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (states.Length == 0) return;
+            using (var cnn = new SqlConnection(_connectionString))
+            {
+                await cnn.OpenAsync(cancellationToken);
+                foreach (var state in states)
+                {
+                    using (var cmd = cnn.CreateCommand())
+                    {
+                        cmd.CommandText = SqlClientScripts.InsertState;
+                        cmd.AddInputParam(SqlClientScripts.ParamPollerContractName, DbType.String, state.PollerContractName);
+                        cmd.AddInputParam(SqlClientScripts.ParamSourceContractName, DbType.String, state.SourceContractName);
+                        cmd.AddInputParam(SqlClientScripts.ParamHandlerContractName, DbType.String, state.HandlerContractName);
+                        cmd.AddInputParam(SqlClientScripts.ParamEventSequence, DbType.Int64, 0);
+                        await cmd.ExecuteNonQueryAsync(cancellationToken);
+                    }
+                }
+            }
+        }
+
+        public async Task DeleteStatesAsync(PollerState[] states, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (states.Length == 0) return;
+            using (var cnn = new SqlConnection(_connectionString))
+            {
+                await cnn.OpenAsync(cancellationToken);
+                foreach (var state in states)
+                {
+                    using (var cmd = cnn.CreateCommand())
+                    {
+                        cmd.CommandText = SqlClientScripts.DeleteState;
+                        cmd.AddInputParam(SqlClientScripts.ParamPollerContractName, DbType.String, state.PollerContractName);
+                        cmd.AddInputParam(SqlClientScripts.ParamSourceContractName, DbType.String, state.SourceContractName);
+                        cmd.AddInputParam(SqlClientScripts.ParamHandlerContractName, DbType.String, state.HandlerContractName);
+                        await cmd.ExecuteNonQueryAsync(cancellationToken);
+                    }
+                }
+            }
+        }
+
         public async Task InsertOrUpdateAsync(PollerState state, CancellationToken cancellationToken = default(CancellationToken))
         {
             using (var cnn = new SqlConnection(_connectionString))
@@ -102,35 +143,75 @@ namespace Ses.Subscriptions.MsSql
             }
         }
 
-        public async Task RemoveNotUsedStatesAsync(string pollerContractName, string[] handlerContractNames, string[] sourceContractNames, CancellationToken cancellationToken = default(CancellationToken))
+        public PollerState[] Load(string pollerContractName)
         {
-            if (handlerContractNames.Length == 0 || sourceContractNames.Length == 0) return;
-
+            List<PollerState> states = null;
             using (var cnn = new SqlConnection(_connectionString))
             using (var cmd = cnn.CreateCommand())
             {
-                cmd.CommandText = SqlClientScripts.DeleteNotUsedStates;
+                cmd.CommandText = SqlClientScripts.SelectStates;
                 cmd.AddInputParam(SqlClientScripts.ParamPollerContractName, DbType.String, pollerContractName);
-                cmd.AddArrayParameters(SqlClientScripts.ParamHandlerContractNames, DbType.String, handlerContractNames);
-                cmd.AddArrayParameters(SqlClientScripts.ParamSourceContractNames, DbType.String, sourceContractNames);
-                await cnn.OpenAsync(cancellationToken).NotOnCapturedContext();
-                await cmd.ExecuteNonQueryAsync(cancellationToken).NotOnCapturedContext();
+                cmd.Connection.Open();
+                using (var reader = cmd.ExecuteReader(CommandBehavior.SingleResult | CommandBehavior.SequentialAccess))
+                {
+                    if (reader.HasRows)
+                    {
+                        states = new List<PollerState>(100);
+                        while (reader.Read())
+                        {
+                            var state = new PollerState(
+                                reader.GetFieldValue<string>(colIndexForPollerContractName),
+                                reader.GetFieldValue<string>(colIndexForSourceContractName),
+                                reader.GetFieldValue<string>(colIndexForHandlerContractName))
+                            {
+                                EventSequenceId = reader.GetFieldValue<long>(colIndexForEventSequence)
+                            };
+                            states.Add(state);
+                        }
+                    }
+                }
+            }
+            return states?.ToArray() ?? new PollerState[0];
+        }
+
+        public void CreateStates(PollerState[] states)
+        {
+            if (states.Length == 0) return;
+            using (var cnn = new SqlConnection(_connectionString))
+            {
+                cnn.Open();
+                foreach (var state in states)
+                {
+                    using (var cmd = cnn.CreateCommand())
+                    {
+                        cmd.CommandText = SqlClientScripts.InsertState;
+                        cmd.AddInputParam(SqlClientScripts.ParamPollerContractName, DbType.String, state.PollerContractName);
+                        cmd.AddInputParam(SqlClientScripts.ParamSourceContractName, DbType.String, state.SourceContractName);
+                        cmd.AddInputParam(SqlClientScripts.ParamHandlerContractName, DbType.String, state.HandlerContractName);
+                        cmd.AddInputParam(SqlClientScripts.ParamEventSequence, DbType.Int64, 0);
+                        cmd.ExecuteNonQuery();
+                    }
+                }
             }
         }
 
-        public void RemoveNotUsedStates(string pollerContractName, string[] handlerContractNames, string[] sourceContractNames)
+        public void DeleteStates(PollerState[] states)
         {
-            if (handlerContractNames.Length == 0 || sourceContractNames.Length == 0) return;
-
+            if (states.Length == 0) return;
             using (var cnn = new SqlConnection(_connectionString))
-            using (var cmd = cnn.CreateCommand())
             {
-                cmd.CommandText = SqlClientScripts.DeleteNotUsedStates;
-                cmd.AddInputParam(SqlClientScripts.ParamPollerContractName, DbType.String, pollerContractName);
-                cmd.AddArrayParameters(SqlClientScripts.ParamHandlerContractNames, DbType.String, handlerContractNames);
-                cmd.AddArrayParameters(SqlClientScripts.ParamSourceContractNames, DbType.String, sourceContractNames);
                 cnn.Open();
-                cmd.ExecuteNonQuery();
+                foreach (var state in states)
+                {
+                    using (var cmd = cnn.CreateCommand())
+                    {
+                        cmd.CommandText = SqlClientScripts.DeleteState;
+                        cmd.AddInputParam(SqlClientScripts.ParamPollerContractName, DbType.String, state.PollerContractName);
+                        cmd.AddInputParam(SqlClientScripts.ParamSourceContractName, DbType.String, state.SourceContractName);
+                        cmd.AddInputParam(SqlClientScripts.ParamHandlerContractName, DbType.String, state.HandlerContractName);
+                        cmd.ExecuteNonQuery();
+                    }
+                }
             }
         }
     }

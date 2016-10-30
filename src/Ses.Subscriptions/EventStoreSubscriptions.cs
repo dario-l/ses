@@ -69,7 +69,7 @@ namespace Ses.Subscriptions
 
             foreach (var poller in _pollers)
             {
-                ClearUnusedStates(poller);
+                SynchronizeStates(poller);
                 poller.Initialize(_contractRegistry);
 
                 var runner = new Runner(_contractRegistry, _logger, _pollerStateRepository, poller, _upConverterFactory);
@@ -86,7 +86,7 @@ namespace Ses.Subscriptions
 
             foreach (var poller in _pollers)
             {
-                await ClearUnusedStatesAsync(poller);
+                await SynchronizeStatesAsync(poller);
                 await poller.InitializeAsync(_contractRegistry);
 
                 var runner = new Runner(_contractRegistry, _logger, _pollerStateRepository, poller, _upConverterFactory);
@@ -96,28 +96,79 @@ namespace Ses.Subscriptions
             return this;
         }
 
-        private void ClearUnusedStates(SubscriptionPoller poller)
+        private void SynchronizeStates(SubscriptionPoller poller)
         {
             var pollerContractName = _contractRegistry.GetContractName(poller.GetType());
-            var handlerTypes = poller.GetRegisteredHandlers();
-            var sourceTypes = poller.Sources.Select(x => x.GetType()).ToList();
+            var handlerContractNames = poller.GetRegisteredHandlers().Select(x => _contractRegistry.GetContractName(x)).ToArray();
+            var sourceContractNames = poller.Sources.Select(x => _contractRegistry.GetContractName(x.GetType())).ToArray();
 
-            _pollerStateRepository.RemoveNotUsedStates(
+            var storedStates = _pollerStateRepository.Load(pollerContractName);
+
+            var statesToDelete = new List<PollerState>(5);
+            var statesToAdd = new List<PollerState>(5);
+
+            FillStatesToSynchronize(
                 pollerContractName,
-                handlerTypes.Select(x => _contractRegistry.GetContractName(x)).ToArray(),
-                sourceTypes.Select(x => _contractRegistry.GetContractName(x)).ToArray());
+                storedStates,
+                sourceContractNames,
+                handlerContractNames,
+                statesToAdd,
+                statesToDelete);
+
+            _pollerStateRepository.DeleteStates(statesToDelete.ToArray());
+            _pollerStateRepository.CreateStates(statesToAdd.ToArray());
         }
 
-        private async Task ClearUnusedStatesAsync(SubscriptionPoller poller)
+        private async Task SynchronizeStatesAsync(SubscriptionPoller poller)
         {
             var pollerContractName = _contractRegistry.GetContractName(poller.GetType());
-            var handlerTypes = poller.GetRegisteredHandlers();
-            var sourceTypes = poller.Sources.Select(x => x.GetType()).ToList();
+            var handlerContractNames = poller.GetRegisteredHandlers().Select(x => _contractRegistry.GetContractName(x)).ToArray();
+            var sourceContractNames = poller.Sources.Select(x => _contractRegistry.GetContractName(x.GetType())).ToArray();
 
-            await _pollerStateRepository.RemoveNotUsedStatesAsync(
+            var storedStates = await _pollerStateRepository.LoadAsync(pollerContractName);
+
+            var statesToDelete = new List<PollerState>(5);
+            var statesToAdd = new List<PollerState>(5);
+
+            FillStatesToSynchronize(
                 pollerContractName,
-                handlerTypes.Select(x => _contractRegistry.GetContractName(x)).ToArray(),
-                sourceTypes.Select(x => _contractRegistry.GetContractName(x)).ToArray());
+                storedStates,
+                sourceContractNames,
+                handlerContractNames,
+                statesToAdd,
+                statesToDelete);
+
+            await _pollerStateRepository.DeleteStatesAsync(statesToDelete.ToArray());
+            await _pollerStateRepository.CreateStatesAsync(statesToAdd.ToArray());
+        }
+
+        private static void FillStatesToSynchronize(string pollerContractName, PollerState[] storedStates, string[] sourceContractNames, string[] handlerContractNames, List<PollerState> statesToAdd, List<PollerState> statesToDelete)
+        {
+            foreach (var state in storedStates)
+            {
+                if (!sourceContractNames.Contains(state.SourceContractName))
+                {
+                    statesToDelete.Add(state);
+                }
+                else if (!handlerContractNames.Contains(state.HandlerContractName))
+                {
+                    statesToDelete.Add(state);
+                }
+            }
+
+            foreach (var source in sourceContractNames)
+            {
+                foreach (var handler in handlerContractNames)
+                {
+                    if (storedStates.All(x => x.SourceContractName != source && x.HandlerContractName != handler))
+                    {
+                        statesToAdd.Add(new PollerState(
+                            pollerContractName,
+                            source,
+                            handler));
+                    }
+                }
+            }
         }
 
         public void Dispose()

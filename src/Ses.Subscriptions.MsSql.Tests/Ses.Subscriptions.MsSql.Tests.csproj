@@ -65,7 +65,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="LocalDbFixture.cs" />
-    <Compile Include="MsSqlPollerStateRepositoryTests\RemovingNotUsedStates.cs" />
     <Compile Include="MsSqlPollerStateRepositoryTests\LoadingAndInserting.cs" />
     <Compile Include="MsSqlPollerStateRepositoryTests\Initializing.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

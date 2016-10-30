@@ -84,13 +84,13 @@ namespace Ses.Subscriptions
                     var timeline = await FetchEventTimeline(ctx, pollerStates);
                     PreExecuting(timeline.Count);
 
-
                     var typesListOfDispatchedHandlers = new List<Type>(_handlerRegistrar.RegisteredHandlerInfos.Length);
                     foreach (var item in timeline)
                     {
+                        var sourceContractName = ctx.ContractsRegistry.GetContractName(item.SourceType);
                         foreach (var handlerInfo in _handlerRegistrar.RegisteredHandlerInfos) // all handlers can/should run in parallel
                         {
-                            var state = FindOrCreateState(ctx.ContractsRegistry, pollerStates, item.SourceType, handlerInfo.HandlerType);
+                            var state = FindOrCreateState(ctx.ContractsRegistry, pollerStates, sourceContractName, handlerInfo.HandlerType);
                             if (item.Envelope.SequenceId <= state.EventSequenceId) continue;
 
                             var handlingRetryAttempts = 0;
@@ -159,9 +159,8 @@ namespace Ses.Subscriptions
             return shouldDispatch;
         }
 
-        private PollerState FindOrCreateState(IContractsRegistry contractsRegistry, List<PollerState> pollerStates, Type sourceType, Type handlerType)
+        private PollerState FindOrCreateState(IContractsRegistry contractsRegistry, List<PollerState> pollerStates, string sourceContractName, Type handlerType)
         {
-            var sourceContractName = contractsRegistry.GetContractName(sourceType);
             var handlerContractName = contractsRegistry.GetContractName(handlerType);
 
             PollerState state = null;
