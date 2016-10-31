@@ -24,15 +24,15 @@ namespace Ses.Subscriptions
             _contractSubscriptions = new Dictionary<ISubscriptionEventSource, int>(Sources.Length);
         }
 
-        private HandlerRegistrar CreateHandlerRegistrar() => new HandlerRegistrar(FindHandlerTypes());
-
+        private HandlerRegistrar CreateHandlerRegistrar() { return new HandlerRegistrar(FindHandlerTypes()); }
         public ISubscriptionEventSource[] Sources { get; }
         public PollerRetriesPolicy RetriesPolicy { get; protected set; }
-        public virtual TimeSpan? RunForDuration => null;
-        public virtual TimeSpan GetFetchTimeout() => TimeSpan.Zero;
+        public virtual TimeSpan? RunForDuration { get; } = null;
+        public virtual TimeSpan GetFetchTimeout() { return TimeSpan.Zero; }
+
         protected abstract IEnumerable<Type> FindHandlerTypes();
         protected abstract IHandle CreateHandlerInstance(Type handlerType);
-        protected virtual IEnumerable<Type> GetConcreteSubscriptionEventTypes() => null;
+        protected virtual IEnumerable<Type> GetConcreteSubscriptionEventTypes() { return null; }
         protected virtual void PreHandleEvent(EventEnvelope envelope, Type handlerType) { }
         protected virtual void PostHandleEvent(EventEnvelope envelope, Type handlerType) { }
         protected virtual void PostHandleEventError(EventEnvelope envelope, Type handlerType, Exception exception, int retryAttempts) { }
