@@ -197,9 +197,14 @@ namespace Ses.Subscriptions
             }
         }
 
-        public Type[] GetPollerTypes()
+        public PollerInfo[] GetPollers()
         {
-            return _runners.Keys.ToArray();
+            return _pollers
+                .Select(x => x.GetInfo(
+                    _runners[x.GetType()].GetInfo(),
+                    _contractRegistry,
+                    _pollerStateRepository))
+                .ToArray();
         }
     }
 }

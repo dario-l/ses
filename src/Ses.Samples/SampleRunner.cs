@@ -45,6 +45,16 @@ namespace Ses.Samples
 
                 Console.WriteLine(@"Starting subscriptions");
                 var subs = await SampleSubscriptions();
+
+                foreach (var poller in subs.GetPollers())
+                {
+                    Console.WriteLine(poller);
+                    foreach (var state in poller.SourceSequenceInfo)
+                    {
+                        Console.WriteLine($@"	{state}");
+                    }
+                }
+
                 await Task.Delay(5000);
                 Console.WriteLine(@"Stopping subscriptions");
                 store.Dispose();

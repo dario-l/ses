@@ -56,7 +56,7 @@ namespace Ses.Subscriptions
         {
             if (_isLockedByPolicy)
             {
-                _pollerContext.Logger.Warn($"Runner for poller {Poller.GetType().FullName} is locked and can't be started.");
+                _pollerContext.Logger.Warn($"Runner for poller {Poller.GetType().FullName} is locked and can't be started. Use ForceStart.");
             }
             else
             {
@@ -138,6 +138,11 @@ namespace Ses.Subscriptions
             }
             _disposedTokenSource = null;
             _runnerTimer = null;
+        }
+
+        public RunnerInfo GetInfo()
+        {
+            return new RunnerInfo(_startedAt.Value, _isLockedByPolicy, _isRunning);
         }
     }
 }

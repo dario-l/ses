@@ -231,5 +231,30 @@ namespace Ses.Subscriptions
             }
             return min ?? 0;
         }
+
+        public PollerInfo GetInfo(RunnerInfo runnerInfo, IContractsRegistry contractsRegistry, IPollerStateRepository stateRepository)
+        {
+            return new PollerInfo(
+                runnerInfo,
+                GetType(),
+                _pollerContractName,
+                GetSourceSequenceInfo(contractsRegistry, stateRepository));
+        }
+
+        private SourcePollerState[] GetSourceSequenceInfo(IContractsRegistry contractsRegistry, IPollerStateRepository stateRepository)
+        {
+            var pollerStates = new List<PollerState>(stateRepository.Load(_pollerContractName));
+            var list = new List<SourcePollerState>(Sources.Length);
+            foreach (var source in Sources)
+            {
+                var minSequenceId = GetMinSequenceIdFor(contractsRegistry, pollerStates, source);
+                var sourceContractName = contractsRegistry.GetContractName(source.GetType());
+                list.Add(new SourcePollerState(_pollerContractName, sourceContractName)
+                {
+                    EventSequenceId = minSequenceId
+                });
+            }
+            return list.ToArray();
+        }
     }
 }

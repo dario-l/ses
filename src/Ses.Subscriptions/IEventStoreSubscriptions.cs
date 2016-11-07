@@ -6,6 +6,6 @@ namespace Ses.Subscriptions
     {
         void RunStoppedPoller(Type type, bool force = false);
         void RunStoppedPollers();
-        Type[] GetPollerTypes();
+        PollerInfo[] GetPollers();
     }
 }

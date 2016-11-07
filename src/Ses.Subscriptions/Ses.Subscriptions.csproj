@@ -43,11 +43,14 @@
     <Compile Include="IEventStoreSubscriptions.cs" />
     <Compile Include="IPollerStateRepository.cs" />
     <Compile Include="PollerContext.cs" />
+    <Compile Include="PollerInfo.cs" />
     <Compile Include="PollerRetriesPolicy.cs" />
     <Compile Include="PollerState.cs" />
     <Compile Include="PollerTimeoutCalculator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Runner.cs" />
+    <Compile Include="RunnerInfo.cs" />
+    <Compile Include="SourcePollerState.cs" />
     <Compile Include="SubscriptionPoller.cs" />
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
