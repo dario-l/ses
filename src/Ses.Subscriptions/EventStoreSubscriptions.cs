@@ -155,7 +155,7 @@ namespace Ses.Subscriptions
             {
                 foreach (var handler in handlerContractNames)
                 {
-                    if (storedStates.All(x => x.SourceContractName != source && x.HandlerContractName != handler))
+                    if (storedStates.FirstOrDefault(x => x.SourceContractName == source && x.HandlerContractName == handler) == null)
                     {
                         statesToAdd.Add(new PollerState(
                             pollerContractName,
