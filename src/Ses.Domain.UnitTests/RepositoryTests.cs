@@ -19,11 +19,8 @@ namespace Ses.Domain.UnitTests
             A.CallTo(() => store.LoadAsync(streamId, 1, false, CancellationToken.None)).Returns((IReadOnlyEventStream)null);
 
             var repo = new Repository<FakeAggregate>(store);
-
-            await Assert.ThrowsAsync<AggregateNotFoundException>(async () =>
-            {
-                await repo.LoadAsync(streamId);
-            });
+            var result = await repo.LoadAsync(streamId);
+            Assert.Null(result);
         }
 
         [Fact]

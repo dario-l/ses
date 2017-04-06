@@ -20,15 +20,13 @@ namespace Ses.Domain
         public async Task<TAggregate> LoadAsync(Guid streamId, bool pessimisticLock = false, CancellationToken cancellationToken = default(CancellationToken))
         {
             var stream = await _store.LoadAsync(streamId, loadFromVersionDefault, pessimisticLock, cancellationToken);
-            if(stream == null) throw new AggregateNotFoundException(streamId, typeof(TAggregate));
-            return RestoreAggregate(streamId, stream);
+            return stream == null ? null : RestoreAggregate(streamId, stream);
         }
 
         public TAggregate Load(Guid streamId, bool pessimisticLock = false)
         {
             var stream = _store.Load(streamId, loadFromVersionDefault, pessimisticLock);
-            if (stream == null) throw new AggregateNotFoundException(streamId, typeof(TAggregate));
-            return RestoreAggregate(streamId, stream);
+            return stream == null ? null : RestoreAggregate(streamId, stream);
         }
 
         protected virtual TAggregate RestoreAggregate(Guid streamId, IReadOnlyEventStream stream)
