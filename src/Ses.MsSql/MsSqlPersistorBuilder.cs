@@ -81,5 +81,10 @@ namespace Ses.MsSql
                 durationWork ?? TimeSpan.FromSeconds(defaultDurationWorkInSeconds),
                 batchSize);
         }
+
+        public void RunLinearizerNow()
+        {
+            Linearizer?.Start();
+        }
     }
 }
