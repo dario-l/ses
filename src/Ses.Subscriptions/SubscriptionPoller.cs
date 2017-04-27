@@ -120,6 +120,8 @@ namespace Ses.Subscriptions
                         }
                     }
 
+                    await SaveDirtyStates(ctx, pollerStates);
+
                     PostExecuting(timeline.Count, typesListOfDispatchedHandlers.ToArray());
                     return anyDispatched;
                 }
@@ -130,6 +132,24 @@ namespace Ses.Subscriptions
                     executionRetryAttempts++;
                 }
             }
+        }
+
+        private async Task SaveDirtyStates(PollerContext ctx, List<PollerState> pollerStates)
+        {
+            var dirtyStates = pollerStates.Where(x => x.IsDirty).ToArray();
+            if (dirtyStates.Length == 0) return;
+
+            ctx.Logger.Trace("Saving dirty states {0} for {1}...", dirtyStates.Length, _pollerContractName);
+
+            using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, _transactionOptions, TransactionScopeAsyncFlowOption.Enabled))
+            {
+                foreach (var state in dirtyStates)
+                {
+                    await ctx.StateRepository.InsertOrUpdateAsync(state);
+                }
+                scope.Complete();
+            }
+            ctx.Logger.Trace("Dirty states for {0} saved.", _pollerContractName);
         }
 
         private async Task<bool> TryDispatch(PollerContext ctx, HandlerRegistrar.HandlerTypeInfo handlerInfo, EventEnvelope envelope, PollerState state)
@@ -154,8 +174,19 @@ namespace Ses.Subscriptions
                         ((dynamic)handlerInstance).Handle((dynamic)envelope.Event, envelope);
                     }
                 }
+
                 state.EventSequenceId = envelope.SequenceId;
-                await ctx.StateRepository.InsertOrUpdateAsync(state);
+
+                if (shouldDispatch)
+                {
+                    await ctx.StateRepository.InsertOrUpdateAsync(state);
+                    state.Clear();
+                    ctx.Logger.Trace("Dispatched event {0} by {1} saved with sequence {2}.", eventType.FullName, handlerInfo.HandlerType.FullName, state.EventSequenceId);
+                }
+                else
+                {
+                    ctx.Logger.Trace("Dispatched event {0} by {1} marked as dirty with sequence {2}.", eventType.FullName, handlerInfo.HandlerType.FullName, state.EventSequenceId);
+                }
                 scope.Complete();
             }
             if (shouldDispatch) PostHandleEvent(envelope, handlerInfo.HandlerType);

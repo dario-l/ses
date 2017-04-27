@@ -21,7 +21,7 @@ CREATE NONCLUSTERED INDEX [IX_Streams_EventId_InternalId] ON [dbo].[Streams] (
 )
 WHERE ([EventId] IS NOT NULL);
 
-CREATE NONCLUSTERED INDEX [IX_Streams_InternalId] ON [dbo].[Streams] ([InternalId]);
+CREATE UNIQUE NONCLUSTERED INDEX [IX_Streams_InternalId] ON [dbo].[Streams] ([InternalId]);
 
 CREATE TABLE [StreamsMetadata] (
     [StreamId] uniqueidentifier NOT NULL,

@@ -69,23 +69,18 @@ namespace Ses.Subscriptions
             public HandlerTypeInfo(Type handlerType, Type[] eventTypes, bool isAsync)
             {
                 HandlerType = handlerType;
-                EventTypes = eventTypes;
+                EventTypes = new HashSet<Type>(eventTypes);
                 IsAsync = isAsync;
             }
 
             public bool IsAsync { get; private set; }
             public Type HandlerType { get; private set; }
-            public Type[] EventTypes { get; }
-
+            public HashSet<Type> EventTypes { get; }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool ContainsEventType(Type eventType)
             {
-                foreach (var t in EventTypes)
-                {
-                    if (t == eventType) return true;
-                }
-                return false;
+                return EventTypes.Contains(eventType);
             }
         }
     }

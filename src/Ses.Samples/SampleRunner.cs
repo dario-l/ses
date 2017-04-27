@@ -44,7 +44,8 @@ namespace Ses.Samples
                 await Sample2(store);
 
                 Console.WriteLine(@"Starting subscriptions");
-                var subs = await SampleSubscriptions();
+                var subs = SampleSubscriptions();
+                await subs.StartAsync();
 
                 foreach (var poller in subs.GetPollers())
                 {
@@ -168,7 +169,7 @@ namespace Ses.Samples
             }
         }
 
-        private static async Task<IEventStoreSubscriptions> SampleSubscriptions()
+        private static EventStoreSubscriptions SampleSubscriptions()
         {
             var sources = new ISubscriptionEventSource[]
             {
@@ -176,14 +177,13 @@ namespace Ses.Samples
                 // new SomeApiEventSource()
             };
 
-            return await new EventStoreSubscriptions(new MsSqlPollerStateRepository(connectionString).Destroy(true).Initialize())
+            return new EventStoreSubscriptions(new MsSqlPollerStateRepository(connectionString).Destroy(true).Initialize())
                 .WithDefaultContractsRegistry(typeof(SampleRunner).Assembly, typeof(MsSqlEventSource).Assembly)
                 .WithLogger(new NLogLogger("Ses.Subscriptions"))
                 .WithUpConverterFactory(new DefaultUpConverterFactory(typeof(SampleRunner).Assembly))
                 .Add(new ProjectionsSubscriptionPoller(sources))
                 .Add(new ProcessManagersSubscriptionPoller(sources))
-                .Add(new EmailSenderSubscriptionPoller(sources))
-                .StartAsync();
+                .Add(new EmailSenderSubscriptionPoller(sources));
         }
     }
 }

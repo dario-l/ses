@@ -206,5 +206,22 @@ namespace Ses.Subscriptions
                     _pollerStateRepository))
                 .ToArray();
         }
+
+        public async Task<EventStoreSubscriptions> StartAndWaitForStoppingByAsync()
+        {
+            if (_contractRegistry == null)
+                throw new InvalidOperationException("Contract registry is not set. Use own IContractRegistry implementation or DefaultContractsRegistry.");
+
+            foreach (var poller in _pollers)
+            {
+                SynchronizeStates(poller);
+                poller.Initialize(_contractRegistry);
+
+                var runner = new Runner(_contractRegistry, _logger, _pollerStateRepository, poller, _upConverterFactory);
+                _runners.Add(poller.GetType(), runner);
+                await runner.StartOnce();
+            }
+            return this;
+        }
     }
 }

@@ -144,5 +144,14 @@ namespace Ses.Subscriptions
         {
             return new RunnerInfo(_startedAt.Value, _isLockedByPolicy, _isRunning);
         }
+
+        public async Task StartOnce()
+        {
+            while (true)
+            {
+                var anyDispatched = await Poller.Execute(_pollerContext, _disposedTokenSource.Token);
+                if (!anyDispatched) return;
+            }
+        }
     }
 }
