@@ -1,5 +1,5 @@
 ﻿using System.Reflection;
 [assembly: AssemblyCopyright("Copyright © Dariusz Lenartowicz 2016")]
-[assembly: AssemblyVersion("0.141.0")]
-[assembly: AssemblyFileVersion("0.141.0")]
-[assembly: AssemblyInformationalVersion("0.141.0")]
+[assembly: AssemblyVersion("0.142.0")]
+[assembly: AssemblyFileVersion("0.142.0")]
+[assembly: AssemblyInformationalVersion("0.142.0")]
