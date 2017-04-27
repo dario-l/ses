@@ -19,18 +19,9 @@ CREATE NONCLUSTERED INDEX [IX_Streams_EventId_InternalId] ON [dbo].[Streams] (
     [EventId] ASC,
     [InternalId] ASC
 )
-INCLUDE (
-    [StreamId],
-    [Version],
-    [CommitId],
-    [ContractName],
-    [Payload],
-    [CreatedAtUtc]
-)
 WHERE ([EventId] IS NOT NULL);
 
-CREATE NONCLUSTERED INDEX [IX_Streams_InternalId] ON [dbo].[Streams] ([InternalId])
-INCLUDE ([StreamId],[Version],[EventId]);
+CREATE NONCLUSTERED INDEX [IX_Streams_InternalId] ON [dbo].[Streams] ([InternalId]);
 
 CREATE TABLE [StreamsMetadata] (
     [StreamId] uniqueidentifier NOT NULL,
