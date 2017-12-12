@@ -89,6 +89,7 @@ namespace Ses.Subscriptions
                     var anyDispatched = await Poller.Execute(_pollerContext, _disposedTokenSource.Token);
                     _runnerTimer.Interval = _timeoutCalc.CalculateNext(anyDispatched);
                     _runnerTimer.Start();
+                    _startedAt.Set(DateTime.UtcNow);
                 }
                 catch (FetchAttemptsThresholdException e)
                 {

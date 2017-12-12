@@ -88,7 +88,6 @@ namespace Ses.MsSql
                     await cmd
                         .ExecuteNonQueryAsync(_disposedTokenSource.Token)
                         .NotOnCapturedContext();
-                    cnn.Close();
                 }
             }
             catch (Exception e)
@@ -98,6 +97,7 @@ namespace Ses.MsSql
             finally
             {
                 _timer.Start();
+                _startedAt.Set(DateTime.UtcNow);
             }
         }
 
