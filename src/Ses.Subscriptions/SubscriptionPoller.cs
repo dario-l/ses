@@ -123,7 +123,8 @@ namespace Ses.Subscriptions
                     await SaveDirtyStates(ctx, pollerStates);
 
                     PostExecuting(timeline.Count, typesListOfDispatchedHandlers.ToArray());
-                    return anyDispatched;
+
+                    return pollerStates.Max(x => x.EventSequenceId) != pollerStates.Min(x => x.EventSequenceId) || anyDispatched;
                 }
                 catch (Exception e)
                 {
