@@ -117,7 +117,7 @@ namespace Ses.MsSql
                 var result = await cmd.ExecuteScalarAsync(token)
                     .NotOnCapturedContext();
 
-                return (bool)result;
+                return result != DBNull.Value && (bool)result; // null should never happen
             }
         }
 
