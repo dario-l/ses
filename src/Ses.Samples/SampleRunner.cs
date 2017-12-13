@@ -52,7 +52,7 @@ namespace Ses.Samples
                     Console.WriteLine(poller);
                     foreach (var state in poller.SourceSequenceInfo)
                     {
-                        Console.WriteLine($@"	{state}");
+                        Console.WriteLine($@"\t{state}");
                     }
                 }
 

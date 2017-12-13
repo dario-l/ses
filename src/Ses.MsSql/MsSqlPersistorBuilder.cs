@@ -1,6 +1,7 @@
 using System;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Ses.Abstracts;
 
 namespace Ses.MsSql
@@ -85,6 +86,11 @@ namespace Ses.MsSql
         public void RunLinearizerNow()
         {
             Linearizer?.Start();
+        }
+
+        public Task RunLinearizerOnce()
+        {
+            return Linearizer?.StartOnce() ?? Task.CompletedTask;
         }
     }
 }

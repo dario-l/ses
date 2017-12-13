@@ -31,7 +31,7 @@ namespace Ses.MsSql
             _startedAt = new InterlockedDateTime(DateTime.MaxValue);
         }
 
-        public async Task RunNow()
+        public async Task StartOnce()
         {
             try
             {
