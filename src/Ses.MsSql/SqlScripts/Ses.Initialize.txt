@@ -364,6 +364,6 @@ BEGIN
         [Streams] dest
         INNER JOIN (SELECT TOP(@Limit) s.[InternalId] FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[EventId] IS NULL ORDER BY s.[InternalId] ASC) src ON src.InternalId = dest.InternalId
 
-    SELECT TOP 1 1 FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[EventId] IS NULL ORDER BY s.[InternalId] ASC
+    SELECT TOP 1 CAST(1 AS BIT) FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[EventId] IS NULL ORDER BY s.[InternalId] ASC
 END;
 GO

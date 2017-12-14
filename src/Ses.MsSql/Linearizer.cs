@@ -39,7 +39,8 @@ namespace Ses.MsSql
                 _isRunning = true;
                 while (true)
                 {
-                    if (!(await Linearize(_disposedTokenSource.Token).NotOnCapturedContext())) break;
+                    var shouldDoMoreWork = await Linearize(_disposedTokenSource.Token).NotOnCapturedContext();
+                    if (!shouldDoMoreWork) break;
                 }
             }
             catch (Exception e)
@@ -88,7 +89,8 @@ namespace Ses.MsSql
                 {
                     while (true)
                     {
-                        if (!(await Linearize(_disposedTokenSource.Token).NotOnCapturedContext())) break;
+                        var shouldDoMoreWork = await Linearize(_disposedTokenSource.Token).NotOnCapturedContext();
+                        if (!shouldDoMoreWork) break;
                     }
                 }
                 catch (Exception e)
