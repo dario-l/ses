@@ -13,7 +13,7 @@
         <tags>eventstore sql domain</tags>
     </metadata>
     <files>
-        <file src="bin\Release\Ses.Domain.pdb" target="lib\net45" />
-        <file src="bin\Release\Ses.Abstracts.*" target="lib\net45" />
+        <file src="bin\Release\Ses.Domain.pdb" target="lib\net461" />
+        <file src="bin\Release\Ses.Abstracts.*" target="lib\net461" />
     </files>
 </package>

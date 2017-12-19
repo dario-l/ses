@@ -13,7 +13,7 @@
         <tags>eventstore mssql subscriptions polling</tags>
     </metadata>
     <files>
-        <file src="bin\Release\Ses.Subscriptions.pdb" target="lib\net45" />
-        <file src="bin\Release\Ses.Abstracts.*" target="lib\net45" />
+        <file src="bin\Release\Ses.Subscriptions.pdb" target="lib\net461" />
+        <file src="bin\Release\Ses.Abstracts.*" target="lib\net461" />
     </files>
 </package>
