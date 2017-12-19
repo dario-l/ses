@@ -115,10 +115,7 @@ namespace Ses.MsSql
             {
                 cmd.CommandTimeout = 60000;
                 cmd.AddInputParam(batchSizeParamName, DbType.Int32, _batchSize);
-                await cnn.OpenAsync(token).NotOnCapturedContext();
-                var result = await cmd.ExecuteScalarAsync(token)
-                    .NotOnCapturedContext();
-
+                var result = await cmd.ExecuteScalarAsync(token).NotOnCapturedContext();
                 return result != DBNull.Value && (bool)result; // null should never happen
             }
         }
