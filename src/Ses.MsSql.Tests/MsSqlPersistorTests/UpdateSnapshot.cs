@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Ses.Abstracts;
 using Xunit;
 
@@ -7,7 +8,7 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
     public class UpdateSnapshot : TestsBase
     {
         [Fact]
-        public async void When_updating_for_not_exited_stream_throws()
+        public async Task When_updating_for_not_exited_stream_throws()
         {
             var store = await GetEventStore();
 

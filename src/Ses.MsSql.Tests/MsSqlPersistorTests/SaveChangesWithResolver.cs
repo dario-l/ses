@@ -1,4 +1,5 @@
-﻿using Ses.Abstracts;
+﻿using System.Threading.Tasks;
+using Ses.Abstracts;
 using Ses.Conflicts;
 using Xunit;
 
@@ -11,7 +12,7 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public async void Can_not_save_new_stream_when_expecting_nostream_and_the_same_streamid_exists(bool isLockable)
+        public async Task Can_not_save_new_stream_when_expecting_nostream_and_the_same_streamid_exists(bool isLockable)
         {
             var store = await GetEventStore(_resolver);
 

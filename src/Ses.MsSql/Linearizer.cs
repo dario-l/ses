@@ -20,7 +20,7 @@ namespace Ses.MsSql
         private readonly InterlockedDateTime _startedAt;
         private readonly int _batchSize;
 
-        public Linearizer(string connectionString, ILogger logger, TimeSpan timeout, TimeSpan durationWork, int batchSize)
+        public Linearizer(string connectionString, ILogger logger, TimeSpan timeout, TimeSpan durationWork, int batchSize = 5000)
         {
             _logger = logger;
             _connectionString = PrepareConnectionString(connectionString);
@@ -99,7 +99,7 @@ namespace Ses.MsSql
                 }
                 finally
                 {
-                    _timer.Start();
+                    _timer?.Start();
                 }
             }
         }
@@ -116,7 +116,7 @@ namespace Ses.MsSql
                 cmd.CommandTimeout = 60000;
                 cmd.AddInputParam(batchSizeParamName, DbType.Int32, _batchSize);
                 var result = await cmd.ExecuteScalarAsync(token).NotOnCapturedContext();
-                return result != DBNull.Value && (bool)result; // null should never happen
+                return result != null && result != DBNull.Value && (bool)result;
             }
         }
 

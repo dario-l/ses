@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Linq;
+using System.Threading.Tasks;
 using Ses.Abstracts;
 using Xunit;
 
@@ -8,7 +8,7 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
     public class Load : TestsBase
     {
         [Fact]
-        public async void When_loading_for_not_exited_stream_returns_null()
+        public async Task When_loading_for_not_exited_stream_returns_null()
         {
             var store = await GetEventStore();
 
@@ -17,7 +17,7 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
         }
 
         [Fact]
-        public async void When_loading_stream_with_one_event_returns_committed_version_equals_1()
+        public async Task When_loading_stream_with_one_event_returns_committed_version_equals_1()
         {
             var store = await GetEventStore();
 

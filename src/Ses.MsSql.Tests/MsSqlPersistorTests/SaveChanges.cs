@@ -1,4 +1,5 @@
-﻿using Ses.Abstracts;
+﻿using System.Threading.Tasks;
+using Ses.Abstracts;
 using Xunit;
 
 namespace Ses.MsSql.Tests.MsSqlPersistorTests
@@ -8,7 +9,7 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public async void Can_save_new_stream(bool isLockable)
+        public async Task Can_save_new_stream(bool isLockable)
         {
             var store = await GetEventStore();
 
@@ -24,7 +25,7 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public async void Can_not_save_new_stream_when_expecting_nostream_and_the_same_streamid_exists(bool isLockable)
+        public async Task Can_not_save_new_stream_when_expecting_nostream_and_the_same_streamid_exists(bool isLockable)
         {
             var store = await GetEventStore();
 
@@ -42,7 +43,7 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public async void Can_save_stream_with_any_events_even_when_stream_exists(bool isLockable)
+        public async Task Can_save_stream_with_any_events_even_when_stream_exists(bool isLockable)
         {
             var store = await GetEventStore();
 
@@ -62,7 +63,7 @@ namespace Ses.MsSql.Tests.MsSqlPersistorTests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public async void Can_not_save_new_stream_when_expecting_1_but_stream_has_3(bool isLockable)
+        public async Task Can_not_save_new_stream_when_expecting_1_but_stream_has_3(bool isLockable)
         {
             var store = await GetEventStore();
 

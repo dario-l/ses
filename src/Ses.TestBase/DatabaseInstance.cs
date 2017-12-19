@@ -91,6 +91,8 @@ namespace Ses.TestBase
                 SqlConnection.ClearPool(sqlConnection);
             }
 
+            SqlConnection.ClearAllPools();
+
             using (var cnn = _localDbInstance.CreateConnection())
             {
                 cnn.Open();
