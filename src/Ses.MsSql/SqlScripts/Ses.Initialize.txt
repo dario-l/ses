@@ -353,17 +353,22 @@ CREATE PROCEDURE SesLinearize
 AS
 BEGIN
     SET NOCOUNT ON;
-    DECLARE @EventId BIGINT
+    DECLARE @id BIGINT, @Version INT, @StreamId UNIQUEIDENTIFIER, @EventId BIGINT
 
-    SELECT @EventId = IsNull(MAX(s.[EventId]), 0) FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[EventId] > 0
+    SELECT @EventId = IsNull(MAX(EventId), 0) FROM Streams WITH (READPAST,ROWLOCK)
 
-    UPDATE dest SET
-        [EventId] = @EventId,
-        @EventId = @EventId + 1
-    FROM
-        [Streams] dest
-        INNER JOIN (SELECT TOP(@Limit) s.[InternalId] FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[EventId] IS NULL ORDER BY s.[InternalId] ASC) src ON src.InternalId = dest.InternalId
+    DECLARE cur CURSOR FAST_FORWARD FOR
+        SELECT TOP(@Limit) InternalId, Version, StreamId FROM Streams WITH (READPAST,ROWLOCK) WHERE EventId IS NULL ORDER BY InternalId ASC
+    OPEN cur
+    FETCH NEXT FROM cur INTO @id, @Version, @StreamId
+    WHILE @@FETCH_STATUS = 0 BEGIN
+        SET @EventId = @EventId + 1
+        UPDATE Streams SET EventId = @EventId WHERE InternalId = @id
+        UPDATE StreamsSnapshots SET [LastStreamVersion] = @Version WHERE [StreamId] = @StreamId
+    FETCH NEXT FROM cur INTO @id, @Version, @StreamId END
+    CLOSE cur
+    DEALLOCATE cur
 
-    SELECT TOP 1 CAST(1 AS BIT) FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[EventId] IS NULL ORDER BY s.[InternalId] ASC
+    SELECT TOP 1 CAST(1 AS BIT) FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[EventId] IS NULL
 END;
 GO
