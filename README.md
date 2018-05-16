@@ -1,3 +1,6 @@
+*Ses is dead. Long live https://github.com/getmanta/manta *
+
+
 # SimpleEventStore
 
 **This project is still under development (with occasionally breaking changes) but it is used in production already**
