@@ -2,25 +2,21 @@ namespace Ses.Subscriptions
 {
     public class SourcePollerState
     {
-        private long _eventSequenceId;
-
-        public SourcePollerState(string pollerContractName, string sourceContractName)
+        public SourcePollerState(string pollerContractName, string sourceContractName, long sequenceId)
         {
             PollerContractName = pollerContractName;
             SourceContractName = sourceContractName;
+            EventSequenceId = sequenceId;
         }
 
         public string PollerContractName { get; }
         public string SourceContractName { get; }
+        public long EventSequenceId { get; private set; }
 
-        public long EventSequenceId
+        public void SetEventSequenceId(long sequenceId)
         {
-            get { return _eventSequenceId; }
-            set
-            {
-                _eventSequenceId = value;
-                IsDirty = true;
-            }
+            EventSequenceId = sequenceId;
+            IsDirty = true;
         }
 
         public bool IsDirty { get; private set; }

@@ -71,10 +71,8 @@ namespace Ses.Subscriptions.MsSql
                             var state = new PollerState(
                                 await reader.GetFieldValueAsync<string>(colIndexForPollerContractName, cancellationToken).NotOnCapturedContext(),
                                 await reader.GetFieldValueAsync<string>(colIndexForSourceContractName, cancellationToken).NotOnCapturedContext(),
-                                await reader.GetFieldValueAsync<string>(colIndexForHandlerContractName, cancellationToken).NotOnCapturedContext())
-                            {
-                                EventSequenceId = await reader.GetFieldValueAsync<long>(colIndexForEventSequence, cancellationToken).NotOnCapturedContext()
-                            };
+                                await reader.GetFieldValueAsync<string>(colIndexForHandlerContractName, cancellationToken).NotOnCapturedContext(),
+                                await reader.GetFieldValueAsync<long>(colIndexForEventSequence, cancellationToken).NotOnCapturedContext());
                             states.Add(state);
                         }
                     }
@@ -162,10 +160,9 @@ namespace Ses.Subscriptions.MsSql
                             var state = new PollerState(
                                 reader.GetFieldValue<string>(colIndexForPollerContractName),
                                 reader.GetFieldValue<string>(colIndexForSourceContractName),
-                                reader.GetFieldValue<string>(colIndexForHandlerContractName))
-                            {
-                                EventSequenceId = reader.GetFieldValue<long>(colIndexForEventSequence)
-                            };
+                                reader.GetFieldValue<string>(colIndexForHandlerContractName),
+                                reader.GetFieldValue<long>(colIndexForEventSequence));
+
                             states.Add(state);
                         }
                     }

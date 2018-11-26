@@ -2,8 +2,8 @@ namespace Ses.Subscriptions
 {
     public class PollerState : SourcePollerState
     {
-        public PollerState(string pollerContractName, string sourceContractName, string handlerContractName)
-            : base(pollerContractName, sourceContractName)
+        public PollerState(string pollerContractName, string sourceContractName, string handlerContractName, long sequenceId = 0)
+            : base(pollerContractName, sourceContractName, sequenceId)
         {
             HandlerContractName = handlerContractName;
         }

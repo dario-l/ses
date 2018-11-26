@@ -176,7 +176,7 @@ namespace Ses.Subscriptions
                     }
                 }
 
-                state.EventSequenceId = envelope.SequenceId;
+                state.SetEventSequenceId(envelope.SequenceId);
 
                 if (shouldDispatch)
                 {
@@ -281,10 +281,7 @@ namespace Ses.Subscriptions
             {
                 var minSequenceId = GetMinSequenceIdFor(contractsRegistry, pollerStates, source);
                 var sourceContractName = contractsRegistry.GetContractName(source.GetType());
-                list.Add(new SourcePollerState(_pollerContractName, sourceContractName)
-                {
-                    EventSequenceId = minSequenceId
-                });
+                list.Add(new SourcePollerState(_pollerContractName, sourceContractName, minSequenceId));
             }
             return list.ToArray();
         }
