@@ -1,4 +1,5 @@
 **Ses is dead. Long live https://github.com/getmanta/manta **
+*...but is still used in production code.*
 
 
 # SimpleEventStore
