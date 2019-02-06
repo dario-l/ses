@@ -10,6 +10,8 @@
     CONSTRAINT [PK_Streams] PRIMARY KEY CLUSTERED ([StreamId],[Version])
 );
 
+ALTER TABLE Streams SET ( LOCK_ESCALATION = DISABLE);
+
 CREATE UNIQUE NONCLUSTERED INDEX [IX_Streams_CommitId_Version] ON [dbo].[Streams] (
     [CommitId] ASC,
     [Version] ASC
@@ -81,7 +83,7 @@ BEGIN
         @SVersion = [Version],
         @SPayload = [Payload]
     FROM
-        [StreamsSnapshots] WITH(READPAST,ROWLOCK)
+        [StreamsSnapshots]
     WHERE
         [StreamId] = @StreamId
         AND [Version] > 0
@@ -97,7 +99,7 @@ BEGIN
         [Version],
         [Payload]
     FROM
-        [Streams] WITH(READPAST,ROWLOCK)
+        [Streams]
     WHERE
         [StreamId] = @StreamId
         AND [Version] >= @FromVersion
