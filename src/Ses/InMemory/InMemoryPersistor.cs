@@ -25,15 +25,13 @@ namespace Ses.InMemory
 
             try
             {
-                InMemoryStream stream;
-                if (!_streams.TryGetValue(streamId, out stream))
+                if (!_streams.TryGetValue(streamId, out var stream))
                 {
                     return new EventRecord[0];
                 }
 
                 var events = new List<EventRecord>(20);
-                InMemorySnapshot snapshot;
-                if (_snapshots.TryGetValue(streamId, out snapshot) && snapshot.Version >= fromVersion)
+                if (_snapshots.TryGetValue(streamId, out var snapshot) && snapshot.Version >= fromVersion)
                 {
                     // ReSharper disable once PossibleNullReferenceException
                     events.Add(EventRecord.Snapshot(snapshot.ContractName, snapshot.Version, snapshot.Payload));
@@ -93,8 +91,7 @@ namespace Ses.InMemory
                     throw new WrongExpectedVersionException($"Expected version {expectedVersion} is different than appended earlier to stream {streamId}.");
                 }
 
-                InMemoryStream inMemoryStream;
-                if (!_streams.TryGetValue(streamId, out inMemoryStream)) return;
+                if (!_streams.TryGetValue(streamId, out var inMemoryStream)) return;
 
                 inMemoryStream.DeleteAllEvents();
             }
@@ -109,8 +106,7 @@ namespace Ses.InMemory
             _lock.EnterWriteLock();
             try
             {
-                InMemorySnapshot snapshot;
-                if (!_snapshots.TryGetValue(streamId, out snapshot))
+                if (!_snapshots.TryGetValue(streamId, out var snapshot))
                 {
                     snapshot = new InMemorySnapshot(version, contractName, payload);
                     _snapshots.TryAdd(streamId, snapshot);
@@ -147,6 +143,30 @@ namespace Ses.InMemory
             {
                 _lock.ExitWriteLock();
             }
+        }
+
+        public int GetStreamVersion(Guid streamId)
+        {
+            _lock.EnterReadLock();
+
+            try
+            {
+                if (!_streams.TryGetValue(streamId, out var stream))
+                {
+                    return -1;
+                }
+
+                return stream.Events.OrderByDescending(x => x.Version).FirstOrDefault()?.Version ?? 0;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
+
+        public Task<int> GetStreamVersionAsync(Guid streamId, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return Task.FromResult(GetStreamVersion(streamId));
         }
 
         private void SaveChangesInternal(Guid streamId, Guid commitId, int expectedVersion, EventRecord[] events, byte[] metadata)

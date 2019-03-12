@@ -71,6 +71,7 @@
     <Compile Include="MsSqlPersistorTests\SaveChangesWithResolver.cs" />
     <Compile Include="MsSqlPersistorTests\SaveChanges.cs" />
     <Compile Include="MsSqlPersistorTests\Load.cs" />
+    <Compile Include="MsSqlPersistorTests\GetStreamVersion.cs" />
     <Compile Include="MsSqlPersistorTests\UpdateSnapshot.cs" />
     <Compile Include="SimpleEventStoreCollection.cs" />
     <Compile Include="TestsBase.cs" />

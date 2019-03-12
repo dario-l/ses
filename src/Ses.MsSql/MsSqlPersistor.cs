@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Threading;
+using System.Threading.Tasks;
+
 // ReSharper disable PossibleNullReferenceException
 
 namespace Ses.MsSql
@@ -274,6 +277,19 @@ namespace Ses.MsSql
                     throw new WrongExpectedVersionException($"Saving new stream {streamId} error. Stream exists.", e);
                 }
                 throw;
+            }
+        }
+
+        public int GetStreamVersion(Guid streamId)
+        {
+            using (var cnn = new SqlConnection(_connectionString))
+            {
+                using (var cmd = cnn.OpenAndCreateCommand(SqlQueries.GetStreamVersion.Query))
+                {
+                    cmd.AddInputParam(SqlQueries.GetStreamVersion.ParamStreamId, DbType.Guid, streamId);
+                    var version = cmd.ExecuteScalar();
+                    return version == null || version == DBNull.Value ? -1 : (int)version;
+                }
             }
         }
 

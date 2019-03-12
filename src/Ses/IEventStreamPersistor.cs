@@ -63,5 +63,8 @@ namespace Ses
         Task SaveChangesAsync(Guid streamId, Guid commitId, int expectedVersion, EventRecord[] events, byte[] metadata, bool isLockable, CancellationToken cancellationToken = default(CancellationToken));
 
         void SaveChanges(Guid streamId, Guid commitId, int expectedVersion, EventRecord[] events, byte[] metadata, bool isLockable);
+
+        int GetStreamVersion(Guid streamId);
+        Task<int> GetStreamVersionAsync(Guid streamId, CancellationToken cancellationToken = default(CancellationToken));
     }
 }

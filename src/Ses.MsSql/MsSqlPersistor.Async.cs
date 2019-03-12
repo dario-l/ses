@@ -276,7 +276,19 @@ namespace Ses.MsSql
                     throw;
                 }
             }
+        }
 
+        public async Task<int> GetStreamVersionAsync(Guid streamId, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            using (var cnn = new SqlConnection(_connectionString))
+            {
+                using (var cmd = await cnn.OpenAndCreateCommandAsync(SqlQueries.GetStreamVersion.Query, cancellationToken))
+                {
+                    cmd.AddInputParam(SqlQueries.GetStreamVersion.ParamStreamId, DbType.Guid, streamId);
+                    var version = await cmd.ExecuteScalarAsync(cancellationToken);
+                    return version == null || version == DBNull.Value ? -1 : (int)version;
+                }
+            }
         }
     }
 }

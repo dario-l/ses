@@ -53,5 +53,11 @@ namespace Ses.MsSql
         {
             public const string Query = "SesLinearize";
         }
+
+        internal static class GetStreamVersion
+        {
+            public const string Query = "SesGetStreamVersion";
+            public const string ParamStreamId = streamId;
+        }
     }
 }

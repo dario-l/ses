@@ -369,3 +369,14 @@ BEGIN
     SELECT TOP 1 CAST(1 AS BIT) FROM [Streams] s WITH (READPAST,ROWLOCK) WHERE s.[EventId] IS NULL
 END;
 GO
+
+CREATE PROCEDURE SesGetStreamVersion
+(
+    @StreamId UNIQUEIDENTIFIER
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT TOP 1 [Version] FROM [Streams] s WITH (ROWLOCK) WHERE s.[StreamId] = @StreamId ORDER BY [Version] DESC
+END;
+GO

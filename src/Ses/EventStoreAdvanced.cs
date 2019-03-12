@@ -28,6 +28,11 @@ namespace Ses
             await _settings.Persistor.UpdateSnapshotAsync(streamId, currentVersion, contractName, payload, cancellationToken);
         }
 
+        public Task<int> GetStreamVersionAsync(Guid streamId, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return _settings.Persistor.GetStreamVersionAsync(streamId, cancellationToken);
+        }
+
         public void DeleteStream(Guid streamId, int expectedVersion)
         {
             if (expectedVersion == ExpectedVersion.NoStream)
@@ -40,6 +45,11 @@ namespace Ses
             var contractName = _settings.ContractsRegistry.GetContractName(snapshot.GetType());
             var payload = _settings.Serializer.Serialize(snapshot, snapshot.GetType());
             _settings.Persistor.UpdateSnapshot(streamId, currentVersion, contractName, payload);
+        }
+
+        public int GetStreamVersion(Guid streamId)
+        {
+            return _settings.Persistor.GetStreamVersion(streamId);
         }
     }
 }

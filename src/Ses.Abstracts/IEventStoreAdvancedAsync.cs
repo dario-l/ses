@@ -16,5 +16,7 @@ namespace Ses.Abstracts
             int currentVersion,
             IMemento snapshot,
             CancellationToken cancellationToken = default(CancellationToken));
+
+        Task<int> GetStreamVersionAsync(Guid streamId, CancellationToken cancellationToken = default(CancellationToken));
     }
 }
