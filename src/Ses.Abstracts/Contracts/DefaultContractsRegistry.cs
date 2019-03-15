@@ -46,26 +46,26 @@ namespace Ses.Abstracts.Contracts
         private static bool IsKnownType(Type t)
         {
             return t.IsClass
-                   && (typeof(IEvent).IsAssignableFrom(t)
-                       || typeof(IMemento).IsAssignableFrom(t)
-                       || typeof(IHandle).IsAssignableFrom(t)
-                       || typeof(ISubscriptionEventSource).IsAssignableFrom(t)
-                       || typeof(ISubscriptionPoller).IsAssignableFrom(t)
-                       );
+               && (typeof(IEvent).IsAssignableFrom(t)
+                   || typeof(IMemento).IsAssignableFrom(t)
+                   || typeof(IHandle).IsAssignableFrom(t)
+                   || typeof(ISubscriptionEventSource).IsAssignableFrom(t)
+                   || typeof(ISubscriptionPoller).IsAssignableFrom(t)
+                   );
         }
 
         public string GetContractName(Type type)
         {
-            string result;
-            if (!_type2Contract.TryGetValue(type, out result)) throw new NullReferenceException($"Contract name for type '{type.FullName}' not found!");
-            return result;
+            return !_type2Contract.TryGetValue(type, out var result)
+                ? throw new NullReferenceException($"Contract name for type '{type.FullName}' not found!")
+                : result;
         }
 
-        public Type GetType(string contractName)
+        public Type GetType(string contractName, bool ignore = false)
         {
-            Type result;
-            if (!_contract2Type.TryGetValue(contractName, out result)) throw new NullReferenceException($"Type for contract name '{contractName}' not found!");
-            return result;
+            return !_contract2Type.TryGetValue(contractName, out var result)
+                ? (ignore ? (Type)null : throw new NullReferenceException($"Type for contract name '{contractName}' not found!"))
+                : result;
         }
     }
 }

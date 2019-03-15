@@ -71,7 +71,8 @@ namespace Ses.Subscriptions.MsSql
                         extractedEvents = new List<ExtractedEvent>(_fetchLimit);
                         while (await reader.ReadAsync(cancellationToken).NotOnCapturedContext())
                         {
-                            var eventType = registry.GetType(await reader.GetFieldValueAsync<string>(colIndexForContractName, cancellationToken).NotOnCapturedContext());
+                            var eventType = registry.GetType(await reader.GetFieldValueAsync<string>(colIndexForContractName, cancellationToken).NotOnCapturedContext(), true);
+                            if (eventType == null) continue;
 
                             var @event = UpConvert(upConverterFactory, eventType, _serializer.Deserialize<IEvent>(await reader.GetFieldValueAsync<byte[]>(colIndexForEventPayload, cancellationToken).NotOnCapturedContext(), eventType));
                             var metadata = await reader.IsDBNullAsync(colIndexForMetaPayload, cancellationToken).NotOnCapturedContext()
