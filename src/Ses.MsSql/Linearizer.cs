@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Ses.Abstracts;
+using Ses.Abstracts.Extensions;
+using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Threading;
 using System.Threading.Tasks;
-using Ses.Abstracts;
-using Ses.Abstracts.Extensions;
 
 namespace Ses.MsSql
 {
@@ -24,7 +24,7 @@ namespace Ses.MsSql
         {
             _logger = logger;
             _connectionString = PrepareConnectionString(connectionString);
-            _timer = new System.Timers.Timer(timeout.TotalMilliseconds) { AutoReset = false, SynchronizingObject = null,  Site = null };
+            _timer = new System.Timers.Timer(timeout.TotalMilliseconds) { AutoReset = false, SynchronizingObject = null, Site = null };
             _timer.Elapsed += (s, e) => Execute().SwallowException();
             _durationWork = durationWork;
             _batchSize = batchSize;

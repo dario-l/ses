@@ -19,7 +19,7 @@ namespace Ses.Subscriptions.MsSql {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Scripts {
@@ -61,7 +61,7 @@ namespace Ses.Subscriptions.MsSql {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to DROP TABLE [StreamsSubscriptionStates];.
         /// </summary>
         internal static string Ses_Subscriptions_Destroy {
             get {
@@ -70,7 +70,13 @@ namespace Ses.Subscriptions.MsSql {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to IF (NOT EXISTS (SELECT TOP 1 TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = &apos;StreamsSubscriptionStates&apos;)) BEGIN
+        ///    CREATE TABLE [StreamsSubscriptionStates] (
+        ///        [PoolerContractName] NVARCHAR(225) NOT NULL,
+        ///        [SourceContractName] NVARCHAR(225) NOT NULL,
+        ///        [HandlerContractName] NVARCHAR(225) NOT NULL,
+        ///        [EventSequence] BIGINT NOT NULL,
+        ///        CONSTRAINT [PK_StreamsSubscriptionStates] PRIMARY KEY CLUSTERED ([PoolerContractName],[SourceContractName],[HandlerContractN [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Ses_Subscriptions_Initialize {
             get {

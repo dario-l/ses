@@ -19,7 +19,7 @@ namespace Ses.MsSql {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Scripts {
@@ -72,8 +72,8 @@ namespace Ses.MsSql {
         ///DROP PROCEDURE [SesUpdateSnapshot];
         ///DROP PROCEDURE [SesLinearize];
         ///
-        ///DROP INDEX [IX_Streams_EventId] ON [Streams];
-        ///DROP INDEX [IX_Streams_InternalId] ON [Str [rest of string was truncated]&quot;;.
+        ///DROP INDEX [IX_Streams_CommitId_Version] ON [Streams];
+        ///DROP INDEX [IX_Streams_EventId_In [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Ses_Destroy {
             get {
@@ -91,11 +91,12 @@ namespace Ses.MsSql {
         ///    [CreatedAtUtc] datetime NOT NULL,
         ///    [Payload] varbinary(max) NOT NULL,
         ///    [EventId] BIGINT NULL
-        ///    CONSTRAINT [PK_Streams] PRIMARY KEY CLUSTERED ([StreamId],[Version],[CommitId])
+        ///    CONSTRAINT [PK_Streams] PRIMARY KEY CLUSTERED ([StreamId],[Version])
         ///);
         ///
-        ///CREATE NONCLUSTERED INDEX [IX_Streams_EventId_InternalId] ON [dbo].[Streams] (
-        ///  [rest of string was truncated]&quot;;.
+        ///ALTER TABLE Streams SET ( LOCK_ESCALATION = DISABLE);
+        ///
+        ///CREATE UNIQUE NONCLUSTERED INDEX [I [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Ses_Initialize {
             get {
