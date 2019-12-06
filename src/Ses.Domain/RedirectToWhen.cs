@@ -20,7 +20,7 @@ namespace Ses.Domain
 
         static class Cache<T>
         {
-            public static readonly IDictionary<Type, MethodInfo> Dict = typeof(T)
+            public static readonly Dictionary<Type, MethodInfo> Dict = typeof(T)
                 .GetMethods(BindingFlags.NonPublic | BindingFlags.Instance)
                 .Where(m => m.Name == methodName && m.GetParameters().Length == 1)
                 .ToDictionary(m => m.GetParameters().First().ParameterType, m => m);
