@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29519.181
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ses", "Ses\Ses.csproj", "{00F648AC-E5B6-47D2-843C-1F34C6FC9843}"
 EndProject
@@ -113,5 +113,8 @@ Global
 		{2E51D2E5-F258-4DFD-B772-5F9DCA4A22CD} = {30BB5F0E-705B-412C-95B1-4AC821B4DCAA}
 		{6921DC8C-ED9C-455D-A87C-8FCD01F2C83F} = {30BB5F0E-705B-412C-95B1-4AC821B4DCAA}
 		{77A9DA31-A288-45B2-BF8D-030C5022C8F0} = {30BB5F0E-705B-412C-95B1-4AC821B4DCAA}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3CDF1912-183E-4084-8B0F-BBF38A99D008}
 	EndGlobalSection
 EndGlobal
