@@ -77,7 +77,7 @@ namespace Ses.Subscriptions.MsSql
                             var @event = UpConvert(upConverterFactory, eventType, _serializer.Deserialize<IEvent>(await reader.GetFieldValueAsync<byte[]>(colIndexForEventPayload, cancellationToken).NotOnCapturedContext(), eventType));
                             var metadata = await reader.IsDBNullAsync(colIndexForMetaPayload, cancellationToken).NotOnCapturedContext()
                                 ? null
-                                : _serializer.Deserialize<IDictionary<string, object>>(await reader.GetFieldValueAsync<byte[]>(colIndexForMetaPayload, cancellationToken).NotOnCapturedContext(), metadataType);
+                                : _serializer.Deserialize<Dictionary<string, object>>(await reader.GetFieldValueAsync<byte[]>(colIndexForMetaPayload, cancellationToken).NotOnCapturedContext(), metadataType);
 
                             var envelope = new EventEnvelope(
                                 await reader.GetFieldValueAsync<Guid>(colIndexForStreamId, cancellationToken).NotOnCapturedContext(), // StreamId 0
