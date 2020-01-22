@@ -55,7 +55,7 @@ namespace Ses.Subscriptions
         {
             if (_isSlowedDownByPolicy)
             {
-                _pollerContext.Logger.Warn($"Runner for poller {Poller.GetType().FullName} is slowed down. Use ForceStart.");
+                _pollerContext.Logger.Warn($"Runner for poller {Poller.GetType().FullName} is slowed down.");
             }
 
             _pollerContext.Logger.Trace(
