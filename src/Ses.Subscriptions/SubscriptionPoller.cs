@@ -91,7 +91,7 @@ namespace Ses.Subscriptions
                     foreach (var item in timeline)
                     {
                         var sourceContractName = ctx.ContractsRegistry.GetContractName(item.SourceType);
-                        foreach (var handlerInfo in _handlerRegistrar.RegisteredHandlerInfos) // all handlers can/should run in parallel
+                        foreach (var handlerInfo in _handlerRegistrar.RegisteredHandlerInfos)  // all handlers can/should run in parallel
                         {
                             var state = FindOrCreateState(ctx.ContractsRegistry, pollerStates, sourceContractName, handlerInfo.HandlerType);
                             if (item.Envelope.SequenceId <= state.EventSequenceId) continue;
@@ -107,8 +107,11 @@ namespace Ses.Subscriptions
                                 }
                                 catch (Exception ex)
                                 {
-                                    PostHandleEventError(item.Envelope, handlerInfo.HandlerType, ex, handlingRetryAttempts);
-                                    if (handlingRetryAttempts >= RetriesPolicy.HandlerAttemptsThreshold) throw;
+                                    if (handlingRetryAttempts >= RetriesPolicy.HandlerAttemptsThreshold)
+                                    {
+                                        PostHandleEventError(item.Envelope, handlerInfo.HandlerType, ex, handlingRetryAttempts);
+                                        throw;
+                                    }
                                     handlingRetryAttempts++;
                                 }
                             }
@@ -157,7 +160,17 @@ namespace Ses.Subscriptions
         {
             var eventType = envelope.Event.GetType();
             var shouldDispatch = handlerInfo.ContainsEventType(eventType);
-            if (shouldDispatch) PreHandleEvent(envelope, handlerInfo.HandlerType);
+            if (shouldDispatch)
+            {
+                try
+                {
+                    PreHandleEvent(envelope, handlerInfo.HandlerType);
+                }
+                catch (Exception e)
+                {
+                    ctx.Logger.Error("PreHandleEvent error: {0}", e.Message);
+                }
+            }
 
             using (var scope = new TransactionScope(TransactionScopeOption.RequiresNew, _transactionOptions, TransactionScopeAsyncFlowOption.Enabled))
             {
@@ -188,9 +201,21 @@ namespace Ses.Subscriptions
                 {
                     ctx.Logger.Trace("Dispatched event {0} by {1} marked as dirty with sequence {2}.", eventType.FullName, handlerInfo.HandlerType.FullName, state.EventSequenceId);
                 }
+
                 scope.Complete();
             }
-            if (shouldDispatch) PostHandleEvent(envelope, handlerInfo.HandlerType);
+
+            if (shouldDispatch)
+            {
+                try
+                {
+                    PostHandleEvent(envelope, handlerInfo.HandlerType);
+                }
+                catch (Exception e)
+                {
+                    ctx.Logger.Error("PostHandleEvent error: {0}", e.Message);
+                }
+            }
             return shouldDispatch;
         }
 

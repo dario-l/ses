@@ -16,7 +16,7 @@ namespace Ses.Subscriptions
         private CancellationTokenSource _disposedTokenSource = new CancellationTokenSource();
 
         private volatile bool _isRunning;
-        private volatile bool _isLockedByPolicy;
+        private volatile bool _isSlowedDownByPolicy;
         private readonly InterlockedDateTime _startedAt;
 
         private readonly PollerTimeoutCalculator _timeoutCalc;
@@ -24,8 +24,7 @@ namespace Ses.Subscriptions
 
         public Runner(IContractsRegistry contractsRegistry, ILogger logger, IPollerStateRepository stateRepository, SubscriptionPoller poller, IUpConverterFactory upConverterFactory)
         {
-            if (poller == null) throw new ArgumentNullException(nameof(poller));
-            Poller = poller;
+            Poller = poller ?? throw new ArgumentNullException(nameof(poller));
 
             _pollerContext = new PollerContext(contractsRegistry, logger, stateRepository, upConverterFactory);
             _startedAt = new InterlockedDateTime(DateTime.MaxValue);
@@ -48,15 +47,15 @@ namespace Ses.Subscriptions
 
         public void ForceStart()
         {
-            _isLockedByPolicy = false;
+            _isSlowedDownByPolicy = false;
             Start();
         }
 
         public void Start()
         {
-            if (_isLockedByPolicy)
+            if (_isSlowedDownByPolicy)
             {
-                _pollerContext.Logger.Warn($"Runner for poller {Poller.GetType().FullName} is locked and can't be started. Use ForceStart.");
+                _pollerContext.Logger.Warn($"Runner for poller {Poller.GetType().FullName} is slowed down. Use ForceStart.");
             }
             else
             {
@@ -77,7 +76,6 @@ namespace Ses.Subscriptions
 
         private async Task Run()
         {
-            if (_isLockedByPolicy) return;
             if (ShouldStop())
             {
                 Stop();
@@ -94,14 +92,16 @@ namespace Ses.Subscriptions
                         _startedAt.Set(DateTime.UtcNow);
                     }
 
+                    _isSlowedDownByPolicy = false;
                     _runnerTimer.Interval = _timeoutCalc.CalculateNext(anyDispatched);
                     _runnerTimer.Start();
                 }
-                catch (FetchAttemptsThresholdException e)
+                catch (Exception e)
                 {
-                    _isLockedByPolicy = true;
+                    _isSlowedDownByPolicy = true;
                     _pollerContext.Logger.Error(e.ToString());
-                    Stop();
+                    _runnerTimer.Interval = TimeSpan.FromSeconds(30).TotalMilliseconds;
+                    _runnerTimer.Start();
                 }
             }
         }
@@ -149,7 +149,7 @@ namespace Ses.Subscriptions
 
         public RunnerInfo GetInfo()
         {
-            return new RunnerInfo(_startedAt.Value, _isLockedByPolicy, _isRunning);
+            return new RunnerInfo(_startedAt.Value, _isSlowedDownByPolicy, _isRunning);
         }
 
         public async Task StartOnce()
