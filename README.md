@@ -1,8 +1,18 @@
 **Ses is dead. Long live https://github.com/getmanta/manta **
 *...but is still used in production code.*
 
-
 # SimpleEventStore
+![SimpleEventStore](https://img.shields.io/nuget/v/SimpleEventStore) SimpleEventStore
+
+![SimpleEventStore](https://img.shields.io/nuget/v/SimpleEventStore.Abstracts) SimpleEventStore.Abstracts
+
+![SimpleEventStore](https://img.shields.io/nuget/v/SimpleEventStore.Domain) SimpleEventStore.Domain
+
+![SimpleEventStore](https://img.shields.io/nuget/v/SimpleEventStore.MsSql) SimpleEventStore.MsSql
+
+![SimpleEventStore](https://img.shields.io/nuget/v/SimpleEventStore.Subscriptions) SimpleEventStore.Subscriptions
+
+![SimpleEventStore](https://img.shields.io/nuget/v/SimpleEventStore.Subscriptions.MsSql) SimpleEventStore.Subscriptions.MsSql
 
 SimpleEventStore is a simple event store library for .NET based on rdbms persistance.
 
