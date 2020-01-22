@@ -57,21 +57,21 @@ namespace Ses.Subscriptions
             {
                 _pollerContext.Logger.Warn($"Runner for poller {Poller.GetType().FullName} is slowed down. Use ForceStart.");
             }
-            else
-            {
-                _pollerContext.Logger.Trace(Poller.RunForDuration != null
+
+            _pollerContext.Logger.Trace(
+                Poller.RunForDuration != null
                     // ReSharper disable once PossibleInvalidOperationException
                     ? $"Starting runner for poller {Poller.GetType().FullName} for duration {Poller.RunForDuration.Value.TotalMinutes} minute(s)..."
                     : $"Starting runner for poller {Poller.GetType().FullName}...");
-                _startedAt.Set(DateTime.UtcNow);
-                if (_isRunning) return;
-                _pollerContext.Logger.Debug(Poller.RunForDuration != null
+            _startedAt.Set(DateTime.UtcNow);
+            if (_isRunning) return;
+            _pollerContext.Logger.Debug(
+                Poller.RunForDuration != null
                     // ReSharper disable once PossibleInvalidOperationException
                     ? $"Runner for poller {Poller.GetType().FullName} for duration {Poller.RunForDuration.Value.TotalMinutes} minute(s) started."
                     : $"Runner for poller {Poller.GetType().FullName} started.");
-                _runnerTimer.Start();
-                _isRunning = true;
-            }
+            _runnerTimer.Start();
+            _isRunning = true;
         }
 
         private async Task Run()
@@ -100,7 +100,7 @@ namespace Ses.Subscriptions
                 {
                     _isSlowedDownByPolicy = true;
                     _pollerContext.Logger.Error(e.ToString());
-                    _runnerTimer.Interval = TimeSpan.FromSeconds(30).TotalMilliseconds;
+                    _runnerTimer.Interval = TimeSpan.FromSeconds(10).TotalMilliseconds;
                     _runnerTimer.Start();
                 }
             }
