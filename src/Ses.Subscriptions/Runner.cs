@@ -76,33 +76,40 @@ namespace Ses.Subscriptions
 
         private async Task Run()
         {
-            if (ShouldStop())
+            try
             {
-                Stop();
-            }
-            else
-            {
-                try
+                if (ShouldStop())
                 {
-                    var anyDispatched = await Poller.Execute(_pollerContext, _disposedTokenSource.Token);
-
-                    if (anyDispatched)
+                    Stop();
+                }
+                else
+                {
+                    try
                     {
-                        // extend period of work duration
-                        _startedAt.Set(DateTime.UtcNow);
-                    }
+                        var anyDispatched = await Poller.Execute(_pollerContext, _disposedTokenSource.Token);
 
-                    _isSlowedDownByPolicy = false;
-                    _runnerTimer.Interval = _timeoutCalc.CalculateNext(anyDispatched);
-                    _runnerTimer.Start();
+                        if (anyDispatched)
+                        {
+                            // extend period of work duration
+                            _startedAt.Set(DateTime.UtcNow);
+                        }
+
+                        _isSlowedDownByPolicy = false;
+                        _runnerTimer.Interval = _timeoutCalc.CalculateNext(anyDispatched);
+                        _runnerTimer.Start();
+                    }
+                    catch (Exception e)
+                    {
+                        _isSlowedDownByPolicy = true;
+                        _pollerContext.Logger.Error(e.ToString());
+                        _runnerTimer.Interval = TimeSpan.FromSeconds(10).TotalMilliseconds;
+                        _runnerTimer.Start();
+                    }
                 }
-                catch (Exception e)
-                {
-                    _isSlowedDownByPolicy = true;
-                    _pollerContext.Logger.Error(e.ToString());
-                    _runnerTimer.Interval = TimeSpan.FromSeconds(10).TotalMilliseconds;
-                    _runnerTimer.Start();
-                }
+            }
+            catch (Exception e)
+            {
+                _pollerContext.Logger.Error(e.ToString());
             }
         }
 

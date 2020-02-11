@@ -2,8 +2,8 @@ namespace Ses.Subscriptions
 {
     public class PollerRetriesPolicy
     {
-        public int HandlerAttemptsThreshold { get; private set; }
-        public int FetchAttemptsThreshold { get; private set; }
+        public int HandlerAttemptsThreshold { get; }
+        public int FetchAttemptsThreshold { get; }
 
         public PollerRetriesPolicy(int fetchAttemptsThreshold, int handlerAttemptsThreshold)
         {

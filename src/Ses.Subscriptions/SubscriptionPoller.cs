@@ -75,7 +75,7 @@ namespace Ses.Subscriptions
             }
         }
 
-        internal async Task<bool> Execute(PollerContext ctx, CancellationToken cancellationToken = default(CancellationToken))
+        internal async Task<bool> Execute(PollerContext ctx, CancellationToken cancellationToken = default)
         {
             var anyDispatched = false;
             var executionRetryAttempts = 0;
