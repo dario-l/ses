@@ -240,7 +240,7 @@ BEGIN
         s.[EventId],
         s.[Version]
     FROM
-        [Streams] s WITH(READPAST,ROWLOCK)
+        [Streams] s WITH(ROWLOCK)
         LEFT JOIN [StreamsMetadata] sm WITH(NOLOCK) ON sm.StreamId = s.StreamId AND sm.CommitId = s.CommitId
     WHERE
         s.[EventId] > @SequenceId
