@@ -65,7 +65,7 @@ namespace Ses.MsSql
             if (_isRunning) return;
             _isRunning = true;
             _timer.Start();
-            _logger.Debug("Linearizer for duration {0} minute(s) started.", _durationWork.TotalMinutes);
+            _logger.Debug("Linearizer for duration {0:0.00} second(s) started.", _durationWork.TotalSeconds);
         }
 
         public void Stop()

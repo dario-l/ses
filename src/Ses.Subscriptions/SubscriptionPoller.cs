@@ -91,7 +91,7 @@ namespace Ses.Subscriptions
                     foreach (var item in timeline)
                     {
                         var sourceContractName = ctx.ContractsRegistry.GetContractName(item.SourceType);
-                        foreach (var handlerInfo in _handlerRegistrar.RegisteredHandlerInfos)  // all handlers can/should run in parallel
+                        foreach (var handlerInfo in _handlerRegistrar.RegisteredHandlerInfos)
                         {
                             var state = FindOrCreateState(ctx.ContractsRegistry, pollerStates, sourceContractName, handlerInfo.HandlerType);
                             if (item.Envelope.SequenceId <= state.EventSequenceId) continue;
@@ -195,7 +195,7 @@ namespace Ses.Subscriptions
                 {
                     await ctx.StateRepository.InsertOrUpdateAsync(state);
                     state.Clear();
-                    ctx.Logger.Trace("Dispatched event {0} by {1} saved with sequence {2}.", eventType.FullName, handlerInfo.HandlerType.FullName, state.EventSequenceId);
+                    ctx.Logger.Debug("Dispatched event {0} by {1} saved with sequence {2}.", eventType.FullName, handlerInfo.HandlerType.FullName, state.EventSequenceId);
                 }
                 else
                 {
@@ -242,7 +242,6 @@ namespace Ses.Subscriptions
             foreach (var source in Sources)
             {
                 var minSequenceId = GetMinSequenceIdFor(ctx.ContractsRegistry, pollerStates, source);
-                ctx.Logger.Trace("Min sequence id for {0} is {1}", _pollerContractName, minSequenceId.ToString());
 
                 var concreteSubscriptionIdentifier = _contractSubscriptions.Count > 0 && _contractSubscriptions.ContainsKey(source)
                     ? _contractSubscriptions[source]
@@ -257,7 +256,14 @@ namespace Ses.Subscriptions
 
             var events = await Task.WhenAll(tasks.ToArray());
             var merged = Merge(events);
-            ctx.Logger.Trace("{0} fetched {1} events from {2} stream sources.", _pollerContractName, merged.Count.ToString(), Sources.Length.ToString());
+            if (merged.Count == 0)
+            {
+                ctx.Logger.Trace("{0} fetched {1} events from {2} stream source(s).", _pollerContractName, merged.Count.ToString(), Sources.Length.ToString());
+            }
+            else
+            {
+                ctx.Logger.Debug("{0} fetched {1} events from {2} stream source(s).", _pollerContractName, merged.Count.ToString(), Sources.Length.ToString());
+            }
             return merged;
         }
 
