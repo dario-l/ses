@@ -177,7 +177,7 @@ namespace Ses.Subscriptions
                 if (shouldDispatch)
                 {
                     ctx.Logger.Trace("Dispatching event {0} to {1}...", eventType.FullName, handlerInfo.HandlerType.FullName);
-                    await DispatchHandler(handlerInfo, envelope);
+                    await Dispatch(handlerInfo, envelope);
                 }
 
                 state.SetEventSequenceId(envelope.SequenceId);
@@ -210,11 +210,16 @@ namespace Ses.Subscriptions
             return shouldDispatch;
         }
 
-        protected virtual async Task DispatchHandler(HandlerTypeInfo handlerInfo, EventEnvelope envelope)
+        protected virtual Task Dispatch(HandlerTypeInfo handlerInfo, EventEnvelope envelope)
         {
             var handlerInstance = CreateHandlerInstance(handlerInfo.HandlerType);
             if (handlerInstance == null) throw new NullReferenceException($"Handler instance {handlerInfo.HandlerType.FullName} is null.");
             
+            return DispatchHandler(handlerInfo, envelope, handlerInstance);
+        }
+
+        protected async Task DispatchHandler(HandlerTypeInfo handlerInfo, EventEnvelope envelope, IHandle handlerInstance)
+        {
             if (handlerInfo.IsAsync)
             {
                 await ((dynamic)handlerInstance).Handle((dynamic)envelope.Event, envelope);
