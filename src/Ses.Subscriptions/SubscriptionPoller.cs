@@ -156,7 +156,7 @@ namespace Ses.Subscriptions
             ctx.Logger.Trace("Dirty states for {0} saved.", _pollerContractName);
         }
 
-        private async Task<bool> TryDispatch(PollerContext ctx, HandlerRegistrar.HandlerTypeInfo handlerInfo, EventEnvelope envelope, PollerState state)
+        private async Task<bool> TryDispatch(PollerContext ctx, HandlerTypeInfo handlerInfo, EventEnvelope envelope, PollerState state)
         {
             var eventType = envelope.Event.GetType();
             var shouldDispatch = handlerInfo.ContainsEventType(eventType);
@@ -176,17 +176,8 @@ namespace Ses.Subscriptions
             {
                 if (shouldDispatch)
                 {
-                    var handlerInstance = CreateHandlerInstance(handlerInfo.HandlerType);
-                    if (handlerInstance == null) throw new NullReferenceException($"Handler instance {handlerInfo.HandlerType.FullName} is null.");
                     ctx.Logger.Trace("Dispatching event {0} to {1}...", eventType.FullName, handlerInfo.HandlerType.FullName);
-                    if (handlerInfo.IsAsync)
-                    {
-                        await ((dynamic)handlerInstance).Handle((dynamic)envelope.Event, envelope);
-                    }
-                    else
-                    {
-                        ((dynamic)handlerInstance).Handle((dynamic)envelope.Event, envelope);
-                    }
+                    await DispatchHandler(handlerInfo, envelope);
                 }
 
                 state.SetEventSequenceId(envelope.SequenceId);
@@ -217,6 +208,21 @@ namespace Ses.Subscriptions
                 }
             }
             return shouldDispatch;
+        }
+
+        protected virtual async Task DispatchHandler(HandlerTypeInfo handlerInfo, EventEnvelope envelope)
+        {
+            var handlerInstance = CreateHandlerInstance(handlerInfo.HandlerType);
+            if (handlerInstance == null) throw new NullReferenceException($"Handler instance {handlerInfo.HandlerType.FullName} is null.");
+            
+            if (handlerInfo.IsAsync)
+            {
+                await ((dynamic)handlerInstance).Handle((dynamic)envelope.Event, envelope);
+            }
+            else
+            {
+                ((dynamic)handlerInstance).Handle((dynamic)envelope.Event, envelope);
+            }
         }
 
         private PollerState FindOrCreateState(IContractsRegistry contractsRegistry, List<PollerState> pollerStates, string sourceContractName, Type handlerType)

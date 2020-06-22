@@ -41,6 +41,7 @@
     <Compile Include="EventStoreSubscriptions.cs" />
     <Compile Include="FetchAttemptsThresholdException.cs" />
     <Compile Include="HandlerRegistrar.cs" />
+    <Compile Include="HandlerTypeInfo.cs" />
     <Compile Include="IEventStoreSubscriptions.cs" />
     <Compile Include="IPollerStateRepository.cs" />
     <Compile Include="PollerContext.cs" />

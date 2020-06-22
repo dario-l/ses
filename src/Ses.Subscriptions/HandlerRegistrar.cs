@@ -59,29 +59,8 @@ namespace Ses.Subscriptions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public HandlerTypeInfo GetHandlerInfoFor(Type handlerType)
         {
-            HandlerTypeInfo result;
-            _types.TryGetValue(handlerType, out result);
+            _types.TryGetValue(handlerType, out var result);
             return result;
-        }
-
-        public class HandlerTypeInfo
-        {
-            public HandlerTypeInfo(Type handlerType, Type[] eventTypes, bool isAsync)
-            {
-                HandlerType = handlerType;
-                EventTypes = new HashSet<Type>(eventTypes);
-                IsAsync = isAsync;
-            }
-
-            public bool IsAsync { get; private set; }
-            public Type HandlerType { get; private set; }
-            public HashSet<Type> EventTypes { get; }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool ContainsEventType(Type eventType)
-            {
-                return EventTypes.Contains(eventType);
-            }
         }
     }
 }
