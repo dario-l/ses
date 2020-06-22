@@ -57,7 +57,7 @@ namespace Ses.Subscriptions
             return this;
         }
 
-        public EventStoreSubscriptions Start()
+        public void Start()
         {
             if (_contractRegistry == null)
                 throw new InvalidOperationException("Contract registry is not set. Use own IContractRegistry implementation or DefaultContractsRegistry.");
@@ -71,10 +71,9 @@ namespace Ses.Subscriptions
                 _runners.Add(poller.GetType(), runner);
                 runner.Start();
             }
-            return this;
         }
 
-        public async Task<EventStoreSubscriptions> StartAsync()
+        public async Task StartAsync()
         {
             if (_contractRegistry == null)
                 throw new InvalidOperationException("Contract registry is not set. Use own IContractRegistry implementation or DefaultContractsRegistry.");
@@ -88,7 +87,6 @@ namespace Ses.Subscriptions
                 _runners.Add(poller.GetType(), runner);
                 runner.Start();
             }
-            return this;
         }
 
         private void SynchronizeStates(SubscriptionPoller poller)

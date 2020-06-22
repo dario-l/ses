@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 
 namespace Ses.Subscriptions
 {
@@ -7,5 +8,7 @@ namespace Ses.Subscriptions
         void RunStoppedPoller(Type type, bool force = false);
         void RunStoppedPollers();
         PollerInfo[] GetPollers();
+        void Start();
+        Task StartAsync();
     }
 }
