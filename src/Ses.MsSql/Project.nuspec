@@ -7,7 +7,7 @@
         <authors>Dariusz Lenartowicz</authors>
         <owners>Dariusz Lenartowicz</owners>
         <projectUrl>https://github.com/dario-l/Ses</projectUrl>
-        <licenseUrl>https://github.com/dario-l/Ses/blob/master/License.txt</licenseUrl>
+        <license>https://github.com/dario-l/Ses/blob/master/License.txt</license>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>MsSql implementation for SimpleEventStore.</description>
         <tags>eventstore mssql</tags>
