@@ -94,6 +94,8 @@ namespace Ses.Subscriptions
                             _startedAt.Set(DateTime.UtcNow);
                         }
 
+                        if (_runnerTimer == null) return;
+
                         _isSlowedDownByPolicy = false;
                         _runnerTimer.Interval = _timeoutCalc.CalculateNext(anyDispatched);
                         _runnerTimer.Start();
@@ -102,6 +104,7 @@ namespace Ses.Subscriptions
                     {
                         _isSlowedDownByPolicy = true;
                         _pollerContext.Logger.Error(e.ToString());
+                        if (_runnerTimer == null) return;
                         _runnerTimer.Interval = TimeSpan.FromSeconds(10).TotalMilliseconds;
                         _runnerTimer.Start();
                     }
